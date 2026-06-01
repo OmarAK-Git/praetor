@@ -9,9 +9,7 @@ from typing import Any, Literal
 
 from pydantic import ConfigDict, Field, ValidationInfo, field_validator, model_validator
 
-from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel
-
-SchemaVersionV1 = Literal["1"]
+from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel, SchemaVersionV1
 
 DIRECTIVE_MAX_LIFETIME = timedelta(seconds=300)
 

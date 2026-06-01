@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict
 
-SCHEMA_VERSION_V1 = "1"
+SchemaVersionV1 = Literal["1"]
+SCHEMA_VERSION_V1: SchemaVersionV1 = "1"
 
 # extra=forbid rejects unknown keys; strict=False allows JSON round-trip coercion
 # (datetime strings, enum values) while keeping typed models in Python.

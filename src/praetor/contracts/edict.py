@@ -7,13 +7,12 @@ from typing import Any, Literal
 
 from pydantic import Field
 
-from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel
+from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel, SchemaVersionV1
 from praetor.contracts.containment import ContainmentDirective
 from praetor.contracts.disposition import Disposition
 from praetor.contracts.judgment import ModelJudgment
 from praetor.contracts.policy import PolicyGateResult
 
-SchemaVersionV1 = Literal["1"]
 RecordTypeDecisionEdict = Literal["decision_edict"]
 
 

@@ -1,6 +1,6 @@
 """Versioned Praetor v1 contracts (Pydantic models)."""
 
-from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel
+from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel, SchemaVersionV1, SchemaVersionV1
 from praetor.contracts.alert import AlertEnvelope
 from praetor.contracts.containment import ContainmentDirective, DirectiveStatus, TargetType
 from praetor.contracts.disposition import Disposition
@@ -23,6 +23,7 @@ from praetor.contracts.schema_export import SCHEMA_EXPORTS, export_schemas
 
 __all__ = [
     "SCHEMA_VERSION_V1",
+    "SchemaVersionV1",
     "SCHEMA_EXPORTS",
     "AlertEnvelope",
     "AnalystAnnotation",

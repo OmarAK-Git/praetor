@@ -219,6 +219,29 @@ def test_invalid_record_type_literal_rejected(decision_edict: DecisionEdict) -> 
         DecisionEdict.model_validate(data)
 
 
+@pytest.mark.parametrize(
+    ("fixture_name", "wrong_record_type"),
+    [
+        ("decision_edict", "directive_revocation"),
+        ("never_contain_snapshot_record", "decision_edict"),
+        ("emergency_never_contain_record", "never_contain_snapshot"),
+        ("directive_revocation_record", "emergency_never_contain"),
+    ],
+)
+def test_ledger_record_type_unknown_or_wrong_rejected(
+    fixture_name: str,
+    wrong_record_type: str,
+    request: pytest.FixtureRequest,
+) -> None:
+    """Unrecognized or mismatched record_type must fail validation (docs/spec chain integrity)."""
+    model = request.getfixturevalue(fixture_name)
+    data = model.model_dump(mode="json")
+    data["record_type"] = wrong_record_type
+    model_type = type(model)
+    with pytest.raises(ValidationError):
+        model_type.model_validate(data)
+
+
 def test_ledger_record_types_are_distinct() -> None:
     from praetor.contracts.edict import DecisionEdict
     from praetor.contracts.ledger import (

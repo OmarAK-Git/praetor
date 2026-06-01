@@ -8,9 +8,7 @@ from typing import Any, Literal
 
 from pydantic import model_validator
 
-from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel
-
-SchemaVersionV1 = Literal["1"]
+from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel, SchemaVersionV1
 
 EMERGENCY_MAX_LIFETIME = timedelta(hours=48)
 

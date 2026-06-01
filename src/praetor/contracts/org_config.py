@@ -2,13 +2,11 @@
 
 from __future__ import annotations
 
-from typing import Any, Literal
+from typing import Any
 
 from pydantic import Field
 
-from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel
-
-SchemaVersionV1 = Literal["1"]
+from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel, SchemaVersionV1
 
 
 class OrgConfigSnapshot(ContractModel):

@@ -3,14 +3,10 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
-
 from pydantic import model_validator
 
-from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel
+from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel, SchemaVersionV1
 from praetor.contracts.disposition import Disposition
-
-SchemaVersionV1 = Literal["1"]
 
 
 class AnalystAnnotation(ContractModel):

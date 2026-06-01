@@ -20,7 +20,8 @@
 |----|----------|---------|------------|
 | R-001 | note | `strict=True` omitted on base config so JSON round-trip coerces datetimes/enums; `extra=forbid` retained | accepted |
 | R-002 | note | `PolicyGateResult` records dispositions only; fault flags live on `DecisionEdict` per spec | accepted |
-| R-003 | note | Read-only review gap: §11 `idempotency_key_cleared` coupling missing | **fixed** — validator + tests in Task 2 patch |
+| R-004 | note | 14 mypy `[assignment]` errors: `SCHEMA_VERSION_V1` typed as `str`, fields as `Literal['1']` | **fixed** — typed pin in `_base.py`; zero mypy errors on `src` |
+| R-005 | note | record_type behavioral: no mypy errors; runtime Literal enforcement verified for all 4 ledger models | **confirmed** — parametrized rejection tests added; no docs change required |
 
 **Severity:** `blocker` | `major` | `minor` | `note`
 
