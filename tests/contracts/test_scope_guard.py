@@ -15,7 +15,6 @@ SRC = REPO_ROOT / "src" / "praetor"
 FORBIDDEN_PACKAGES = (
     "engine",
     "policy",
-    "tickets",
     "alerts",
     "containment",
 )
@@ -49,8 +48,15 @@ def test_forbidden_packages_absent() -> None:
 
 def test_only_expected_top_level_packages() -> None:
     children = {p.name for p in SRC.iterdir() if p.is_dir() and not p.name.startswith("_")}
-    assert children <= {"auth", "contracts", "hashing", "runtime", "state"}, (
-        f"unexpected packages: {children - {'auth', 'contracts', 'hashing', 'runtime', 'state'}}"
+    assert children <= {
+        "auth",
+        "contracts",
+        "hashing",
+        "runtime",
+        "state",
+        "tickets",
+    }, (
+        f"unexpected packages: {children - {'auth', 'contracts', 'hashing', 'runtime', 'state', 'tickets'}}"
     )
 
 

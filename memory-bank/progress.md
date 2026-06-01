@@ -1,5 +1,22 @@
 # Progress Log
 
+## 2026-06-01 — TASK-007 verification hardening (reopen)
+
+- **G-1 fixed:** `ConnectionError`/transport ambiguity → durable `unknown` via `_is_backend_ambiguity`; programmer `ValueError` not swallowed.
+- **G-2–G-9 fixed:** 10 new tests — pending restart recovery, EMPTY_BUNDLE path, cached failed terminal, payload authority, DEC-022 additive schema, idempotent recovery path, `record_stamp_outcome` PENDING guard, `processing_attempt_identity` semantics (DEC-023).
+- **G-10 deferred:** outbox timestamps use `isoformat()` (+00:00); Task 23 hazard if copied into hashed edict fields.
+- **G-11 documented:** per-conn schema cache validates table exists (recycled `id(conn)` safety).
+- Tests: `tests/tickets/test_stamp_outbox.py` — **21** tests.
+- Verification: `pytest -q` → 173 passed; `mypy src` → 34 files pass.
+
+## 2026-06-01 — TASK-007 complete
+
+- **`src/praetor/tickets/`:** `outbox.py`, `stamp.py` — durable SQLite stamp outbox keyed by `stamp_id`; pending before external call; `succeeded`/`failed`/`unknown` outcomes; recovery retry with same `stamp_id`.
+- Tests: `tests/tickets/test_stamp_outbox.py` — 11 tests.
+- Verification: `pytest -q` → 163 passed; `mypy src` → 34 files pass.
+- Flight Recorder: `.workflow/TASK-007/`.
+- Gap: attempt FSM / edict append wiring (Task 23); startup recovery enumeration (Task 11–12).
+
 ## 2026-06-01 — TASK-006 verification fix pass
 
 - Added 20 tests: feed sequence reopen/rollback, manual revocation rollback, completed-edict conflict, FSM negatives, idempotency duplicate, schema version reject, abort same-input retry, singleton contract.
@@ -81,9 +98,10 @@
 | Auth | Task 4 done — `src/praetor/auth/` |
 | Runtime / startup guard | Task 5 done — `src/praetor/runtime/`, `src/praetor/state/sqlite_guard.py` |
 | State store / lifecycle | Task 6 done — `src/praetor/state/{store,attempts,completed_decisions,idempotency}.py` |
+| Ticket stamp outbox | Task 7 done — `src/praetor/tickets/{outbox,stamp}.py` |
 | CI / eval harness | Not started (Task 26+) |
 | Operator runbooks | Not in repo yet (Task 35) |
 
 ## Next recommended steps
 
-1. TASK-007 — Ticket stamp outbox per `docs/plan.md`.
+1. TASK-008 — SystemHealthAlert outbox per `docs/plan.md`.

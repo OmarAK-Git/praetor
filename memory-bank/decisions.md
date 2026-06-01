@@ -25,5 +25,7 @@ Product and architecture decisions are **documented in `docs/prd.md`** (seven nu
 | DEC-019 | 2026-06-01 | Windows lock uses `msvcrt.locking` (byte-range), not spec-worded `CreateFile` exclusive | No pywin32 dep; same exclusivity vs same-mechanism contenders; in-bounds sentinel byte before lock | TASK-005 reopen, `docs/spec.md` § startup step 1 |
 | DEC-020 | 2026-06-01 | State store v1: single-writer + `BEGIN IMMEDIATE`; revocation durable in SQLite before ledger append | Matches spec single-process constraint; Task 10 chains revocations; `foreign_keys=ON` at open | TASK-006, `docs/plan.md` Task 6 |
 | DEC-021 | 2026-06-01 | `open_state_store` rejects incompatible `schema_meta.schema_version`; duplicate idempotency insert fails | Migrations deferred; duplicate key registration is fail-not-idempotent | TASK-006 verification fix pass |
+| DEC-022 | 2026-06-01 | Stamp outbox additive table via `init_stamp_outbox_schema`; per-conn cache with table-exists validation | No schema_version bump; cache invalidates on recycled `id(conn)` | TASK-007 reopen |
+| DEC-023 | 2026-06-01 | `processing_attempt_identity` on stamp outbox row is the first writer; not updated on cross-attempt recovery | `stamp_id` excludes attempt; row records who opened pending | TASK-007 reopen |
 
 Add rows here when implementation choices diverge from or refine docs (with date and evidence).

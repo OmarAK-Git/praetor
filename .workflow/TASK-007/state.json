@@ -1,0 +1,16 @@
+{
+  "task_slug": "TASK-007",
+  "tier": "T3",
+  "run_status": "complete",
+  "current_task": null,
+  "blockers": [],
+  "tasks": {
+    "T-001": "completed",
+    "T-002": "completed",
+    "T-003": "completed",
+    "T-004": "completed",
+    "T-005": "completed"
+  },
+  "updated_at": "2026-06-01T00:00:00Z",
+  "note": "T-005 = reopen verification hardening pass"
+}
