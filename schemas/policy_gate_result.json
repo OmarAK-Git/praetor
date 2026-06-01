@@ -1,0 +1,34 @@
+{
+  "$defs": {
+    "Disposition": {
+      "enum": [
+        "standard_review",
+        "escalate",
+        "auto_contain"
+      ],
+      "title": "Disposition",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "final_disposition": {
+      "$ref": "#/$defs/Disposition"
+    },
+    "proposed_disposition": {
+      "$ref": "#/$defs/Disposition"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "proposed_disposition",
+    "final_disposition"
+  ],
+  "title": "PolicyGateResult",
+  "type": "object"
+}

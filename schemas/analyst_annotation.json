@@ -1,0 +1,58 @@
+{
+  "$defs": {
+    "Disposition": {
+      "enum": [
+        "standard_review",
+        "escalate",
+        "auto_contain"
+      ],
+      "title": "Disposition",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "comment": {
+      "title": "Comment",
+      "type": "string"
+    },
+    "corrected_disposition": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Disposition"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "disposition_correct": {
+      "title": "Disposition Correct",
+      "type": "boolean"
+    },
+    "reviewer_identity": {
+      "title": "Reviewer Identity",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "timestamp": {
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    }
+  },
+  "required": [
+    "disposition_correct",
+    "comment",
+    "reviewer_identity",
+    "timestamp"
+  ],
+  "title": "AnalystAnnotation",
+  "type": "object"
+}

@@ -1,0 +1,65 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "directive_id": {
+      "title": "Directive Id",
+      "type": "string"
+    },
+    "ledger_commit_at": {
+      "format": "date-time",
+      "title": "Ledger Commit At",
+      "type": "string"
+    },
+    "public_detail": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Public Detail"
+    },
+    "reason_code": {
+      "title": "Reason Code",
+      "type": "string"
+    },
+    "record_checksum": {
+      "description": "Corruption detection only; computed per docs/contracts.md (Task 3).",
+      "title": "Record Checksum",
+      "type": "string"
+    },
+    "revocation_id": {
+      "title": "Revocation Id",
+      "type": "string"
+    },
+    "revoked_at": {
+      "format": "date-time",
+      "title": "Revoked At",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "sequence_number": {
+      "title": "Sequence Number",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "sequence_number",
+    "directive_id",
+    "revocation_id",
+    "reason_code",
+    "revoked_at",
+    "ledger_commit_at",
+    "record_checksum"
+  ],
+  "title": "RevocationFeedRecord",
+  "type": "object"
+}

@@ -1,0 +1,46 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "account_name": {
+      "title": "Account Name",
+      "type": "string"
+    },
+    "account_type": {
+      "title": "Account Type",
+      "type": "string"
+    },
+    "ambiguity_flag": {
+      "title": "Ambiguity Flag",
+      "type": "boolean"
+    },
+    "authority_source": {
+      "title": "Authority Source",
+      "type": "string"
+    },
+    "domain": {
+      "title": "Domain",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "sid": {
+      "description": "Security identifier (SID).",
+      "title": "Sid",
+      "type": "string"
+    }
+  },
+  "required": [
+    "sid",
+    "domain",
+    "account_name",
+    "account_type",
+    "authority_source",
+    "ambiguity_flag"
+  ],
+  "title": "CanonicalAccountIdentity",
+  "type": "object"
+}

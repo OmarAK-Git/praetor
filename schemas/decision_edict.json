@@ -1,0 +1,378 @@
+{
+  "$defs": {
+    "CitedEvidenceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "field_path": {
+          "title": "Field Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "field_path"
+      ],
+      "title": "CitedEvidenceRef",
+      "type": "object"
+    },
+    "ContainmentDirective": {
+      "additionalProperties": false,
+      "description": "v1 containment directive. revocation_feed_id is reserved for post-v1 multi-feed deployments and must not be present.",
+      "properties": {
+        "actuator_constraints": {
+          "additionalProperties": true,
+          "title": "Actuator Constraints",
+          "type": "object"
+        },
+        "decision_id": {
+          "title": "Decision Id",
+          "type": "string"
+        },
+        "directive_id": {
+          "title": "Directive Id",
+          "type": "string"
+        },
+        "embedded_never_contain_entries": {
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "title": "Embedded Never Contain Entries",
+          "type": "array"
+        },
+        "evidence_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Refs",
+          "type": "array"
+        },
+        "expires_at": {
+          "format": "date-time",
+          "title": "Expires At",
+          "type": "string"
+        },
+        "idempotency_key": {
+          "title": "Idempotency Key",
+          "type": "string"
+        },
+        "issued_at": {
+          "format": "date-time",
+          "title": "Issued At",
+          "type": "string"
+        },
+        "live_never_contain_hash": {
+          "title": "Live Never Contain Hash",
+          "type": "string"
+        },
+        "minimum_feed_sequence_at_issue": {
+          "title": "Minimum Feed Sequence At Issue",
+          "type": "integer"
+        },
+        "revocation_policy": {
+          "additionalProperties": true,
+          "title": "Revocation Policy",
+          "type": "object"
+        },
+        "schema_version": {
+          "const": "1",
+          "default": "1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "scope": {
+          "title": "Scope",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/DirectiveStatus"
+        },
+        "supersedes_directive_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Supersedes Directive Id"
+        },
+        "target_id": {
+          "title": "Target Id",
+          "type": "string"
+        },
+        "target_type": {
+          "$ref": "#/$defs/TargetType"
+        }
+      },
+      "required": [
+        "directive_id",
+        "decision_id",
+        "target_type",
+        "target_id",
+        "scope",
+        "evidence_refs",
+        "issued_at",
+        "expires_at",
+        "idempotency_key",
+        "actuator_constraints",
+        "revocation_policy",
+        "status",
+        "live_never_contain_hash",
+        "embedded_never_contain_entries",
+        "minimum_feed_sequence_at_issue"
+      ],
+      "title": "ContainmentDirective",
+      "type": "object"
+    },
+    "DirectiveStatus": {
+      "enum": [
+        "proposed",
+        "emitted"
+      ],
+      "title": "DirectiveStatus",
+      "type": "string"
+    },
+    "Disposition": {
+      "enum": [
+        "standard_review",
+        "escalate",
+        "auto_contain"
+      ],
+      "title": "Disposition",
+      "type": "string"
+    },
+    "ModelJudgment": {
+      "additionalProperties": false,
+      "properties": {
+        "benign_alternatives": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Benign Alternatives",
+          "type": "array"
+        },
+        "benign_alternatives_ruled_out": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Benign Alternatives Ruled Out",
+          "type": "array"
+        },
+        "cited_evidence_refs": {
+          "items": {
+            "$ref": "#/$defs/CitedEvidenceRef"
+          },
+          "title": "Cited Evidence Refs",
+          "type": "array"
+        },
+        "convergence_reasoning": {
+          "title": "Convergence Reasoning",
+          "type": "string"
+        },
+        "key_tells": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Key Tells",
+          "type": "array"
+        },
+        "model_name": {
+          "description": "Model/provider metadata.",
+          "title": "Model Name",
+          "type": "string"
+        },
+        "narrative": {
+          "title": "Narrative",
+          "type": "string"
+        },
+        "org_config_refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Org Config Refs",
+          "type": "array"
+        },
+        "proposed_disposition": {
+          "$ref": "#/$defs/Disposition"
+        },
+        "provider_name": {
+          "description": "Model/provider metadata.",
+          "title": "Provider Name",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "1",
+          "default": "1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "proposed_disposition",
+        "cited_evidence_refs",
+        "key_tells",
+        "org_config_refs",
+        "benign_alternatives",
+        "benign_alternatives_ruled_out",
+        "convergence_reasoning",
+        "narrative",
+        "model_name",
+        "provider_name"
+      ],
+      "title": "ModelJudgment",
+      "type": "object"
+    },
+    "PolicyGateResult": {
+      "additionalProperties": false,
+      "properties": {
+        "final_disposition": {
+          "$ref": "#/$defs/Disposition"
+        },
+        "proposed_disposition": {
+          "$ref": "#/$defs/Disposition"
+        },
+        "schema_version": {
+          "const": "1",
+          "default": "1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "proposed_disposition",
+        "final_disposition"
+      ],
+      "title": "PolicyGateResult",
+      "type": "object"
+    },
+    "TargetType": {
+      "enum": [
+        "host",
+        "account"
+      ],
+      "title": "TargetType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "alert_reference": {
+      "title": "Alert Reference",
+      "type": "string"
+    },
+    "containment_directive": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ContainmentDirective"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "decided_at": {
+      "description": "Timing metadata anchor.",
+      "format": "date-time",
+      "title": "Decided At",
+      "type": "string"
+    },
+    "decision_id": {
+      "title": "Decision Id",
+      "type": "string"
+    },
+    "evidence_bundle_hash": {
+      "title": "Evidence Bundle Hash",
+      "type": "string"
+    },
+    "fault_flags": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Fault Flags",
+      "type": "array"
+    },
+    "final_disposition": {
+      "$ref": "#/$defs/Disposition"
+    },
+    "ledger_current_hash": {
+      "title": "Ledger Current Hash",
+      "type": "string"
+    },
+    "ledger_previous_hash": {
+      "title": "Ledger Previous Hash",
+      "type": "string"
+    },
+    "live_never_contain_hash": {
+      "title": "Live Never Contain Hash",
+      "type": "string"
+    },
+    "model_judgment": {
+      "$ref": "#/$defs/ModelJudgment"
+    },
+    "org_config_snapshot_hash": {
+      "title": "Org Config Snapshot Hash",
+      "type": "string"
+    },
+    "policy_gate_result": {
+      "$ref": "#/$defs/PolicyGateResult"
+    },
+    "record_type": {
+      "const": "decision_edict",
+      "default": "decision_edict",
+      "title": "Record Type",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "stamp_status": {
+      "title": "Stamp Status",
+      "type": "string"
+    },
+    "system_fault_escalation": {
+      "title": "System Fault Escalation",
+      "type": "boolean"
+    },
+    "ticket_stamp_payload": {
+      "additionalProperties": true,
+      "title": "Ticket Stamp Payload",
+      "type": "object"
+    },
+    "timing_metadata": {
+      "additionalProperties": true,
+      "title": "Timing Metadata",
+      "type": "object"
+    }
+  },
+  "required": [
+    "decision_id",
+    "alert_reference",
+    "evidence_bundle_hash",
+    "org_config_snapshot_hash",
+    "live_never_contain_hash",
+    "model_judgment",
+    "policy_gate_result",
+    "final_disposition",
+    "system_fault_escalation",
+    "fault_flags",
+    "stamp_status",
+    "timing_metadata",
+    "ledger_previous_hash",
+    "ledger_current_hash",
+    "ticket_stamp_payload",
+    "decided_at"
+  ],
+  "title": "DecisionEdict",
+  "type": "object"
+}

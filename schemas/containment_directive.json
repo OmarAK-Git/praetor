@@ -1,0 +1,130 @@
+{
+  "$defs": {
+    "DirectiveStatus": {
+      "enum": [
+        "proposed",
+        "emitted"
+      ],
+      "title": "DirectiveStatus",
+      "type": "string"
+    },
+    "TargetType": {
+      "enum": [
+        "host",
+        "account"
+      ],
+      "title": "TargetType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "v1 containment directive. revocation_feed_id is reserved for post-v1 multi-feed deployments and must not be present.",
+  "properties": {
+    "actuator_constraints": {
+      "additionalProperties": true,
+      "title": "Actuator Constraints",
+      "type": "object"
+    },
+    "decision_id": {
+      "title": "Decision Id",
+      "type": "string"
+    },
+    "directive_id": {
+      "title": "Directive Id",
+      "type": "string"
+    },
+    "embedded_never_contain_entries": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Embedded Never Contain Entries",
+      "type": "array"
+    },
+    "evidence_refs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Evidence Refs",
+      "type": "array"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "idempotency_key": {
+      "title": "Idempotency Key",
+      "type": "string"
+    },
+    "issued_at": {
+      "format": "date-time",
+      "title": "Issued At",
+      "type": "string"
+    },
+    "live_never_contain_hash": {
+      "title": "Live Never Contain Hash",
+      "type": "string"
+    },
+    "minimum_feed_sequence_at_issue": {
+      "title": "Minimum Feed Sequence At Issue",
+      "type": "integer"
+    },
+    "revocation_policy": {
+      "additionalProperties": true,
+      "title": "Revocation Policy",
+      "type": "object"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "scope": {
+      "title": "Scope",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/DirectiveStatus"
+    },
+    "supersedes_directive_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Supersedes Directive Id"
+    },
+    "target_id": {
+      "title": "Target Id",
+      "type": "string"
+    },
+    "target_type": {
+      "$ref": "#/$defs/TargetType"
+    }
+  },
+  "required": [
+    "directive_id",
+    "decision_id",
+    "target_type",
+    "target_id",
+    "scope",
+    "evidence_refs",
+    "issued_at",
+    "expires_at",
+    "idempotency_key",
+    "actuator_constraints",
+    "revocation_policy",
+    "status",
+    "live_never_contain_hash",
+    "embedded_never_contain_entries",
+    "minimum_feed_sequence_at_issue"
+  ],
+  "title": "ContainmentDirective",
+  "type": "object"
+}

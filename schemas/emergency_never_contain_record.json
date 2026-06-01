@@ -1,0 +1,54 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "added_at": {
+      "format": "date-time",
+      "title": "Added At",
+      "type": "string"
+    },
+    "added_by": {
+      "title": "Added By",
+      "type": "string"
+    },
+    "audit_reason": {
+      "title": "Audit Reason",
+      "type": "string"
+    },
+    "entry_id": {
+      "title": "Entry Id",
+      "type": "string"
+    },
+    "expires_at": {
+      "format": "date-time",
+      "title": "Expires At",
+      "type": "string"
+    },
+    "record_type": {
+      "const": "emergency_never_contain",
+      "default": "emergency_never_contain",
+      "title": "Record Type",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "target_specification": {
+      "additionalProperties": true,
+      "title": "Target Specification",
+      "type": "object"
+    }
+  },
+  "required": [
+    "entry_id",
+    "target_specification",
+    "added_by",
+    "added_at",
+    "expires_at",
+    "audit_reason"
+  ],
+  "title": "EmergencyNeverContainRecord",
+  "type": "object"
+}

@@ -1,0 +1,27 @@
+{
+  "additionalProperties": false,
+  "description": "Critical safety alert; full outbox delivery shape deferred to Task 8.",
+  "properties": {
+    "alert_code": {
+      "title": "Alert Code",
+      "type": "string"
+    },
+    "emitted_at": {
+      "format": "date-time",
+      "title": "Emitted At",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "alert_code",
+    "emitted_at"
+  ],
+  "title": "SystemHealthAlert",
+  "type": "object"
+}

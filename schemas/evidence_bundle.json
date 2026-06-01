@@ -1,0 +1,87 @@
+{
+  "$defs": {
+    "EvidenceFact": {
+      "additionalProperties": false,
+      "description": "Normalized fact; ``normalized_fields`` shape is source-specific (deferred to correlation).",
+      "properties": {
+        "ambiguity_flag": {
+          "title": "Ambiguity Flag",
+          "type": "boolean"
+        },
+        "entity_references": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Entity References"
+        },
+        "evidence_id": {
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "normalized_fields": {
+          "additionalProperties": true,
+          "title": "Normalized Fields",
+          "type": "object"
+        },
+        "provenance_path": {
+          "title": "Provenance Path",
+          "type": "string"
+        },
+        "raw_source": {
+          "title": "Raw Source",
+          "type": "string"
+        },
+        "source_event_reference": {
+          "title": "Source Event Reference",
+          "type": "string"
+        },
+        "timestamp": {
+          "format": "date-time",
+          "title": "Timestamp",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "normalized_fields",
+        "source_event_reference",
+        "raw_source",
+        "provenance_path",
+        "ambiguity_flag",
+        "timestamp"
+      ],
+      "title": "EvidenceFact",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "facts": {
+      "items": {
+        "$ref": "#/$defs/EvidenceFact"
+      },
+      "title": "Facts",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "facts"
+  ],
+  "title": "EvidenceBundle",
+  "type": "object"
+}

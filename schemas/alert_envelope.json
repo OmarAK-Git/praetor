@@ -1,0 +1,22 @@
+{
+  "additionalProperties": false,
+  "description": "Versioned alert at intake; ``alert_identity`` is the SOC-assigned reference.",
+  "properties": {
+    "alert_identity": {
+      "description": "Stable upstream alert reference (not Praetor attempt/queue ids).",
+      "title": "Alert Identity",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "alert_identity"
+  ],
+  "title": "AlertEnvelope",
+  "type": "object"
+}

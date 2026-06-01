@@ -1,0 +1,111 @@
+{
+  "$defs": {
+    "CitedEvidenceRef": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "field_path": {
+          "title": "Field Path",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "field_path"
+      ],
+      "title": "CitedEvidenceRef",
+      "type": "object"
+    },
+    "Disposition": {
+      "enum": [
+        "standard_review",
+        "escalate",
+        "auto_contain"
+      ],
+      "title": "Disposition",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "benign_alternatives": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Benign Alternatives",
+      "type": "array"
+    },
+    "benign_alternatives_ruled_out": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Benign Alternatives Ruled Out",
+      "type": "array"
+    },
+    "cited_evidence_refs": {
+      "items": {
+        "$ref": "#/$defs/CitedEvidenceRef"
+      },
+      "title": "Cited Evidence Refs",
+      "type": "array"
+    },
+    "convergence_reasoning": {
+      "title": "Convergence Reasoning",
+      "type": "string"
+    },
+    "key_tells": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Key Tells",
+      "type": "array"
+    },
+    "model_name": {
+      "description": "Model/provider metadata.",
+      "title": "Model Name",
+      "type": "string"
+    },
+    "narrative": {
+      "title": "Narrative",
+      "type": "string"
+    },
+    "org_config_refs": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Org Config Refs",
+      "type": "array"
+    },
+    "proposed_disposition": {
+      "$ref": "#/$defs/Disposition"
+    },
+    "provider_name": {
+      "description": "Model/provider metadata.",
+      "title": "Provider Name",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "proposed_disposition",
+    "cited_evidence_refs",
+    "key_tells",
+    "org_config_refs",
+    "benign_alternatives",
+    "benign_alternatives_ruled_out",
+    "convergence_reasoning",
+    "narrative",
+    "model_name",
+    "provider_name"
+  ],
+  "title": "ModelJudgment",
+  "type": "object"
+}

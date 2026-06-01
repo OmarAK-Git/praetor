@@ -33,12 +33,13 @@ Referenced but not yet in repo: `docs/operator_runbook.md`, `docs/architecture.m
 
 ## Main commands
 
-No `pyproject.toml` or `src/` in repo yet. After Task 1:
+After Task 1–2:
 
-- Install: TODO (expected `pip`/editable install per Task 1)
-- Run: TODO
-- Test: `pytest` (Task 1 acceptance)
-- Build: TODO
+- Install: `pip install -e ".[dev]"`
+- Test: `pytest` from repo root
+- Export schemas: `python -m praetor.contracts.schema_export`
+- Run: TODO (application entrypoint not yet defined)
+- Build: `pip install -e .` (hatchling wheel)
 
 Benchmarks planned: `benchmarks/smoke_serialized_path.py` (Task 11), `benchmarks/serialized_path.py` (Task 35).
 

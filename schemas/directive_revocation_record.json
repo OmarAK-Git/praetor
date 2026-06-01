@@ -1,0 +1,87 @@
+{
+  "$defs": {
+    "RevocationReason": {
+      "description": "Internal revocation reason (ledger); maps to external reason_code.",
+      "enum": [
+        "supersession",
+        "never_contain_conflict",
+        "manual",
+        "post_activation_reconciliation"
+      ],
+      "title": "RevocationReason",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "directive_id": {
+      "title": "Directive Id",
+      "type": "string"
+    },
+    "idempotency_key_cleared": {
+      "title": "Idempotency Key Cleared",
+      "type": "boolean"
+    },
+    "ledger_commit_at": {
+      "format": "date-time",
+      "title": "Ledger Commit At",
+      "type": "string"
+    },
+    "reason": {
+      "$ref": "#/$defs/RevocationReason"
+    },
+    "reason_code": {
+      "title": "Reason Code",
+      "type": "string"
+    },
+    "record_type": {
+      "const": "directive_revocation",
+      "default": "directive_revocation",
+      "title": "Record Type",
+      "type": "string"
+    },
+    "revocation_id": {
+      "title": "Revocation Id",
+      "type": "string"
+    },
+    "revoked_at": {
+      "format": "date-time",
+      "title": "Revoked At",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "superseded_by_directive_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Superseded By Directive Id"
+    },
+    "triggered_by": {
+      "title": "Triggered By",
+      "type": "string"
+    }
+  },
+  "required": [
+    "revocation_id",
+    "directive_id",
+    "reason",
+    "reason_code",
+    "triggered_by",
+    "revoked_at",
+    "ledger_commit_at",
+    "idempotency_key_cleared"
+  ],
+  "title": "DirectiveRevocationRecord",
+  "type": "object"
+}

@@ -1,0 +1,123 @@
+{
+  "additionalProperties": false,
+  "description": "Bound org-config snapshot; section bodies are opaque until loader task defines shapes.",
+  "properties": {
+    "account_auto_contain_enabled": {
+      "default": false,
+      "title": "Account Auto Contain Enabled",
+      "type": "boolean"
+    },
+    "assets_and_asset_groups": {
+      "additionalProperties": true,
+      "title": "Assets And Asset Groups",
+      "type": "object"
+    },
+    "business_context": {
+      "additionalProperties": true,
+      "title": "Business Context",
+      "type": "object"
+    },
+    "consumer_clock_skew_policy": {
+      "additionalProperties": true,
+      "title": "Consumer Clock Skew Policy",
+      "type": "object"
+    },
+    "containment_circuit_breaker_policy": {
+      "additionalProperties": true,
+      "title": "Containment Circuit Breaker Policy",
+      "type": "object"
+    },
+    "containment_exclusions": {
+      "additionalProperties": true,
+      "title": "Containment Exclusions",
+      "type": "object"
+    },
+    "containment_policy": {
+      "additionalProperties": true,
+      "title": "Containment Policy",
+      "type": "object"
+    },
+    "directive_lifetime_policy": {
+      "additionalProperties": true,
+      "title": "Directive Lifetime Policy",
+      "type": "object"
+    },
+    "emergency_never_contain_policy": {
+      "additionalProperties": true,
+      "title": "Emergency Never Contain Policy",
+      "type": "object"
+    },
+    "known_principals": {
+      "additionalProperties": true,
+      "title": "Known Principals",
+      "type": "object"
+    },
+    "latency_and_queue_aging_policy": {
+      "additionalProperties": true,
+      "title": "Latency And Queue Aging Policy",
+      "type": "object"
+    },
+    "normal_admin_patterns": {
+      "additionalProperties": true,
+      "title": "Normal Admin Patterns",
+      "type": "object"
+    },
+    "provider_health_circuit_breaker_policy": {
+      "additionalProperties": true,
+      "title": "Provider Health Circuit Breaker Policy",
+      "type": "object"
+    },
+    "provisional_alert_rate_targets": {
+      "additionalProperties": true,
+      "title": "Provisional Alert Rate Targets",
+      "type": "object"
+    },
+    "rate_limit_policy": {
+      "additionalProperties": true,
+      "title": "Rate Limit Policy",
+      "type": "object"
+    },
+    "revocation_feed_policy": {
+      "additionalProperties": true,
+      "title": "Revocation Feed Policy",
+      "type": "object"
+    },
+    "schema_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "snapshot_hash": {
+      "description": "Canonical hash of snapshot content (computed Task 3).",
+      "title": "Snapshot Hash",
+      "type": "string"
+    },
+    "version_metadata": {
+      "additionalProperties": true,
+      "title": "Version Metadata",
+      "type": "object"
+    }
+  },
+  "required": [
+    "snapshot_hash",
+    "version_metadata",
+    "known_principals",
+    "assets_and_asset_groups",
+    "normal_admin_patterns",
+    "containment_exclusions",
+    "business_context",
+    "containment_policy",
+    "directive_lifetime_policy",
+    "emergency_never_contain_policy",
+    "rate_limit_policy",
+    "provider_health_circuit_breaker_policy",
+    "containment_circuit_breaker_policy",
+    "revocation_feed_policy",
+    "consumer_clock_skew_policy",
+    "latency_and_queue_aging_policy",
+    "provisional_alert_rate_targets"
+  ],
+  "title": "OrgConfigSnapshot",
+  "type": "object"
+}
