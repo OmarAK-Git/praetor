@@ -1,0 +1,11 @@
+{
+  "task_slug": "<task-slug>",
+  "tier": "T3",
+  "run_status": "not_started",
+  "current_task": null,
+  "blockers": [],
+  "tasks": {
+    "T-001": "pending"
+  },
+  "updated_at": null
+}

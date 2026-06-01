@@ -1,0 +1,75 @@
+---
+description: Use for all non-trivial coding work. Combines Superpowers, Memory Bank, and Flight Recorder.
+alwaysApply: false
+---
+
+# ultimate-agentic-workflow
+
+Use this rule whenever the user asks to build, modify, debug, refactor, test, review, or plan code.
+
+## First move
+
+Before doing non-trivial work:
+
+1. Use Superpowers.
+2. Select the relevant Superpowers workflow:
+   - unclear idea or feature: brainstorming
+   - approved design: writing-plans
+   - executing existing plan: executing-plans
+   - bug: systematic-debugging
+   - behavior change: test-driven-development where practical
+   - finishing/checking work: verification-before-completion or code review
+3. Announce the workflow briefly.
+4. Classify the task as T0, T1, T2, or T3.
+5. Do not edit code until the required planning level is satisfied.
+
+## Tiers
+
+### T0
+
+Answer directly or make the tiny safe edit.
+
+### T1
+
+Briefly state approach, execute, verify.
+
+### T2
+
+Create a spec/plan before implementation.
+
+Use:
+- `memory-bank/activeContext.md`
+- `memory-bank/tasks.md`
+- `memory-bank/progress.md`
+
+Update Memory Bank if project state changes.
+
+### T3
+
+Use the full Flight Recorder workflow.
+
+Create:
+
+`.workflow/<task-slug>/`
+
+With:
+
+- `plan.md`
+- `state.json`
+- `traceability.md`
+- `verification.md`
+- `review.md`
+- `final-report.md`
+
+Do not implement until scope, requirements, risks, and verification plan are written.
+
+## Completion rule
+
+Never claim completion without fresh evidence.
+
+Final response must include:
+
+- files changed
+- checks run
+- check results
+- known gaps or skipped checks
