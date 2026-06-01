@@ -27,5 +27,9 @@ Product and architecture decisions are **documented in `docs/prd.md`** (seven nu
 | DEC-021 | 2026-06-01 | `open_state_store` rejects incompatible `schema_meta.schema_version`; duplicate idempotency insert fails | Migrations deferred; duplicate key registration is fail-not-idempotent | TASK-006 verification fix pass |
 | DEC-022 | 2026-06-01 | Stamp outbox additive table via `init_stamp_outbox_schema`; per-conn cache with table-exists validation | No schema_version bump; cache invalidates on recycled `id(conn)` | TASK-007 reopen |
 | DEC-023 | 2026-06-01 | `processing_attempt_identity` on stamp outbox row is the first writer; not updated on cross-attempt recovery | `stamp_id` excludes attempt; row records who opened pending | TASK-007 reopen |
+| DEC-024 | 2026-06-01 | Health alert outbox uses separate delivery-attempts table keyed by `(alert_id, channel)` | Future SIEM/chat channels add rows without schema migration | TASK-008, `docs/spec.md` § SystemHealthAlert Delivery |
+| DEC-025 | 2026-06-01 | Lazy outbox schema imports in `open_state_store` | Avoids circular import via `state.__init__` when importing outbox modules directly | TASK-008 |
+| DEC-026 | 2026-06-01 | `SystemHealthAlert` contract is emission payload only; delivery tracking in SQLite outbox tables | Spec § SystemHealthAlert Delivery separates payload from per-channel delivery status. Structured context for downstream alert codes (e.g. `revocation_feed_unhealthy` emitter in Task 9+) requires a `schema_version` bump per `docs/contracts.md` §15 — not a free additive field. | TASK-008 reopen |
+| DEC-027 | 2026-06-01 | Duplicate `alert_id` persist idempotent when payload matches; `DuplicateHealthAlertError` on payload conflict | Safe retry after ambiguous persist exception | TASK-008 reopen |
 
 Add rows here when implementation choices diverge from or refine docs (with date and evidence).

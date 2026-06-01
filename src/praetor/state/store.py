@@ -31,7 +31,6 @@ from praetor.state.sqlite_guard import (
     critical_transaction,
     init_state_dir,
 )
-from praetor.tickets.outbox import init_stamp_outbox_schema
 
 SCHEMA_VERSION = 1
 SCHEMA_VERSION_KEY = "schema_version"
@@ -296,7 +295,11 @@ def open_state_store(db_path: Path) -> StateStore:
             "INSERT INTO schema_meta (key, value) VALUES (?, ?)",
             (SCHEMA_VERSION_KEY, str(SCHEMA_VERSION)),
         )
+    from praetor.alerts.outbox import init_health_alert_outbox_schema
+    from praetor.tickets.outbox import init_stamp_outbox_schema
+
     init_stamp_outbox_schema(conn)
+    init_health_alert_outbox_schema(conn)
     return StateStore(conn=conn, db_path=db_path)
 
 

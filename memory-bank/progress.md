@@ -1,5 +1,23 @@
 # Progress Log
 
+## 2026-06-01 — TASK-008 verification hardening (reopen)
+
+- **G-1 fixed:** `FailingJsonlSink` moved to `tests/alerts/_fakes.py`; removed from production API.
+- **G-2 fixed:** `SystemHealthAlert` docstring corrected — contract is payload; delivery in SQLite (DEC-026).
+- **G-3 fixed:** `_deliver_to_sink` catches all `Exception`; records `exception_type`.
+- **G-4–G-13 fixed:** 14 new tests — record guards, FK regression, nested critical tx, duplicate alert_id, fail→fail, at-least-once JSONL, retry query, import smoke, non-OSError sink.
+- **G-14 documented:** `_initialized_conn_ids` v1 single-connection lifetime comment.
+- Tests: `tests/alerts/test_system_health_outbox.py` — **23** tests.
+- Verification: `pytest -q` → 196 passed; `mypy src` → 37 files pass; `ruff check` pass.
+
+## 2026-06-01 — TASK-008 complete
+
+- **`src/praetor/alerts/`:** `outbox.py`, `system_health.py` — durable SQLite health alert outbox; per-channel delivery tracking (`jsonl`, `stdout`); persist-before-deliver; retry failed channels; future channels via delivery table rows.
+- Tests: `tests/alerts/test_system_health_outbox.py` — **9** tests.
+- Verification: `pytest -q` → 182 passed; `mypy src` → 37 files pass.
+- Flight Recorder: `.workflow/TASK-008/`.
+- Gap: startup delivery worker (Task 11–12); emitter wiring (Task 9+).
+
 ## 2026-06-01 — TASK-007 verification hardening (reopen)
 
 - **G-1 fixed:** `ConnectionError`/transport ambiguity → durable `unknown` via `_is_backend_ambiguity`; programmer `ValueError` not swallowed.
@@ -99,9 +117,10 @@
 | Runtime / startup guard | Task 5 done — `src/praetor/runtime/`, `src/praetor/state/sqlite_guard.py` |
 | State store / lifecycle | Task 6 done — `src/praetor/state/{store,attempts,completed_decisions,idempotency}.py` |
 | Ticket stamp outbox | Task 7 done — `src/praetor/tickets/{outbox,stamp}.py` |
+| SystemHealthAlert outbox | Task 8 done — `src/praetor/alerts/{outbox,system_health}.py` |
 | CI / eval harness | Not started (Task 26+) |
 | Operator runbooks | Not in repo yet (Task 35) |
 
 ## Next recommended steps
 
-1. TASK-008 — SystemHealthAlert outbox per `docs/plan.md`.
+1. TASK-008 reopen sign-off, then TASK-009 — org config loader per `docs/plan.md`.

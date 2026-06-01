@@ -2,22 +2,20 @@
 
 ## Current focus
 
-**TASK-007 verification hardening complete** — awaiting sign-off before TASK-008. Do not start Task 8 until TASK-007 reopen is accepted.
+**TASK-008 verification hardening complete** — awaiting sign-off before TASK-009. Do not start Task 9 until TASK-008 reopen is accepted.
 
 **Hard gate:** Three role-tagged external surfaces exist; ledger/feed/directive emission remain internal-only. Startup singleton + WAL guard operational.
 
 ## Recently changed
 
+- TASK-008 reopen: test fakes removed from production; sink exception taxonomy; nested critical-tx boundary; duplicate `alert_id` idempotency; 14 new hardening tests; DEC-026/027.
+- TASK-008: `src/praetor/alerts/{outbox,system_health}.py` — durable health alert outbox; per-channel delivery; JSONL + stdout v1 sinks.
 - TASK-007 reopen: ambiguous backend errors → `unknown`; 10 new hardening tests; DEC-023 processing_attempt_identity semantics.
-- TASK-007: `src/praetor/tickets/{outbox,stamp}.py` — durable stamp outbox keyed by `stamp_id`; pending-before-call; `unknown` vs `failed`; recovery retry.
+- TASK-007: `src/praetor/tickets/{outbox,stamp}.py` — durable stamp outbox keyed by `stamp_id`.
 - TASK-006: `src/praetor/state/{store,attempts,completed_decisions,idempotency}.py` — attempt lifecycle, completed-edict three-tuple, revocation + feed outbox.
-- TASK-005: `src/praetor/runtime/singleton.py`, `src/praetor/state/sqlite_guard.py` — OS singleton lock, WAL/isolation/BEGIN IMMEDIATE startup guard.
-- Flight Recorder: `.workflow/TASK-006/` complete.
-- TASK-004: `src/praetor/auth/` — authenticated write surfaces.
 
 ## Current blockers
 
-- None for Task 8 start.
 - Operator docs still absent: `docs/operator_runbook.md`, `docs/architecture.md`, `docs/eval_gates.md` (Task 35).
 - Provisional alert-rate targets — **TODO** before Sprint 1 ends (Tasks 9 / 11).
 
@@ -34,3 +32,4 @@
 9. State store is v1 single-writer — one process with singleton lock; `allocate_attempt` / revocation paths require that constraint.
 10. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.
 11. Ticket stamp: `derive_stamp_id` from three-tuple; `execute_stamp` writes pending before backend call; transport/timeout ambiguity → `unknown` (not `failed`); recovery resends same `stamp_id` with durable payload; `processing_attempt_identity` is first-writer only (DEC-023).
+12. SystemHealthAlert: `emit_system_health_alert` persists pending before delivery; per-channel status in `system_health_delivery_attempts`; v1 channels `jsonl` + `stdout`; failed channels retry via `deliver_health_alerts`; alerts are outbox-only (not hash chain). Duplicate `alert_id` idempotent when payload matches. Must not call persist/emit inside an open `critical_transaction` (Task 9 boundary). JSONL is at-least-once — consumers dedupe on `alert_id`.
