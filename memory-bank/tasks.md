@@ -1,12 +1,11 @@
 # Tasks
 
-Index of `docs/plan.md` (35 tasks, 5 sprints). Status reflects repo state: **no implementation started**.
+Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 ## Active
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-001 | Repository structure and test harness | pending | Sprint 1; `pyproject.toml`, `src/praetor/`, `pytest`, fixture manifest |
 | TASK-002 | Versioned contract models | pending | Depends on 001; Pydantic models + `schemas/` export |
 | TASK-003 | Canonical serialization and hash constants | pending | **Blocked on:** treat `docs/contracts.md` as fixed; implement per doc |
 | TASK-004 | Authenticated write surface primitives | pending | soc_lead / analyst roles; three external surfaces |
@@ -34,4 +33,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 
 | ID | Task | Evidence |
 |---|---|---|
-| — | — | — |
+| TASK-001 | Repository structure and test harness | `.workflow/task-001/verification.md` — `pytest` 2 passed; hatchling + Python 3.11+ |
