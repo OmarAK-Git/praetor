@@ -23,5 +23,7 @@ Product and architecture decisions are **documented in `docs/prd.md`** (seven nu
 | DEC-017 | 2026-06-01 | `init_state_dir(db_path)` ships in Task 5 as separate one-shot WAL bootstrap | Fresh deploy must boot; guard stays verify-only; Task 6 assumes initialized DB | TASK-005 reopen, `docs/spec.md` § startup |
 | DEC-018 | 2026-06-01 | Nested `critical_transaction` forbidden (raises), not nested via SAVEPOINT | Prevents silent outer-tx rollback corruption under `isolation_level=None` | TASK-005 reopen, `docs/spec.md` serializable tx |
 | DEC-019 | 2026-06-01 | Windows lock uses `msvcrt.locking` (byte-range), not spec-worded `CreateFile` exclusive | No pywin32 dep; same exclusivity vs same-mechanism contenders; in-bounds sentinel byte before lock | TASK-005 reopen, `docs/spec.md` § startup step 1 |
+| DEC-020 | 2026-06-01 | State store v1: single-writer + `BEGIN IMMEDIATE`; revocation durable in SQLite before ledger append | Matches spec single-process constraint; Task 10 chains revocations; `foreign_keys=ON` at open | TASK-006, `docs/plan.md` Task 6 |
+| DEC-021 | 2026-06-01 | `open_state_store` rejects incompatible `schema_meta.schema_version`; duplicate idempotency insert fails | Migrations deferred; duplicate key registration is fail-not-idempotent | TASK-006 verification fix pass |
 
 Add rows here when implementation choices diverge from or refine docs (with date and evidence).

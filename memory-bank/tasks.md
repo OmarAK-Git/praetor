@@ -6,7 +6,6 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-006 | SQLite state store and attempt lifecycle | pending | |
 | TASK-007 | Ticket stamp outbox | pending | |
 | TASK-008 | SystemHealthAlert outbox | pending | |
 | TASK-009 | Org config loader, preflight, activation, emergency never-contain | pending | |
@@ -34,3 +33,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-003 | Canonical serialization and hash constants | `.workflow/TASK-003/verification.md` — `pytest` 62 passed; `docs/contracts.md` §5/§7; `src/praetor/hashing/` |
 | TASK-004 | Authenticated write surface primitives | `.workflow/TASK-004/verification.md` — `pytest` 90 passed; `src/praetor/auth/` |
 | TASK-005 | SQLite startup guard and process singleton | `.workflow/TASK-005/verification.md` — `pytest` 107 passed; `src/praetor/runtime/`, `src/praetor/state/sqlite_guard.py` |
+| TASK-006 | SQLite state store and attempt lifecycle | `.workflow/TASK-006/verification.md` — `pytest` 152 passed, 32 Task-6 tests; `src/praetor/state/{store,attempts,completed_decisions,idempotency}.py` |

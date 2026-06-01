@@ -1,5 +1,20 @@
 # Progress Log
 
+## 2026-06-01 — TASK-006 verification fix pass
+
+- Added 20 tests: feed sequence reopen/rollback, manual revocation rollback, completed-edict conflict, FSM negatives, idempotency duplicate, schema version reject, abort same-input retry, singleton contract.
+- Implementation: `IncompatibleSchemaError`, `IdempotencyKeyConflictError`, `verify_schema_version`, `read_feed_sequence_next`.
+- Verification: `pytest -q` → 152 passed; Task 6 file → **32** tests collected; `mypy src` pass.
+- Artifacts corrected (V-002 wording, test count).
+
+## 2026-06-01 — TASK-006 complete
+
+- **`src/praetor/state/`:** `store.py`, `attempts.py`, `completed_decisions.py`, `idempotency.py` — attempt FSM, three-tuple dedup, manual/automated revocation + feed outbox sequence.
+- Tests: `tests/state/test_attempt_lifecycle.py` — 32 tests (after fix pass).
+- Verification: `pytest -q` → 152 passed; `mypy src` → 31 files pass.
+- Flight Recorder: `.workflow/TASK-006/`.
+- Gap: ledger chain append (Task 10); feed export (Task 11); enumeration helpers (11/12).
+
 ## 2026-06-01 — TASK-005 reopen complete
 
 - **DEC-017:** `init_state_dir` one-shot WAL bootstrap; guard verify-only.
@@ -65,9 +80,10 @@
 | Hashing | Task 3 done — `src/praetor/hashing/` + `docs/contracts.md` §1–§9 |
 | Auth | Task 4 done — `src/praetor/auth/` |
 | Runtime / startup guard | Task 5 done — `src/praetor/runtime/`, `src/praetor/state/sqlite_guard.py` |
+| State store / lifecycle | Task 6 done — `src/praetor/state/{store,attempts,completed_decisions,idempotency}.py` |
 | CI / eval harness | Not started (Task 26+) |
 | Operator runbooks | Not in repo yet (Task 35) |
 
 ## Next recommended steps
 
-1. TASK-006 — SQLite state store and attempt lifecycle per `docs/plan.md`.
+1. TASK-007 — Ticket stamp outbox per `docs/plan.md`.
