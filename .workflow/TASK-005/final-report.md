@@ -45,6 +45,7 @@ TASK-005 reopen closes gaps against `docs/spec.md` startup steps 1–2: fresh-in
 | TASK-006 | next agent | State store; call `init_state_dir` before first guard |
 | TASK-012 | future | Application entrypoint maps guard errors to `sys.exit(exit_code)` |
 | Operator runbook PRAGMA list | Task 35 | Extend guard beyond WAL + synchronous |
+| FU-2: bare-BEGIN scope guard AST precision | next `test_scope_guard.py` touch | Restrict check to string constants inside `Call(func=Attribute(attr="execute"))` nodes; current regex false-positives on docstring prose containing "begin" |
 
 ## Sign-off
 

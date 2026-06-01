@@ -30,7 +30,7 @@ class StartupGuardError(Exception):
 
 
 def init_state_dir(db_path: Path) -> None:
-    """One-shot bootstrap: persist WAL journal mode on a fresh or existing DB.
+    """One-shot bootstrap: persist WAL and synchronous=NORMAL on a fresh or existing DB.
 
     Idempotent. Does not acquire the singleton lock or run startup guard checks.
     """
@@ -38,6 +38,7 @@ def init_state_dir(db_path: Path) -> None:
     conn = sqlite3.connect(db_path)
     try:
         conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=NORMAL")
     finally:
         conn.close()
 

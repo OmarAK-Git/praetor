@@ -191,8 +191,28 @@ class TestInitStateDir:
         conn.isolation_level = None
         try:
             verify_journal_mode(conn)
+            verify_synchronous(conn)
         finally:
             conn.close()
+
+    def test_init_state_dir_restores_guard_after_sync_off(self, tmp_path: Path) -> None:
+        db_path = tmp_path / "state.db"
+        conn = sqlite3.connect(db_path)
+        conn.isolation_level = None
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA synchronous=OFF")
+        try:
+            with pytest.raises(StartupGuardError):
+                verify_synchronous(conn)
+        finally:
+            conn.close()
+        init_state_dir(db_path)
+        guarded = create_guarded_connection(db_path)
+        try:
+            verify_journal_mode(guarded)
+            verify_synchronous(guarded)
+        finally:
+            guarded.close()
 
 
 class TestJournalMode:
