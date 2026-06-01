@@ -2,26 +2,28 @@
 
 ## Current focus
 
-**TASK-003 next** — canonical serialization and hash constants (`docs/plan.md` Task 3). TASK-002 complete.
+**TASK-004 next** — authenticated write surface primitives (`docs/plan.md` Task 4). TASK-003 complete (including doc-first contract corrections).
 
-**Hard gate:** Implement hashing per `docs/contracts.md` §1–§8; no inline domain strings.
+**Hard gate:** Three role-tagged external surfaces; ledger/feed/directive emission remain internal-only.
 
 ## Recently changed
 
-- TASK-002: `src/praetor/contracts/` (14 Pydantic models), `schemas/*.json` artifacts, `tests/contracts/`, `pydantic>=2` in `pyproject.toml`.
-- Flight Recorder: `.workflow/task-002/` complete.
+- **`docs/contracts.md`:** new §5 `stamp_id` (three-tuple, stable across attempts); §7 `EMPTY_BUNDLE` preimage `praetor:v1:empty_bundle`; sections renumbered §6–§15.
+- TASK-003: `src/praetor/hashing/` aligned to updated contracts; `tests/hashing/`.
+- Flight Recorder: `.workflow/TASK-003/` complete.
 
 ## Current blockers
 
-- None for Task 3 start (contracts exist).
+- None for Task 4 start.
 - Operator docs still absent: `docs/operator_runbook.md`, `docs/architecture.md`, `docs/eval_gates.md` (Task 35).
 - Provisional alert-rate targets — **TODO** before Sprint 1 ends (Tasks 9 / 11).
 
 ## Important notes for agents
 
 1. Read `docs/contracts.md` before any hashing, feed checksum, or ID code.
-2. `docs/` are authoritative; `schemas/` are generated artifacts only.
-3. `standard_review` replaces `pass` everywhere.
-4. Do not rewrite `docs/`; update Memory Bank when project state changes.
-5. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.
-6. Regenerate schemas: `python -m praetor.contracts.schema_export`
+2. **`stamp_id` (§5):** completed-edict three-tuple + `DOMAIN_STAMP_ID` — **no** `processing_attempt_identity`.
+3. **`EMPTY_BUNDLE` (§7):** preimage exactly `praetor:v1:empty_bundle`; hash baked into correlation-failure IDs.
+4. Hash/ID pins that feed derivations require **doc update in the same task** before code — not follow-up tickets.
+5. `docs/contracts.md` is SSOT; `schemas/` are generated artifacts only.
+6. Domain constants live only in `src/praetor/hashing/domains.py`.
+7. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.

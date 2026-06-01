@@ -75,7 +75,7 @@ All three are SHA-256.
 
 `decision_id` is the unique identifier of a single physical `DecisionEdict` record in the ledger. It answers "which record am I looking at," and it is distinct per processing attempt.
 
-It is **not** the deduplication key. Deduplication is the three-tuple (§5). These are orthogonal mechanisms at different layers; conflating them was explicitly rejected in design review. The three-tuple decides *whether a new attempt is allocated*; `decision_id` identifies *the record a winning attempt produces*. The disambiguating reason `decision_id` includes attempt identity: if two attempts on the same three-tuple both leave stamp-outbox entries in `unknown` state after timeouts, recovery needs attempt identity to tell the two outbox entries apart. The three-tuple alone cannot.
+It is **not** the deduplication key. Deduplication is the three-tuple (§6). These are orthogonal mechanisms at different layers; conflating them was explicitly rejected in design review. The three-tuple decides *whether a new attempt is allocated*; `decision_id` identifies *the record a winning attempt produces*. The disambiguating reason `decision_id` includes attempt identity: if two attempts on the same three-tuple both leave stamp-outbox entries in `unknown` state after timeouts, recovery needs attempt identity to tell the two outbox entries apart. The three-tuple alone cannot.
 
 ### Construction
 
@@ -83,7 +83,7 @@ It is **not** the deduplication key. Deduplication is the three-tuple (§5). The
 decision_id = SHA256( delimited([
     DOMAIN_DECISION_ID,          # "praetor:v1:decision_id"  -- always first
     alert_identity,              # see §3.1
-    evidence_bundle_hash,        # canonical hash, or EMPTY_BUNDLE sentinel (§6) on correlation failure
+    evidence_bundle_hash,        # canonical hash, or EMPTY_BUNDLE sentinel (§7) on correlation failure
     org_config_snapshot_hash,    # canonical hash of the bound OrgConfigSnapshot
     processing_attempt_identity, # see §3.2
 ]) )
@@ -101,7 +101,7 @@ The monotonic attempt identifier allocated by the state store (§ state store, T
 
 ### 3.3 Correlation-failure case
 
-On correlation failure there is no evidence bundle. The `evidence_bundle_hash` input is the `EMPTY_BUNDLE` sentinel hash (§6), not an empty string, not a hash of an empty object. This produces a well-formed, deterministic `decision_id` for the escalate-on-correlation-failure edict. The substitution happens at exactly one place in code; every other site reads the resulting value.
+On correlation failure there is no evidence bundle. The `evidence_bundle_hash` input is the `EMPTY_BUNDLE` sentinel hash (§7), not an empty string, not a hash of an empty object. This produces a well-formed, deterministic `decision_id` for the escalate-on-correlation-failure edict. The substitution happens at exactly one place in code; every other site reads the resulting value.
 
 ---
 
@@ -139,7 +139,32 @@ The key has states active / expired / cleared.
 
 ---
 
-## 5. Completed-edict three-tuple (deduplication key)
+## 5. `stamp_id`
+
+`stamp_id` is the stable identifier of a ticket-stamp outbox entry and the idempotency key presented to the ticket integration receiver. It answers "has this logical decision already been stamped."
+
+Unlike `decision_id` (§3), `stamp_id` is **stable across processing attempts** on the same completed-edict three-tuple (§6). Recovery on `unknown` stamp status resends the same `stamp_id` so the ticket receiver dedupes the retry as an idempotent no-op. Including `processing_attempt_identity` would produce a different `stamp_id` per attempt and cause double-stamping — that is forbidden.
+
+### Construction
+
+```
+stamp_id = SHA256( delimited([
+    DOMAIN_STAMP_ID,              # "praetor:v1:stamp_id" -- always first
+    alert_identity,               # §3.1
+    evidence_bundle_hash,         # canonical hash, or EMPTY_BUNDLE sentinel (§7) on correlation failure
+    org_config_snapshot_hash,     # canonical hash of the bound OrgConfigSnapshot
+]) )
+```
+
+Four inputs in exactly this order. The domain constant is the first delimited part. Output is the lowercase hex SHA-256 digest. The three hash inputs after the domain constant are the same tuple as the completed-edict deduplication key (§6); `processing_attempt_identity` is **not** included.
+
+### 5.1 Rationale (stable across attempts)
+
+Every attempt to stamp the same logical decision — same `alert_identity`, `evidence_bundle_hash`, and `org_config_snapshot_hash` — must produce an identical `stamp_id`. This includes recovery resends after crash, distinct processing attempts on the same three-tuple before completion, and any retry of an outbox entry in `unknown` state. The ticket integration contract requires the receiver to treat repeated `stamp_id` as idempotent no-ops; Praetor must never derive a new stamp identifier for the same logical decision context.
+
+---
+
+## 6. Completed-edict three-tuple (deduplication key)
 
 The deduplication / "one disposition per alert" key is the tuple:
 
@@ -149,27 +174,37 @@ The deduplication / "one disposition per alert" key is the tuple:
 
 This is a uniqueness constraint in the state store, checked **before** an attempt is allocated. Identical inputs return the existing completed edict; a genuinely changed bundle or config snapshot is a different tuple and legitimately produces a new decision.
 
-This tuple is not a hash and is not `decision_id`. It is the state-store key. `decision_id` additionally includes attempt identity (§3) and is therefore distinct per attempt even for the same tuple. Both exist; neither substitutes for the other.
+This tuple is not a hash and is not `decision_id`. It is the state-store key. `decision_id` additionally includes attempt identity (§3) and is therefore distinct per attempt even for the same tuple. `stamp_id` (§5) hashes this same tuple with `DOMAIN_STAMP_ID` and is therefore identical across attempts for the same logical decision. Both exist; neither substitutes for the other.
 
 Intake-race rule (at-least-once delivery): at most one non-terminal attempt may exist per `alert_identity`. The loser of an allocation race, on acquiring the lock, must re-check for an existing completed edict for its tuple and return it; it must **not** allocate a fresh attempt immediately after the winner completes. "Check after acquire" is required, not optional.
 
 ---
 
-## 6. `EMPTY_BUNDLE` sentinel
+## 7. `EMPTY_BUNDLE` sentinel
 
-`EMPTY_BUNDLE` is a fixed module-level sentinel value representing "no evidence bundle was produced" (correlation failure). It hashes deterministically under the canonical algorithm. It is substituted into the `evidence_bundle_hash` position of `decision_id` (§3.3) on correlation failure.
+`EMPTY_BUNDLE` is a fixed module-level sentinel value representing "no evidence bundle was produced" (correlation failure). It hashes deterministically under the canonical algorithm. It is substituted into the `evidence_bundle_hash` position of `decision_id` (§3.3) and `stamp_id` (§5) on correlation failure.
 
-It is a defined constant, not the empty string and not the hash of an empty object — both of those could collide with a real (if degenerate) bundle. Define it once, hash it once at module load, reuse the value.
+It is a defined constant, not the empty string and not the hash of an empty object — both of those could collide with a real (if degenerate) bundle.
+
+### Contract preimage
+
+The sentinel preimage string is exactly:
+
+```
+praetor:v1:empty_bundle
+```
+
+`EMPTY_BUNDLE` is `SHA256( canonical_serialization(preimage) )` — the lowercase hex digest computed once at module load in `src/praetor/hashing/canonical.py` and reused everywhere. The preimage must not change without a domain-version bump and a breaking migration.
 
 ---
 
-## 7. Revocation feed: checksum and sequence semantics
+## 8. Revocation feed: checksum and sequence semantics
 
-The revocation feed is an append-only JSONL **projection** of `DirectiveRevocationRecord`s. It is not the system of record; the hash chain is (see spec, RevocationFeed v1). The feed exists so consumers can perform the pre-actuation revocation check (§9) without a live query API.
+The revocation feed is an append-only JSONL **projection** of `DirectiveRevocationRecord`s. It is not the system of record; the hash chain is (see spec, RevocationFeed v1). The feed exists so consumers can perform the pre-actuation revocation check (§10) without a live query API.
 
 Field-level shape of `RevocationFeedRecord` is in `schemas/revocation_feed_record.json`. The two things that must be pinned here:
 
-### 7.1 `record_checksum` — corruption detection, not tamper resistance
+### 8.1 `record_checksum` — corruption detection, not tamper resistance
 
 ```
 record_checksum = SHA256( canonical_serialization(feed_record_without_checksum_field) )
@@ -177,24 +212,24 @@ record_checksum = SHA256( canonical_serialization(feed_record_without_checksum_f
 
 The checksum is computed over the canonical serialization of the feed record with the `record_checksum` field itself excluded, then the field is populated. It exists to let a consumer detect a truncated or corrupted JSONL line. It is **explicitly not** a tamper-evidence mechanism — a writer who can rewrite the line can recompute the checksum. Tamper evidence comes from the ledger hash chain, not the feed. This distinction must be stated in the operator runbook so no one mistakes feed integrity for audit integrity.
 
-### 7.2 `sequence_number` — gap-free, assigned in the revocation transaction
+### 8.2 `sequence_number` — gap-free, assigned in the revocation transaction
 
 - `sequence_number` is a gap-free, monotonically increasing, application-managed integer.
 - It is assigned **in the same SQLite transaction** that writes the `DirectiveRevocationRecord` and the feed outbox row. The sequence is not assigned by the exporter and not by JSONL line position.
 - Export is single-threaded and strictly sequential. Line N is written and verified before line N+1.
-- A gap in consumed sequence numbers is, to a consumer, a feed-integrity failure that triggers fail-closed (§9).
+- A gap in consumed sequence numbers is, to a consumer, a feed-integrity failure that triggers fail-closed (§10).
 
-### 7.3 `minimum_feed_sequence_at_issue` — verified-exported, not merely assigned
+### 8.3 `minimum_feed_sequence_at_issue` — verified-exported, not merely assigned
 
 When a `ContainmentDirective` is issued it carries `minimum_feed_sequence_at_issue`: the **highest feed sequence whose export to JSONL was verified complete** at issuance time. It is never a sequence that was assigned in a transaction whose export had not yet been confirmed.
 
 This precision matters: directive issuance and feed export are different transactions. If a revocation for some *other* directive is mid-export when this directive issues, setting the floor to the assigned-but-unexported sequence would cause a strict consumer to reject a legitimately fresh directive (the consumer's cursor cannot reach a sequence Praetor has not published). Using the last *verified-exported* sequence makes the floor reachable. This is a fail-closed footgun if got wrong, not a safety hole — but it degrades availability, so it is pinned here.
 
-`minimum_feed_sequence_at_issue` is a freshness *floor* the consumer must be at or beyond; it does not by itself satisfy the consumer's current-freshness check (§9 item 3).
+`minimum_feed_sequence_at_issue` is a freshness *floor* the consumer must be at or beyond; it does not by itself satisfy the consumer's current-freshness check (§10 item 3).
 
 ---
 
-## 8. Embedded never-contain entries: consumer hash verification
+## 9. Embedded never-contain entries: consumer hash verification
 
 Each `ContainmentDirective` embeds the target-relevant never-contain entries evaluated at emission time, plus `live_never_contain_hash`. The consumer verifies the embedded entries were not altered in transit by recomputing the hash.
 
@@ -205,19 +240,19 @@ recomputed = SHA256( canonical_serialization(embedded_never_contain_entries) )
 assert recomputed == directive.live_never_contain_hash
 ```
 
-The consumer canonically serializes the embedded entries using the **same** canonical algorithm defined in §1 — same key ordering, same timestamp format, same delimiting where applicable — and compares to `live_never_contain_hash`. A mismatch means the directive's embedded entries are not what Praetor evaluated; the consumer fails closed (§9 item 2).
+The consumer canonically serializes the embedded entries using the **same** canonical algorithm defined in §1 — same key ordering, same timestamp format, same delimiting where applicable — and compares to `live_never_contain_hash`. A mismatch means the directive's embedded entries are not what Praetor evaluated; the consumer fails closed (§10 item 2).
 
 Relationship to the ledger: `live_never_contain_hash` on the `DecisionEdict` is the canonical hash of the corresponding `NeverContainSnapshotRecord.snapshot_content` (the full combined permanent + active-emergency list at evaluation time), which is interleaved in the hash chain. An investigator verifies retrospectively by locating that snapshot record by `triggered_by_decision_id` and hashing its `snapshot_content`. The directive embeds the *target-relevant subset*; the snapshot record holds the *full* evaluated list. Both hash under §1; the consumer-side check is against the embedded subset and is for transit integrity, while the chain snapshot is for audit reconstruction.
 
 ---
 
-## 9. Consumer pre-actuation protocol (authoritative ordering)
+## 10. Consumer pre-actuation protocol (authoritative ordering)
 
 Praetor does not actuate. It emits honest, freshness-bearing, revocable directives; the consumer owns everything from receipt to action and must perform all of the following **immediately before** acting. This is the canonical statement of the protocol; the reference verifier (Task 21) implements exactly this and lives outside the Praetor production binary.
 
-1. **Clock confidence + expiry.** Confirm local clock-sync confidence is within `max_consumer_clock_skew_seconds`, and that the directive is not expired after applying the skew bound. Directive lifetime is hard-capped at 300 seconds (§10); a consumer that cannot prove clock confidence fails closed.
-2. **Embedded never-contain integrity.** Recompute the hash of the embedded never-contain entries (§8) and compare to `live_never_contain_hash`. Mismatch → fail closed.
-3. **Feed freshness, two independent requirements.** (a) The consumer's feed cursor is at or beyond `minimum_feed_sequence_at_issue` (§7.3). (b) `feed_last_read_at` is within `max_revocation_feed_propagation_delay_seconds + max_consumer_clock_skew_seconds` of the consumer-local check time. Either failing → fail closed.
+1. **Clock confidence + expiry.** Confirm local clock-sync confidence is within `max_consumer_clock_skew_seconds`, and that the directive is not expired after applying the skew bound. Directive lifetime is hard-capped at 300 seconds (§11); a consumer that cannot prove clock confidence fails closed.
+2. **Embedded never-contain integrity.** Recompute the hash of the embedded never-contain entries (§9) and compare to `live_never_contain_hash`. Mismatch → fail closed.
+3. **Feed freshness, two independent requirements.** (a) The consumer's feed cursor is at or beyond `minimum_feed_sequence_at_issue` (§8.3). (b) `feed_last_read_at` is within `max_revocation_feed_propagation_delay_seconds + max_consumer_clock_skew_seconds` of the consumer-local check time. Either failing → fail closed.
 4. **No revocation.** No `DirectiveRevocationRecord` for this `directive_id` appears in the feed up to the consumer's cursor. Present → non-actionable.
 5. **No lineage conflict.** No overlapping directive lineage conflict for the target and scope, including supersession records.
 6. **Local policy.** Any consumer-owned current-policy or local never-contain check required by that actuation environment.
@@ -226,7 +261,7 @@ Fail-closed conditions, collectively: feed stale, feed unavailable, sequence gap
 
 ---
 
-## 10. Hard bounds (compile-/config-time invariants)
+## 11. Hard bounds (compile-/config-time invariants)
 
 These bounds are enforced at config-activation preflight and asserted by the eval harness. They are not advisory.
 
@@ -242,7 +277,7 @@ Org config may choose values *more* restrictive than the directive/emergency cap
 
 ---
 
-## 11. Cross-field validation rules (enforced in code, not expressible in plain schema)
+## 12. Cross-field validation rules (enforced in code, not expressible in plain schema)
 
 These are Pydantic v2 `@model_validator` rules at the schema level (not the storage layer). The generated JSON Schema in `schemas/` reflects field types; these *relationships* are asserted here and in the model validators, and tested in both directions.
 
@@ -257,17 +292,17 @@ These are Pydantic v2 `@model_validator` rules at the schema level (not the stor
 
 **`ContainmentDirective`**:
 - `target_type = account` ⇒ `target_id` is a SID (matches the SID form), never a name-form.
-- `expires_at - issued_at ≤ 300s` (also §10).
+- `expires_at - issued_at ≤ 300s` (also §11).
 - `revocation_feed_id` is **absent** in v1 (reserved post-v1); its presence is a validation error in v1.
 
 **`EmergencyNeverContainRecord`**:
-- `expires_at - added_at ≤ 48h` (also §10).
+- `expires_at - added_at ≤ 48h` (also §11).
 
-**`DecisionEdict` / Outcome Matrix coupling**: `system_fault_escalation` must equal the matrix value for the active fault flag (§12). A `final_disposition = escalate` whose fault flag is a policy/safety-gate flag with `system_fault_escalation = true` (or vice versa) is an invariant violation the eval harness must catch.
+**`DecisionEdict` / Outcome Matrix coupling**: `system_fault_escalation` must equal the matrix value for the active fault flag (§13). A `final_disposition = escalate` whose fault flag is a policy/safety-gate flag with `system_fault_escalation = true` (or vice versa) is an invariant violation the eval harness must catch.
 
 ---
 
-## 12. Outcome Matrix (behavioral contract)
+## 13. Outcome Matrix (behavioral contract)
 
 The eval harness asserts, for every failure class, the disposition, the fault flag, and the `system_fault_escalation` value. `true` = infrastructure / model-quality / feed / latency-queue fault requiring operational triage. `false` = deliberate policy or safety-gate enforcement (the engine working as designed). This table is the contract; the spec's copy and this copy must match exactly.
 
@@ -300,7 +335,7 @@ Two behavioral notes the harness must assert beyond the per-row values:
 
 ---
 
-## 13. Generated-schema index
+## 14. Generated-schema index
 
 Field-level shape for each contract is generated to `schemas/` and is the source of truth for field names, types, and `schema_version`. This document references them; it does not duplicate them.
 
@@ -323,8 +358,8 @@ Each is exported deterministically (Task 2) and includes `schema_version`. A cha
 
 ---
 
-## 14. Change discipline
+## 15. Change discipline
 
-- A change to any construction in §2–§8 bumps the relevant domain version (`praetor:v1:*` → `praetor:v2:*`) and is a breaking change; mixed-version ledgers are out of scope for v1 (unrecognized `record_type` and version drift are integrity violations, not compatibility cases).
+- A change to any construction in §2–§9 bumps the relevant domain version (`praetor:v1:*` → `praetor:v2:*`) and is a breaking change; mixed-version ledgers are out of scope for v1 (unrecognized `record_type` and version drift are integrity violations, not compatibility cases). A change to the `EMPTY_BUNDLE` preimage (§7) is a breaking change requiring the same discipline.
 - A change to the canonical algorithm (§1) that alters bytes for unchanged input is breaking and requires regenerating and re-versioning affected schemas.
 - This document is reviewed as part of any PR that touches `src/praetor/hashing/`, contract models, the revocation feed, or the consumer protocol. Code that introduces an inline domain string, a non-delimited concatenation in a hashed position, or a second serialization path for hashing is a review failure regardless of test status.

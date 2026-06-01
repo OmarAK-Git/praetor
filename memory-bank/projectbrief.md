@@ -33,11 +33,12 @@ Referenced but not yet in repo: `docs/operator_runbook.md`, `docs/architecture.m
 
 ## Main commands
 
-After Task 1–2:
+After Task 1–3:
 
 - Install: `pip install -e ".[dev]"`
 - Test: `pytest` from repo root
 - Export schemas: `python -m praetor.contracts.schema_export`
+- Hashing: `from praetor.hashing import canonical_hash, derive_decision_id, EMPTY_BUNDLE`
 - Run: TODO (application entrypoint not yet defined)
 - Build: `pip install -e .` (hatchling wheel)
 
@@ -47,7 +48,9 @@ Benchmarks planned: `benchmarks/smoke_serialized_path.py` (Task 11), `benchmarks
 
 - **Docs are source of truth** — Memory Bank summarizes; do not invent fields or behavior not in docs.
 - **Single writer** — OS singleton + SQLite WAL; `docs/contracts.md` fixes all hash domain constants before hashing code.
-- **Idempotency** — One completed edict per `(alert_id, evidence_bundle_hash, org_config_snapshot_hash)`; `decision_id` is per-attempt (includes attempt identity).
+- **Hash/ID contract pins** — Any value that feeds a hash or ID derivation must be ratified in `docs/contracts.md` in the same task as the code (doc first, then implementation).
+- **Idempotency** — One completed edict per `(alert_identity, evidence_bundle_hash, org_config_snapshot_hash)`; `decision_id` is per-attempt; `stamp_id` (§5) is stable across attempts on the same three-tuple.
+- **`EMPTY_BUNDLE`** — Preimage `praetor:v1:empty_bundle` (§7); substituted on correlation failure.
 - **No auto_close**; uncertainty flows to `standard_review`.
 - **`auto_contain`** only after all deterministic gates (citations, never-contain, rate limits, breakers, revocation-feed health, etc.).
 - **Consumer** owns receipt-to-actuation; Praetor owns honest emission + revocation feed signals.

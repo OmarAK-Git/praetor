@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-06-01 — TASK-003 complete (doc-first correction)
+
+- **`docs/contracts.md`:** added §5 `stamp_id` (four-part delimited hash over completed-edict three-tuple; stable across attempts for outbox recovery idempotency); ratified §7 `EMPTY_BUNDLE` preimage `praetor:v1:empty_bundle`; renumbered §6–§15.
+- **`src/praetor/hashing/`:** canonical serialization; `derive_decision_id`, `derive_idempotency_key`, `derive_stamp_id` (three-tuple only), feed checksum, never-contain hash.
+- Tests: `tests/hashing/test_canonical.py` — includes stamp stability across attempts; scope guard allows `docs/contracts.md` only.
+- Verification: `pytest -q` → 62 passed.
+- Flight Recorder: `.workflow/TASK-003/`.
+
 ## 2026-06-01 — TASK-002 complete
 
 - Implemented 14 versioned Pydantic v2 contracts under `src/praetor/contracts/` with `extra=forbid`, Literal `schema_version` / `record_type`, and §10–§11 validators.
@@ -27,10 +35,10 @@
 | Implementation plan | Complete — 35 tasks in `docs/plan.md` |
 | Package / tests | Task 1 done — `pytest` runs, `praetor` imports |
 | Contracts | Task 2 done — `src/praetor/contracts/`, `schemas/` |
-| Hashing | Not started (Task 3) |
+| Hashing | Task 3 done — `src/praetor/hashing/` + `docs/contracts.md` §1–§9 |
 | CI / eval harness | Not started (Task 26+) |
 | Operator runbooks | Not in repo yet (Task 35) |
 
 ## Next recommended steps
 
-1. TASK-003 — canonical hashing per `docs/contracts.md`.
+1. TASK-004 — authenticated write surface primitives per `docs/plan.md`.

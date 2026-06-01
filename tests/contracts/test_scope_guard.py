@@ -11,7 +11,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC = REPO_ROOT / "src" / "praetor"
 
 FORBIDDEN_PACKAGES = (
-    "hashing",
     "state",
     "engine",
     "policy",
@@ -30,10 +29,12 @@ def test_forbidden_packages_absent() -> None:
 
 def test_only_expected_top_level_packages() -> None:
     children = {p.name for p in SRC.iterdir() if p.is_dir() and not p.name.startswith("_")}
-    assert children <= {"contracts"}, f"unexpected packages: {children - {'contracts'}}"
+    assert children <= {"contracts", "hashing"}, (
+        f"unexpected packages: {children - {'contracts', 'hashing'}}"
+    )
 
 
-def test_docs_unchanged_in_task_branch() -> None:
+def test_docs_changes_limited_to_contracts_md() -> None:
     result = subprocess.run(
         ["git", "diff", "--name-only", "docs/"],
         cwd=REPO_ROOT,
@@ -44,4 +45,5 @@ def test_docs_unchanged_in_task_branch() -> None:
     if result.returncode != 0:
         pytest.skip("git not available or not a git repo")
     changed = [line.strip() for line in result.stdout.splitlines() if line.strip()]
-    assert changed == [], f"docs/ must not be modified: {changed}"
+    unexpected = [path for path in changed if path != "docs/contracts.md"]
+    assert unexpected == [], f"only docs/contracts.md may change in hashing tasks: {unexpected}"

@@ -12,9 +12,11 @@ Product and architecture decisions are **documented in `docs/prd.md`** (seven nu
 | DEC-006 | Unknown | Analyst feedback human-gated via config edits | No self-tuning containment authority | `docs/prd.md` §6 |
 | DEC-007 | Unknown | Ledger tamper-evident; human reconstructable case | Do not overclaim immutable or LLM replay | `docs/prd.md` §7 |
 | DEC-008 | Unknown | `docs/contracts.md` is SSOT for hashes/IDs/Outcome Matrix | Prevents silent cross-site divergence | `docs/contracts.md` header |
-| DEC-009 | Unknown | Completed-edict key ≠ `decision_id` | Three-tuple dedupes; attempt identity in `decision_id` | `docs/contracts.md` §3, §5 |
-| DEC-010 | Unknown | Revocation feed is projection; chain is audit authority | Feed checksum is corruption-only, not tamper evidence | `docs/spec.md`, `docs/contracts.md` §7 |
+| DEC-009 | Unknown | Completed-edict key ≠ `decision_id` | Three-tuple dedupes; attempt identity in `decision_id` | `docs/contracts.md` §3, §6 |
+| DEC-010 | Unknown | Revocation feed is projection; chain is audit authority | Feed checksum is corruption-only, not tamper evidence | `docs/spec.md`, `docs/contracts.md` §8 |
 | DEC-011 | Unknown | `standard_review` replaces `pass` | Terminology alignment across API/schema/persistence | `docs/spec.md` |
 | DEC-012 | Unknown | Account `auto_contain` gated until Phase 3 | SID + distinct-provenance corroboration required | `docs/spec.md`, `docs/plan.md` Phase 3 |
+| DEC-013 | 2026-06-01 | `stamp_id` = three-tuple + `DOMAIN_STAMP_ID`; excludes attempt identity | Stable across attempts for ticket receiver idempotency on recovery resend | `docs/contracts.md` §5 |
+| DEC-014 | 2026-06-01 | `EMPTY_BUNDLE` preimage = `praetor:v1:empty_bundle` | Ratified in §7; hash permanent in correlation-failure IDs | `docs/contracts.md` §7 |
 
 Add rows here when implementation choices diverge from or refine docs (with date and evidence).
