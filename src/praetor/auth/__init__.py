@@ -1,0 +1,53 @@
+"""Authentication and authorization primitives for external write surfaces."""
+
+from praetor.auth.principal import (
+    AuthError,
+    InsufficientRoleError,
+    InvalidTokenError,
+    MissingTokenError,
+    Principal,
+    Role,
+    SelfAssertedIdentityError,
+)
+from praetor.auth.verifier import (
+    EXTERNAL_WRITE_SURFACES,
+    INTERNAL_OPERATIONS,
+    SURFACE_REQUIRED_ROLE,
+    InternalOnlyOperationError,
+    InternalOperation,
+    PrincipalMapVerifier,
+    TokenVerifier,
+    WriteSurface,
+    authenticate_annotation_submission,
+    authenticate_emergency_never_contain,
+    authenticate_external_write,
+    authenticate_org_config_activation,
+    authenticate_write,
+    guard_internal_only,
+    verified_record_identity,
+)
+
+__all__ = [
+    "AuthError",
+    "EXTERNAL_WRITE_SURFACES",
+    "INTERNAL_OPERATIONS",
+    "InsufficientRoleError",
+    "InternalOnlyOperationError",
+    "InternalOperation",
+    "InvalidTokenError",
+    "MissingTokenError",
+    "Principal",
+    "PrincipalMapVerifier",
+    "Role",
+    "SelfAssertedIdentityError",
+    "SURFACE_REQUIRED_ROLE",
+    "TokenVerifier",
+    "WriteSurface",
+    "authenticate_annotation_submission",
+    "authenticate_emergency_never_contain",
+    "authenticate_external_write",
+    "authenticate_org_config_activation",
+    "authenticate_write",
+    "guard_internal_only",
+    "verified_record_identity",
+]

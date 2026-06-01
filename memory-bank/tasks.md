@@ -6,7 +6,6 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-004 | Authenticated write surface primitives | pending | soc_lead / analyst roles; three external surfaces |
 | TASK-005 | SQLite startup guard and process singleton | pending | WAL, singleton lock |
 | TASK-006 | SQLite state store and attempt lifecycle | pending | |
 | TASK-007 | Ticket stamp outbox | pending | |
@@ -34,3 +33,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-001 | Repository structure and test harness | `.workflow/task-001/verification.md` — `pytest` 2 passed; hatchling + Python 3.11+ |
 | TASK-002 | Versioned contract models | `.workflow/task-002/verification.md` — 14 models, `schemas/` export, 36 `pytest` passed |
 | TASK-003 | Canonical serialization and hash constants | `.workflow/TASK-003/verification.md` — `pytest` 62 passed; `docs/contracts.md` §5/§7; `src/praetor/hashing/` |
+| TASK-004 | Authenticated write surface primitives | `.workflow/TASK-004/verification.md` — `pytest` 80 passed; `src/praetor/auth/` |

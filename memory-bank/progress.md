@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-06-01 — TASK-004 complete
+
+- **`src/praetor/auth/`:** `Principal`, role literals, `TokenVerifier`, three external surfaces, `verified_record_identity` (rejects self-asserted overrides), `guard_internal_only` + `authenticate_external_write` for internal-op enforcement.
+- Tests: `tests/auth/test_auth_primitives.py` — 28 tests.
+- Tooling: mypy/ruff added to dev deps; auth module passes strict mypy and ruff.
+- Verification: `pytest -q` → 90 passed; `mypy src/praetor/auth`; `ruff check src/praetor/auth tests/auth`.
+- Flight Recorder: `.workflow/TASK-004/`.
+
 ## 2026-06-01 — TASK-003 complete (doc-first correction)
 
 - **`docs/contracts.md`:** added §5 `stamp_id` (four-part delimited hash over completed-edict three-tuple; stable across attempts for outbox recovery idempotency); ratified §7 `EMPTY_BUNDLE` preimage `praetor:v1:empty_bundle`; renumbered §6–§15.
@@ -36,9 +44,10 @@
 | Package / tests | Task 1 done — `pytest` runs, `praetor` imports |
 | Contracts | Task 2 done — `src/praetor/contracts/`, `schemas/` |
 | Hashing | Task 3 done — `src/praetor/hashing/` + `docs/contracts.md` §1–§9 |
+| Auth | Task 4 done — `src/praetor/auth/` |
 | CI / eval harness | Not started (Task 26+) |
 | Operator runbooks | Not in repo yet (Task 35) |
 
 ## Next recommended steps
 
-1. TASK-004 — authenticated write surface primitives per `docs/plan.md`.
+1. TASK-005 — SQLite startup guard and process singleton per `docs/plan.md`.

@@ -14,7 +14,6 @@ FORBIDDEN_PACKAGES = (
     "state",
     "engine",
     "policy",
-    "auth",
     "runtime",
     "tickets",
     "alerts",
@@ -29,8 +28,8 @@ def test_forbidden_packages_absent() -> None:
 
 def test_only_expected_top_level_packages() -> None:
     children = {p.name for p in SRC.iterdir() if p.is_dir() and not p.name.startswith("_")}
-    assert children <= {"contracts", "hashing"}, (
-        f"unexpected packages: {children - {'contracts', 'hashing'}}"
+    assert children <= {"auth", "contracts", "hashing"}, (
+        f"unexpected packages: {children - {'auth', 'contracts', 'hashing'}}"
     )
 
 

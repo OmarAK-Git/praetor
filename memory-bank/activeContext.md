@@ -2,19 +2,19 @@
 
 ## Current focus
 
-**TASK-004 next** — authenticated write surface primitives (`docs/plan.md` Task 4). TASK-003 complete (including doc-first contract corrections).
+**TASK-005 next** — SQLite startup guard and process singleton (`docs/plan.md` Task 5). TASK-004 complete.
 
-**Hard gate:** Three role-tagged external surfaces; ledger/feed/directive emission remain internal-only.
+**Hard gate:** Three role-tagged external surfaces exist; ledger/feed/directive emission remain internal-only.
 
 ## Recently changed
 
-- **`docs/contracts.md`:** new §5 `stamp_id` (three-tuple, stable across attempts); §7 `EMPTY_BUNDLE` preimage `praetor:v1:empty_bundle`; sections renumbered §6–§15.
-- TASK-003: `src/praetor/hashing/` aligned to updated contracts; `tests/hashing/`.
-- Flight Recorder: `.workflow/TASK-003/` complete.
+- TASK-004: `src/praetor/auth/` — `Principal`, `TokenVerifier`, three authenticated write surfaces.
+- Flight Recorder: `.workflow/TASK-004/` complete.
+- **`docs/contracts.md`:** §5 `stamp_id`; §7 `EMPTY_BUNDLE` preimage (TASK-003).
 
 ## Current blockers
 
-- None for Task 4 start.
+- None for Task 5 start.
 - Operator docs still absent: `docs/operator_runbook.md`, `docs/architecture.md`, `docs/eval_gates.md` (Task 35).
 - Provisional alert-rate targets — **TODO** before Sprint 1 ends (Tasks 9 / 11).
 
@@ -26,4 +26,5 @@
 4. Hash/ID pins that feed derivations require **doc update in the same task** before code — not follow-up tickets.
 5. `docs/contracts.md` is SSOT; `schemas/` are generated artifacts only.
 6. Domain constants live only in `src/praetor/hashing/domains.py`.
-7. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.
+7. Auth: external surfaces via `authenticate_*` functions; token issuance is operator-supplied (`TokenVerifier` protocol).
+8. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.

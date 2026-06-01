@@ -18,5 +18,6 @@ Product and architecture decisions are **documented in `docs/prd.md`** (seven nu
 | DEC-012 | Unknown | Account `auto_contain` gated until Phase 3 | SID + distinct-provenance corroboration required | `docs/spec.md`, `docs/plan.md` Phase 3 |
 | DEC-013 | 2026-06-01 | `stamp_id` = three-tuple + `DOMAIN_STAMP_ID`; excludes attempt identity | Stable across attempts for ticket receiver idempotency on recovery resend | `docs/contracts.md` §5 |
 | DEC-014 | 2026-06-01 | `EMPTY_BUNDLE` preimage = `praetor:v1:empty_bundle` | Ratified in §7; hash permanent in correlation-failure IDs | `docs/contracts.md` §7 |
+| DEC-015 | 2026-06-01 | Auth via pluggable `TokenVerifier`; surfaces as Python callables | Token issuance/IdP out of scope per spec; HTTP deferred | `docs/spec.md` § Auth, TASK-004 |
 
 Add rows here when implementation choices diverge from or refine docs (with date and evidence).

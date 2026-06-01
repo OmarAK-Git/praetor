@@ -15,11 +15,30 @@ dependencies = [
 dev = [
     "pytest>=8.0",
     "PyYAML>=6.0",
+    "mypy>=1.11",
+    "ruff>=0.8",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+plugins = ["pydantic.mypy"]
+packages = ["praetor"]
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+disallow_untyped_defs = false
+
+[tool.ruff]
+target-version = "py311"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/praetor"]
