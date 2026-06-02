@@ -1,24 +1,17 @@
-# Review: TASK-008 (reopen hardening)
+# Review: TASK-008
 
 ## Scope adherence
 
-- Hardening pass only; no Task 9+ scope.
+- Implemented only Task 8 files per `docs/plan.md`.
 - No `docs/` modifications.
-- Test fakes removed from production package.
+- No ledger chain, PolicyGate, or startup recovery wiring.
 
-## Fixes applied
+## Design notes
 
-1. `FailingJsonlSink` moved to `tests/alerts/_fakes.py`; removed from public API.
-2. `SystemHealthAlert` docstring corrected: contract is emission payload; delivery tracking is SQLite outbox (DEC-026).
-3. `_deliver_to_sink` catches all `Exception` (not `BaseException`); records `exception_type` in result.
-4. Guards pinned: `record_delivery_attempt` PENDING → `ValueError`; unknown channel → `KeyError`.
-5. FK regression test for orphan delivery-attempt rows.
-6. Nested `critical_transaction` rejected for persist/emit/record (Task 9 boundary).
-7. Duplicate `alert_id`: idempotent when payload matches; `DuplicateHealthAlertError` on conflict (DEC-027).
-8. Fail → fail retry coverage; at-least-once JSONL duplicate test + module doc.
-9. Direct `fetch_retryable_delivery_attempts` empty-list test.
-10. Import-order smoke tests for DEC-025.
-11. `_initialized_conn_ids` v1 lifetime documented.
+- Two-table outbox: `system_health_alert_outbox` (alert payload) + `system_health_delivery_attempts` (per-channel status). Future channels (SIEM, chat, etc.) add rows without schema migration.
+- v1 channels: `jsonl`, `stdout`. Delivery statuses: `pending`, `succeeded`, `failed`.
+- `emit_system_health_alert` persists pending rows before delivery; `deliver=False` supports persist-only callers (startup refusal paths).
+- Lazy imports in `open_state_store` avoid circular import with `alerts.outbox` / `tickets.outbox` via `state.__init__`.
 
 ## Gaps (documented, not hidden)
 
@@ -27,8 +20,7 @@
 | Startup outbox scan / recovery orchestration | TASK-011/012 |
 | Breaker trip / emergency / config activation emitters | TASK-009+ |
 | Actual SIEM/chat integrations | Future |
-| Exactly-once JSONL | Not planned v1 |
 
 ## Doc ambiguity
 
-Resolved: contract fields unchanged; outbox delivery shape lives in SQLite tables per spec, not on the Pydantic model.
+None blocking. Spec § SystemHealthAlert Delivery satisfied at minimal v1 surface.

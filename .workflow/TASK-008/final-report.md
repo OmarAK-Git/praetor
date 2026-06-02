@@ -1,54 +1,29 @@
-# Final report: TASK-008 (reopen hardening)
+# Final report: TASK-008
 
 ## Summary
 
-TASK-008 reopen adds verification hardening only. Fourteen gaps from initial close are fixed or pinned: test fakes removed from production, contract docstring corrected, sink exception taxonomy widened, delivery/outbox guards tested, FK enforcement regression, nested critical-transaction boundary for Task 9, duplicate `alert_id` idempotency, fail→fail retry, at-least-once JSONL semantics, fully-succeeded retry query, critical-transaction tests (replacing code-review-only evidence), import-order smoke tests, and `_initialized_conn_ids` v1 documentation.
+TASK-008 delivers the **SystemHealthAlert outbox** with durable SQLite persistence before delivery, per-channel status tracking for JSONL and stdout, retryable failed deliveries, and extensible channel rows for future integrations. `revocation_feed_unhealthy` and other alert codes are supported via the existing `SystemHealthAlert` contract. Alerts are confirmed outbox-only (not in ledger tables).
 
 ## Files changed
 
 | Path | Change |
 |------|--------|
-| `src/praetor/alerts/system_health.py` | Remove test fake; widen sink exception handling; at-least-once doc |
-| `src/praetor/alerts/outbox.py` | `DuplicateHealthAlertError`; idempotent persist; cache comment |
-| `src/praetor/alerts/__init__.py` | Remove `FailingJsonlSink` export; add `DuplicateHealthAlertError` |
-| `src/praetor/contracts/health.py` | Correct docstring (DEC-026) |
-| `tests/alerts/_fakes.py` | New test doubles |
-| `tests/alerts/test_system_health_outbox.py` | +14 tests (23 total) |
-| `memory-bank/decisions.md` | DEC-026, DEC-027 |
-| `memory-bank/*` | Reopen updates |
-| `.workflow/TASK-008/*` | verification, review, final-report, state |
-
-## Tests added (reopen)
-
-1. `test_record_pending_outcome_rejected_and_row_unchanged`
-2. `test_record_unknown_channel_raises_key_error`
-3. `test_delivery_attempt_foreign_key_rejects_orphan_alert_id`
-4. `test_write_pending_health_alert_rejects_nested_critical_transaction`
-5. `test_emit_without_delivery_rejects_nested_critical_transaction`
-6. `test_duplicate_alert_id_same_payload_is_idempotent`
-7. `test_duplicate_alert_id_different_payload_raises`
-8. `test_fail_then_fail_retry_stays_failed`
-9. `test_jsonl_at_least_once_duplicate_on_crash_before_record`
-10. `test_fetch_retryable_empty_when_fully_succeeded`
-11. `test_non_oserror_sink_failure_recorded_as_failed`
-12. `test_record_delivery_attempt_rejects_nested_critical_transaction`
-13. `TestImportOrderSmoke` (2 tests)
-
-## Behavior corrected
-
-- Non-`OSError` sink failures → durable `failed` with `exception_type` (not leaked)
-- Duplicate `alert_id` + matching payload → idempotent return
-- Duplicate `alert_id` + different payload → `DuplicateHealthAlertError`
-- Health alert persist/record cannot run inside an open critical transaction
+| `src/praetor/alerts/outbox.py` | Outbox + delivery attempt schema, pending write, outcome recording |
+| `src/praetor/alerts/system_health.py` | Emit orchestration, JSONL/stdout sinks, retry delivery |
+| `src/praetor/alerts/__init__.py` | Package exports |
+| `src/praetor/state/store.py` | Lazy-init health alert outbox on `open_state_store` |
+| `tests/alerts/test_system_health_outbox.py` | 9 Task 8 tests |
+| `tests/contracts/test_scope_guard.py` | Allow `alerts` package |
+| `memory-bank/*` | Task 8 completion updates |
+| `.workflow/TASK-008/*` | Flight Recorder artifacts |
 
 ## Checks
 
 | Check | Result |
 |-------|--------|
-| `pytest -q tests/alerts/test_system_health_outbox.py` | pass (23 tests) |
-| `pytest -q` | pass (196 tests) |
+| `pytest -q tests/alerts/test_system_health_outbox.py` | pass (9 tests) |
+| `pytest -q` | pass (182 tests) |
 | `mypy src` | pass (37 files) |
-| `ruff check src/praetor/alerts tests/alerts` | pass |
 | No `docs/` modifications | pass |
 
 ## Gaps remaining (deferred)
@@ -56,11 +31,11 @@ TASK-008 reopen adds verification hardening only. Fourteen gaps from initial clo
 | Gap | Deferred to |
 |-----|-------------|
 | Startup delivery worker / recovery enumeration | TASK-011/012 |
-| Breaker/emergency/config emitters | TASK-009+ |
-| Exactly-once JSONL file output | Not planned v1 |
+| Breaker/emergency/config emitters calling outbox | TASK-009+ |
+| SIEM/chat/ticket/SOAR channel implementations | Future |
 
 ## Sign-off
 
-- **Run status:** complete (reopen hardening)
+- **Run status:** complete
 - **Evidence fresh as of:** 2026-06-01
 - **Safe to commit:** yes

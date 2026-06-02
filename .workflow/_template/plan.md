@@ -1,39 +1,66 @@
-# Plan: <task-slug>
+# \# Workflow Plan
 
-## Goal
+# 
 
-<!-- One paragraph: what success looks like for this run. -->
+# \## Goal
 
-## Scope
+# 
 
-**In scope:**
+# TODO
 
--
+# 
 
-**Out of scope:**
+# \## Scope
 
--
+# 
 
-## Requirements
+# \### In scope
 
-| ID | Requirement | Source |
-|----|-------------|--------|
-| REQ-001 | | docs/ |
+# 
 
-## Risks
+# \- TODO
 
-| Risk | Impact | Mitigation |
-|------|--------|------------|
-| | | |
+# 
 
-## Task breakdown
+# \### Out of scope
 
-| ID | Task | Depends on | Notes |
-|----|------|------------|-------|
-| T-001 | | — | |
+# 
 
-## Verification plan (summary)
+# \- TODO
 
-<!-- What must be true before claiming done. Detail in verification.md. -->
+# 
 
--
+# \## Requirements
+
+# 
+
+# | ID | Requirement |
+
+# |---|---|
+
+# | REQ-001 | TODO |
+
+# 
+
+# \## Acceptance Criteria
+
+# 
+
+# | ID | Requirement | Acceptance Criterion |
+
+# |---|---|---|
+
+# | AC-001 | REQ-001 | TODO |
+
+# 
+
+# \## Implementation Plan
+
+# 
+
+# | Task | Description | Files likely affected | Status |
+
+# |---|---|---|---|
+
+# | TASK-001 | TODO | TODO | pending |
+

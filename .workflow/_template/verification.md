@@ -1,18 +1,20 @@
-# Verification: <task-slug>
+# \# Verification Ledger
 
-Fresh evidence required before completion. Do not claim pass without actual results.
+# 
 
-| ID | Check | Expected | Actual | Status |
-|----|-------|----------|--------|--------|
-| V-001 | | | | pending |
+# | ID | Requirement | Check | Command/Evidence | Expected | Actual | Status |
 
-**Status values:** `pending` | `pass` | `fail` | `skipped`
+# |---|---|---|---|---|---|---|
 
-## Summary
+# | VERIFY-001 | REQ-001 | Unit tests | TODO | pass | TODO | pending |
 
-- **Last run:**
-- **Overall:**
+# 
 
-## Gaps / skipped
+# \## Skipped checks
 
--
+# 
+
+# | Check | Reason | Risk |
+
+# |---|---|---|
+

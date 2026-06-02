@@ -2,47 +2,49 @@
 
 ## Summary
 
-TASK-006 delivers the SQLite state store and attempt lifecycle. A **verification fix pass** added 20 tests and minimal implementation hardening: schema-version rejection, idempotency duplicate registration errors, feed-sequence reopen/rollback proofs, manual-revocation atomicity rollback, completed-edict conflict path, expanded FSM negatives, abort same-input retry pinning, and corrected workflow evidence (32 tests, accurate V-002 wording).
+TASK-006 delivers the SQLite state store and processing-attempt lifecycle per `docs/plan.md` Task 6: partial unique index for one non-terminal attempt per `alert_identity`, completed-edict three-tuple uniqueness, FSM transitions with abort, intake-race re-check after lock, and revocation writes (`DirectiveRevocationRecord` JSON + gap-free feed outbox sequence) with idempotency key clear on manual revocation only. All paths use Task 5 `critical_transaction`.
 
 ## Files changed
 
 | Path | Change |
 |------|--------|
-| `src/praetor/state/store.py` | Schema version verify; `open_state_store` contract; `read_feed_sequence_next` |
-| `src/praetor/state/idempotency.py` | `IdempotencyKeyConflictError` |
-| `src/praetor/state/__init__.py` | New exports |
-| `tests/state/test_attempt_lifecycle.py` | 32 tests (fix pass) |
-| `memory-bank/progress.md` | Fix-pass note |
-| `memory-bank/decisions.md` | DEC-021 |
-| `.workflow/TASK-006/*` | Updated verification, review, final-report |
+| `src/praetor/state/store.py` | Schema, `StateStore`, revocation writers |
+| `src/praetor/state/attempts.py` | Allocation, transitions, completion, abort |
+| `src/praetor/state/completed_decisions.py` | Three-tuple completed edict table |
+| `src/praetor/state/idempotency.py` | Active idempotency keys |
+| `src/praetor/state/__init__.py` | Public exports |
+| `tests/state/test_attempt_lifecycle.py` | 13 Task 6 tests |
+| `memory-bank/tasks.md` | TASK-006 done |
+| `memory-bank/activeContext.md` | TASK-007 next |
+| `memory-bank/progress.md` | TASK-006 entry |
+| `memory-bank/decisions.md` | DEC-020 |
+| `.workflow/TASK-006/*` | Flight Recorder complete |
 
 ## Checks
 
 | Check | Result |
 |-------|--------|
-| `pytest -q` | pass (152 tests) |
-| `pytest --collect-only tests/state/test_attempt_lifecycle.py` | 32 tests |
+| `pytest -q` | pass (132 tests) |
 | `mypy src` | pass (31 files) |
 | No `docs/` modifications | pass |
 
 ## Gaps / skipped checks
 
-- Ledger hash-chain append (Task 10)
-- Feed export / startup recovery (Tasks 11–12)
-- Enumeration helpers for non-terminal attempts and pending feed outbox (Tasks 11–12)
-- `_in_critical` `id(conn)` guard improvement (Task 5 follow-up, non-blocking)
-- Full SQLite PRAGMA list (`docs/operator_runbook.md`, Task 35)
+- Ledger hash-chain append for revocations deferred to Task 10
+- Feed JSONL exporter and startup recovery deferred to Tasks 11–12
+- Full SQLite PRAGMA list deferred to absent `docs/operator_runbook.md` (Task 35)
+- Live two-thread allocation race not exercised (serialized re-check tests used)
 
 ## Follow-up
 
 | Item | Owner | Notes |
 |------|-------|-------|
-| TASK-007 | next agent | Stamp outbox |
-| TASK-011 | future | Add outbox/attempt enumeration helpers |
-| TASK-005 | optional | Harden nested-tx guard if connection pooling added |
+| TASK-007 | next agent | Ticket stamp outbox; uses `stamp_id` + lifecycle |
+| TASK-010 | future | Append `DirectiveRevocationRecord` to hash chain |
+| TASK-011 | future | Export `revocation_feed_outbox` rows |
 
 ## Sign-off
 
-- **Run status:** complete (verification fix pass)
+- **Run status:** complete
 - **Evidence fresh as of:** 2026-06-01
 - **Safe to commit:** yes

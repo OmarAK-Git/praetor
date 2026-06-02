@@ -1,25 +1,34 @@
-# Review: <task-slug>
+# \# Review
 
-## Review findings
+# 
 
-| ID | Severity | Finding | Resolution |
-|----|----------|---------|------------|
-| R-001 | | | open |
+# \## Spec compliance review
 
-**Severity:** `blocker` | `major` | `minor` | `note`
+# 
 
-## Risks (post-review)
+# \- TODO
 
-| Risk | Status |
-|------|--------|
-| | |
+# 
 
-## Human review notes
+# \## Code quality review
 
-- **Reviewer:**
-- **Date:**
-- **Decision:** approve | changes requested | blocked
+# 
 
-## Open items
+# \- TODO
 
--
+# 
+
+# \## Risk review
+
+# 
+
+# \- TODO
+
+# 
+
+# \## Human review notes
+
+# 
+
+# \- TODO
+

@@ -1,32 +1,62 @@
-# Final report: <task-slug>
+# \# Final Report
 
-## Summary
+# 
 
-<!-- What was done and outcome (1–3 sentences). -->
+# \## Summary
 
-## Files changed
+# 
 
-| Path | Change |
-|------|--------|
-| | |
+# TODO
 
-## Checks
+# 
 
-| Check | Result |
-|-------|--------|
-| | |
+# \## Completed requirements
 
-## Gaps / skipped checks
+# 
 
--
+# | Requirement | Evidence |
 
-## Follow-up
+# |---|---|
 
-| Item | Owner | Notes |
-|------|-------|-------|
-| | | |
+# | REQ-001 | TODO |
 
-## Sign-off
+# 
 
-- **Run status:** complete | partial | blocked
-- **Evidence fresh as of:**
+# \## Files changed
+
+# 
+
+# \- TODO
+
+# 
+
+# \## Verification performed
+
+# 
+
+# \- TODO
+
+# 
+
+# \## Known gaps
+
+# 
+
+# \- TODO
+
+# 
+
+# \## Follow-up tasks
+
+# 
+
+# \- TODO
+
+# 
+
+# \## Archive decision
+
+# 
+
+# \- Accepted / Needs revision / Rejected
+

@@ -1,13 +1,10 @@
-# Traceability: <task-slug>
+# \# Traceability Matrix
 
-Map requirements → tasks → code → verification. Update as work proceeds.
+# 
 
-| Req ID | Requirement (summary) | Task ID | Code / artifact | Verification |
-|--------|-------------------------|---------|-----------------|--------------|
-| REQ-001 | | T-001 | | V-001 |
+# | Req | AC | Decision | Task | Code/Diff | Test/Check | Review | Status |
 
-## Orphan / unmapped
+# |---|---|---|---|---|---|---|---|
 
-- Requirements with no task:
-- Tasks with no requirement:
-- Code changes with no verification:
+# | REQ-001 | AC-001 | DEC-001 | TASK-001 | TODO | VERIFY-001 | REVIEW-001 | pending |
+
