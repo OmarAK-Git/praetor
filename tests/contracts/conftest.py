@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -29,7 +29,7 @@ from praetor.contracts.ledger import (
 from praetor.contracts.org_config import OrgConfigSnapshot
 from praetor.contracts.policy import PolicyGateResult
 
-UTC = timezone.utc
+UTC = UTC
 NOW = datetime(2026, 6, 1, 12, 0, 0, tzinfo=UTC)
 
 
@@ -61,32 +61,23 @@ def evidence_bundle() -> EvidenceBundle:
 
 @pytest.fixture
 def org_config_snapshot() -> OrgConfigSnapshot:
-    return OrgConfigSnapshot(
-        snapshot_hash="sha256:org:abc",
-        version_metadata=_section(),
-        known_principals=_section(),
-        assets_and_asset_groups=_section(),
-        normal_admin_patterns=_section(),
-        containment_exclusions=_section(),
-        business_context=_section(),
-        containment_policy=_section(),
-        directive_lifetime_policy=_section(),
-        emergency_never_contain_policy=_section(),
-        rate_limit_policy=_section(),
-        provider_health_circuit_breaker_policy=_section(),
-        containment_circuit_breaker_policy=_section(),
-        revocation_feed_policy=_section(),
-        consumer_clock_skew_policy=_section(),
-        latency_and_queue_aging_policy=_section(),
-        provisional_alert_rate_targets=_section(),
-    )
+    from pathlib import Path
+
+    from praetor.config.loader import load_org_config_source
+    from praetor.config.preflight import run_preflight
+
+    example = Path(__file__).resolve().parents[2] / "configs" / "example_org.yaml"
+    loaded = load_org_config_source(example)
+    return run_preflight(loaded.document, verbatim_text=loaded.verbatim_text)
 
 
 @pytest.fixture
 def model_judgment() -> ModelJudgment:
     return ModelJudgment(
         proposed_disposition=Disposition.STANDARD_REVIEW,
-        cited_evidence_refs=[CitedEvidenceRef(evidence_id="ev-1", field_path="process_name")],
+        cited_evidence_refs=[
+            CitedEvidenceRef(evidence_id="ev-1", field_path="process_name"),
+        ],
         key_tells=["suspicious parent"],
         org_config_refs=["containment_policy.default"],
         benign_alternatives=["admin tooling"],

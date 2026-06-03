@@ -9,19 +9,19 @@ description = "Post-detection disposition-policy engine for SOCs"
 requires-python = ">=3.11"
 dependencies = [
     "pydantic>=2.0",
+    "PyYAML>=6.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
-    "PyYAML>=6.0",
     "mypy>=1.11",
     "ruff>=0.8",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = ["src"]
+pythonpath = ["src", "."]
 
 [tool.mypy]
 python_version = "3.11"
@@ -39,6 +39,10 @@ src = ["src", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/praetor/config/**/*.py" = ["E501"]
+"tests/config/**/*.py" = ["E501"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/praetor"]

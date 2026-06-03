@@ -6,7 +6,6 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-009 | Org config loader, preflight, activation, emergency never-contain | pending | |
 | TASK-010 | Hash-chained audit log and snapshot records | pending | |
 | TASK-011 | Revocation feed outbox, exporter, startup recovery, smoke benchmark | pending | |
 | TASK-012 | Walking skeleton decision flow and recovery | pending | **Phase 1 gate** ends here |
@@ -34,3 +33,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-006 | SQLite state store and attempt lifecycle | `.workflow/TASK-006/verification.md` — `pytest` 152 passed, 32 Task-6 tests; `src/praetor/state/{store,attempts,completed_decisions,idempotency}.py` |
 | TASK-007 | Ticket stamp outbox | `.workflow/TASK-007/verification.md` — `pytest` 173 passed, 21 Task-7 tests; reopen hardening pass |
 | TASK-008 | SystemHealthAlert outbox | `.workflow/TASK-008/verification.md` — `pytest` 196 passed, 23 Task-8 tests; reopen hardening pass |
+| TASK-009 | Org config loader, preflight, activation, emergency never-contain | `.workflow/TASK-009/verification.md` — `pytest` 254 / config 55; contracts §3a; flight recorder closed |

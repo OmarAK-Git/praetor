@@ -1,6 +1,362 @@
 {
+  "$defs": {
+    "AssetEntry": {
+      "additionalProperties": true,
+      "properties": {
+        "asset_id": {
+          "minLength": 1,
+          "title": "Asset Id",
+          "type": "string"
+        },
+        "subnet_membership": {
+          "minLength": 1,
+          "title": "Subnet Membership",
+          "type": "string"
+        }
+      },
+      "required": [
+        "asset_id",
+        "subnet_membership"
+      ],
+      "title": "AssetEntry",
+      "type": "object"
+    },
+    "AssetsAndAssetGroups": {
+      "additionalProperties": true,
+      "properties": {
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/AssetEntry"
+          },
+          "minItems": 1,
+          "title": "Entries",
+          "type": "array"
+        }
+      },
+      "required": [
+        "entries"
+      ],
+      "title": "AssetsAndAssetGroups",
+      "type": "object"
+    },
+    "BusinessContext": {
+      "additionalProperties": true,
+      "properties": {},
+      "title": "BusinessContext",
+      "type": "object"
+    },
+    "CircuitBreakerPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "failure_threshold": {
+          "exclusiveMinimum": 0,
+          "title": "Failure Threshold",
+          "type": "integer"
+        },
+        "success_reset_threshold": {
+          "exclusiveMinimum": 0,
+          "title": "Success Reset Threshold",
+          "type": "integer"
+        },
+        "window_seconds": {
+          "exclusiveMinimum": 0,
+          "title": "Window Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "window_seconds",
+        "failure_threshold",
+        "success_reset_threshold"
+      ],
+      "title": "CircuitBreakerPolicy",
+      "type": "object"
+    },
+    "ConsumerClockSkewPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "max_consumer_clock_skew_seconds": {
+          "exclusiveMinimum": 0,
+          "title": "Max Consumer Clock Skew Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_consumer_clock_skew_seconds"
+      ],
+      "title": "ConsumerClockSkewPolicy",
+      "type": "object"
+    },
+    "ContainmentExclusions": {
+      "additionalProperties": false,
+      "properties": {
+        "never_contain": {
+          "items": {
+            "$ref": "#/$defs/NeverContainEntry"
+          },
+          "minItems": 1,
+          "title": "Never Contain",
+          "type": "array"
+        }
+      },
+      "required": [
+        "never_contain"
+      ],
+      "title": "ContainmentExclusions",
+      "type": "object"
+    },
+    "ContainmentPolicy": {
+      "additionalProperties": true,
+      "properties": {
+        "precedence": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Precedence"
+        },
+        "rules": {
+          "items": {
+            "$ref": "#/$defs/ContainmentRule"
+          },
+          "minItems": 1,
+          "title": "Rules",
+          "type": "array"
+        }
+      },
+      "required": [
+        "rules"
+      ],
+      "title": "ContainmentPolicy",
+      "type": "object"
+    },
+    "ContainmentRule": {
+      "additionalProperties": true,
+      "properties": {
+        "action": {
+          "minLength": 1,
+          "title": "Action",
+          "type": "string"
+        },
+        "name": {
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "action"
+      ],
+      "title": "ContainmentRule",
+      "type": "object"
+    },
+    "DirectiveLifetimePolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "max_lifetime_seconds": {
+          "exclusiveMinimum": 0,
+          "title": "Max Lifetime Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_lifetime_seconds"
+      ],
+      "title": "DirectiveLifetimePolicy",
+      "type": "object"
+    },
+    "EmergencyNeverContainPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "max_lifetime_seconds": {
+          "exclusiveMinimum": 0,
+          "title": "Max Lifetime Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_lifetime_seconds"
+      ],
+      "title": "EmergencyNeverContainPolicy",
+      "type": "object"
+    },
+    "KnownPrincipals": {
+      "additionalProperties": true,
+      "properties": {},
+      "title": "KnownPrincipals",
+      "type": "object"
+    },
+    "LatencyAndQueueAgingPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "max_queue_age_seconds": {
+          "exclusiveMinimum": 0,
+          "title": "Max Queue Age Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_queue_age_seconds"
+      ],
+      "title": "LatencyAndQueueAgingPolicy",
+      "type": "object"
+    },
+    "NeverContainEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "target_id": {
+          "minLength": 1,
+          "title": "Target Id",
+          "type": "string"
+        },
+        "target_type": {
+          "enum": [
+            "host",
+            "account"
+          ],
+          "title": "Target Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target_type",
+        "target_id"
+      ],
+      "title": "NeverContainEntry",
+      "type": "object"
+    },
+    "NormalAdminPatterns": {
+      "additionalProperties": true,
+      "properties": {},
+      "title": "NormalAdminPatterns",
+      "type": "object"
+    },
+    "ProviderHealthCircuitBreakerPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "failure_threshold": {
+          "exclusiveMinimum": 0,
+          "title": "Failure Threshold",
+          "type": "integer"
+        },
+        "probe_rate_limit_per_minute": {
+          "exclusiveMinimum": 0,
+          "title": "Probe Rate Limit Per Minute",
+          "type": "integer"
+        },
+        "success_reset_threshold": {
+          "exclusiveMinimum": 0,
+          "title": "Success Reset Threshold",
+          "type": "integer"
+        },
+        "window_seconds": {
+          "exclusiveMinimum": 0,
+          "title": "Window Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "window_seconds",
+        "failure_threshold",
+        "success_reset_threshold",
+        "probe_rate_limit_per_minute"
+      ],
+      "title": "ProviderHealthCircuitBreakerPolicy",
+      "type": "object"
+    },
+    "ProvisionalAlertRateTargets": {
+      "additionalProperties": false,
+      "properties": {
+        "burst_alerts_per_minute": {
+          "exclusiveMinimum": 0,
+          "title": "Burst Alerts Per Minute",
+          "type": "integer"
+        },
+        "sustained_alerts_per_minute": {
+          "exclusiveMinimum": 0,
+          "title": "Sustained Alerts Per Minute",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "sustained_alerts_per_minute",
+        "burst_alerts_per_minute"
+      ],
+      "title": "ProvisionalAlertRateTargets",
+      "type": "object"
+    },
+    "RateLimitPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "scopes": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Scopes",
+          "type": "array"
+        }
+      },
+      "required": [
+        "scopes"
+      ],
+      "title": "RateLimitPolicy",
+      "type": "object"
+    },
+    "RevocationFeedPolicy": {
+      "additionalProperties": false,
+      "properties": {
+        "max_feed_export_retries": {
+          "exclusiveMinimum": 0,
+          "title": "Max Feed Export Retries",
+          "type": "integer"
+        },
+        "max_revocation_feed_propagation_delay_seconds": {
+          "exclusiveMinimum": 0,
+          "title": "Max Revocation Feed Propagation Delay Seconds",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "max_revocation_feed_propagation_delay_seconds",
+        "max_feed_export_retries"
+      ],
+      "title": "RevocationFeedPolicy",
+      "type": "object"
+    },
+    "VersionMetadata": {
+      "additionalProperties": true,
+      "properties": {
+        "config_version": {
+          "minLength": 1,
+          "title": "Config Version",
+          "type": "string"
+        },
+        "org_id": {
+          "minLength": 1,
+          "title": "Org Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "org_id",
+        "config_version"
+      ],
+      "title": "VersionMetadata",
+      "type": "object"
+    }
+  },
   "additionalProperties": false,
-  "description": "Bound org-config snapshot; section bodies are opaque until loader task defines shapes.",
+  "description": "Bound org-config snapshot at activation.",
   "properties": {
     "account_auto_contain_enabled": {
       "default": false,
@@ -8,79 +364,49 @@
       "type": "boolean"
     },
     "assets_and_asset_groups": {
-      "additionalProperties": true,
-      "title": "Assets And Asset Groups",
-      "type": "object"
+      "$ref": "#/$defs/AssetsAndAssetGroups"
     },
     "business_context": {
-      "additionalProperties": true,
-      "title": "Business Context",
-      "type": "object"
+      "$ref": "#/$defs/BusinessContext"
     },
     "consumer_clock_skew_policy": {
-      "additionalProperties": true,
-      "title": "Consumer Clock Skew Policy",
-      "type": "object"
+      "$ref": "#/$defs/ConsumerClockSkewPolicy"
     },
     "containment_circuit_breaker_policy": {
-      "additionalProperties": true,
-      "title": "Containment Circuit Breaker Policy",
-      "type": "object"
+      "$ref": "#/$defs/CircuitBreakerPolicy"
     },
     "containment_exclusions": {
-      "additionalProperties": true,
-      "title": "Containment Exclusions",
-      "type": "object"
+      "$ref": "#/$defs/ContainmentExclusions"
     },
     "containment_policy": {
-      "additionalProperties": true,
-      "title": "Containment Policy",
-      "type": "object"
+      "$ref": "#/$defs/ContainmentPolicy"
     },
     "directive_lifetime_policy": {
-      "additionalProperties": true,
-      "title": "Directive Lifetime Policy",
-      "type": "object"
+      "$ref": "#/$defs/DirectiveLifetimePolicy"
     },
     "emergency_never_contain_policy": {
-      "additionalProperties": true,
-      "title": "Emergency Never Contain Policy",
-      "type": "object"
+      "$ref": "#/$defs/EmergencyNeverContainPolicy"
     },
     "known_principals": {
-      "additionalProperties": true,
-      "title": "Known Principals",
-      "type": "object"
+      "$ref": "#/$defs/KnownPrincipals"
     },
     "latency_and_queue_aging_policy": {
-      "additionalProperties": true,
-      "title": "Latency And Queue Aging Policy",
-      "type": "object"
+      "$ref": "#/$defs/LatencyAndQueueAgingPolicy"
     },
     "normal_admin_patterns": {
-      "additionalProperties": true,
-      "title": "Normal Admin Patterns",
-      "type": "object"
+      "$ref": "#/$defs/NormalAdminPatterns"
     },
     "provider_health_circuit_breaker_policy": {
-      "additionalProperties": true,
-      "title": "Provider Health Circuit Breaker Policy",
-      "type": "object"
+      "$ref": "#/$defs/ProviderHealthCircuitBreakerPolicy"
     },
     "provisional_alert_rate_targets": {
-      "additionalProperties": true,
-      "title": "Provisional Alert Rate Targets",
-      "type": "object"
+      "$ref": "#/$defs/ProvisionalAlertRateTargets"
     },
     "rate_limit_policy": {
-      "additionalProperties": true,
-      "title": "Rate Limit Policy",
-      "type": "object"
+      "$ref": "#/$defs/RateLimitPolicy"
     },
     "revocation_feed_policy": {
-      "additionalProperties": true,
-      "title": "Revocation Feed Policy",
-      "type": "object"
+      "$ref": "#/$defs/RevocationFeedPolicy"
     },
     "schema_version": {
       "const": "1",
@@ -89,14 +415,12 @@
       "type": "string"
     },
     "snapshot_hash": {
-      "description": "Canonical hash of snapshot content (computed Task 3).",
+      "description": "Canonical hash of binding body per docs/contracts.md \u00a73a.",
       "title": "Snapshot Hash",
       "type": "string"
     },
     "version_metadata": {
-      "additionalProperties": true,
-      "title": "Version Metadata",
-      "type": "object"
+      "$ref": "#/$defs/VersionMetadata"
     }
   },
   "required": [

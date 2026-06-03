@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from datetime import datetime
 from typing import Any
 
 from praetor.hashing.canonical import canonical_hash, delimited, sha256_hex
@@ -11,6 +10,30 @@ from praetor.hashing.canonical import canonical_hash, delimited, sha256_hex
 DOMAIN_DECISION_ID = "praetor:v1:decision_id"
 DOMAIN_IDEMPOTENCY_KEY = "praetor:v1:idempotency_key"
 DOMAIN_STAMP_ID = "praetor:v1:stamp_id"
+
+# OrgConfigSnapshot binding body keys (docs/contracts.md §3a); excludes snapshot_hash.
+ORG_CONFIG_SNAPSHOT_HASH_KEYS: frozenset[str] = frozenset(
+    {
+        "schema_version",
+        "version_metadata",
+        "known_principals",
+        "assets_and_asset_groups",
+        "normal_admin_patterns",
+        "containment_exclusions",
+        "business_context",
+        "containment_policy",
+        "account_auto_contain_enabled",
+        "directive_lifetime_policy",
+        "emergency_never_contain_policy",
+        "rate_limit_policy",
+        "provider_health_circuit_breaker_policy",
+        "containment_circuit_breaker_policy",
+        "revocation_feed_policy",
+        "consumer_clock_skew_policy",
+        "latency_and_queue_aging_policy",
+        "provisional_alert_rate_targets",
+    }
+)
 
 _FEED_RECORD_ALLOWED_KEYS = frozenset(
     {
@@ -91,7 +114,9 @@ def compute_feed_record_checksum(record: Mapping[str, Any]) -> str:
     if unknown:
         from praetor.hashing.canonical import CanonicalSerializationError
 
-        raise CanonicalSerializationError(f"unknown feed record fields: {sorted(unknown)}")
+        unknown_fields = sorted(unknown)
+        msg = f"unknown feed record fields: {unknown_fields}"
+        raise CanonicalSerializationError(msg)
     return canonical_hash(payload, allowed_keys=_FEED_RECORD_ALLOWED_KEYS)
 
 

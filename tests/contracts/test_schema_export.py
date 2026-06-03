@@ -7,7 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from praetor.contracts.schema_export import SCHEMA_EXPORTS, canonical_schema_bytes, export_schemas
+from praetor.contracts.schema_export import (
+    SCHEMA_EXPORTS,
+    canonical_schema_bytes,
+    export_schemas,
+)
 
 EXPECTED_SCHEMA_FILES = {filename for _, filename in SCHEMA_EXPORTS}
 

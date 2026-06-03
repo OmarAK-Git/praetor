@@ -1,6 +1,6 @@
 {
   "additionalProperties": false,
-  "description": "Critical safety alert; full outbox delivery shape deferred to Task 8.",
+  "description": "Critical safety alert emission payload (outbox record, not in hash chain).\n\nDurable delivery and per-channel status tracking live in the SQLite outbox\n(Task 8: ``system_health_alert_outbox`` / ``system_health_delivery_attempts``),\nnot as fields on this contract. See ``docs/spec.md`` \u00a7 SystemHealthAlert\nDelivery.",
   "properties": {
     "alert_code": {
       "title": "Alert Code",

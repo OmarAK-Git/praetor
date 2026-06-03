@@ -105,6 +105,54 @@ On correlation failure there is no evidence bundle. The `evidence_bundle_hash` i
 
 ---
 
+## 3a. `org_config_snapshot_hash`
+
+`org_config_snapshot_hash` is the canonical hash of the bound `OrgConfigSnapshot` **binding body** at intake/activation time. It feeds `decision_id` (§3), `stamp_id` (§5), and the completed-edict three-tuple (§6). It is **not** domain-delimited; it uses the canonical serialization algorithm (§1) only.
+
+### Binding body
+
+The binding body is the `OrgConfigSnapshot` record with the `snapshot_hash` field **omitted**. All other contract fields are included, including `schema_version`. No other fields may be added or dropped at hash time.
+
+The allowed key set is fixed in `src/praetor/hashing/domains.py` as `ORG_CONFIG_SNAPSHOT_HASH_KEYS` and must match the generated `schemas/org_config_snapshot.json` property set except `snapshot_hash`.
+
+### Construction
+
+```
+org_config_snapshot_hash = SHA256( canonical_serialize(binding_body, allowed_keys=ORG_CONFIG_SNAPSHOT_HASH_KEYS) )
+```
+
+Output is the lowercase hex SHA-256 digest. The same logical binding body must produce the same hash across calls, Python versions, and hosts.
+
+### Verbatim judgment render and character budget
+
+The human-authored org config file is rendered **verbatim** into the judgment context (no selective omission) per `docs/prd.md` §5 and `docs/spec.md` § Org Config. That render text is the **UTF-8 source file bytes as read from disk** (comments, whitespace, and key order preserved). Each distinct verbatim source is stored in `org_config_verbatim_renders` keyed by `(org_config_snapshot_hash, verbatim_render_id)` where `verbatim_render_id = SHA256(utf-8 source bytes)`. The active binding records which `verbatim_render_id` was used at activation; multiple verbatim sources may share one binding hash when structured content matches.
+
+Preflight **character budget** measures the Unicode code-point length of that verbatim source text. It is **not** the canonical serialization length: two files that parse to the same structured document but differ in comments or whitespace must have different budget counts.
+
+Structured validation and `org_config_snapshot_hash` use the parsed, defaulted, typed binding body (canonical serialize per §1). Budget and binding hash therefore serve different purposes and may diverge by design.
+
+The v1 hard budget is `400000` characters (`HARD_CONFIG_CHARACTER_BUDGET`). Exceeding the budget is `config_over_budget` (§13).
+
+### Snapshot persistence integrity
+
+`org_config_snapshots` rows must satisfy: stored `snapshot_hash` equals `SHA256(canonical_serialize(binding_body))` of the stored `snapshot_json`, and the JSON `snapshot_hash` field matches the row key. Inserting an existing hash with a conflicting body is rejected. Fetch by hash rejects a mismatched JSON `snapshot_hash` field, recomputes the body hash, and calls `verify_snapshot_hash` before returning.
+
+### Account containment gate (v1)
+
+`account_auto_contain_enabled` defaults to `false` when omitted. In v1 Sprint 1, `account_auto_contain_enabled=true` is **rejected at preflight** — production account `auto_contain` requires Phase 3 identity compliance gates (`docs/spec.md` § RevocationFeed / account targets) that cannot be self-attested inside org config. Operators enable account containment only after those gates pass in a future phase; the org-config file cannot declare that prerequisite satisfied.
+
+### Immutable snapshot retention
+
+Each distinct `org_config_snapshot_hash` is stored durably with its full `OrgConfigSnapshot` JSON. In-flight processing attempts retain only the hash; the statute content must remain retrievable by hash after later activations supersede the active pointer (`docs/spec.md` § Alert Intake).
+
+### Test vector (v1)
+
+For the minimal valid `configs/example_org.yaml` in the repository at Task 9 completion, the binding-body hash must equal:
+
+`8b694ab5aea32db12b6a0b89000ecb34fd1bfe8a7c70489396c18c3b9607d7d3`
+
+---
+
 ## 4. Idempotency key
 
 The idempotency key gates *containment directive emission*, not edict creation. It answers "is this target already under an active directive for this alert and scope." Its scope is **alert–target–scope**, deliberately not the full decision identity, so that re-judging or recorrelating the same alert does not emit a second directive for a target already under one.
@@ -271,7 +319,13 @@ These bounds are enforced at config-activation preflight and asserted by the eva
 | `EmergencyNeverContainRecord.expires_at - added_at` | ≤ 48 hours | schema validator + preflight |
 | `max_revocation_feed_propagation_delay_seconds` | default 60; must be materially below 300 | preflight (must be < directive max lifetime) |
 | `max_consumer_clock_skew_seconds` | default 30 | preflight; deployment prerequisite |
-| `account_auto_contain_enabled` | default false | preflight; only true after Phase 3 identity gates |
+| `account_auto_contain_enabled` | default false; `true` rejected in v1 | preflight (`account_containment_prerequisite`) |
+| Org config judgment render (Unicode characters) | ≤ `400000` (`HARD_CONFIG_CHARACTER_BUDGET`) | preflight (`config_over_budget`) |
+| `provisional_alert_rate_targets.sustained_alerts_per_minute` | required positive integer (v1 Sprint 1 provisional target) | preflight |
+| `provisional_alert_rate_targets.burst_alerts_per_minute` | required positive integer (v1 Sprint 1 provisional target) | preflight |
+| `revocation_feed_policy.max_revocation_feed_propagation_delay_seconds` | default `60` when section present and field omitted | field default at preflight only |
+| `revocation_feed_policy.max_feed_export_retries` | required positive integer when section present | preflight |
+| `consumer_clock_skew_policy.max_consumer_clock_skew_seconds` | default `30` when section present and field omitted | field default at preflight only |
 
 Org config may choose values *more* restrictive than the directive/emergency caps (shorter lifetimes) but never less restrictive. The feed propagation delay being below the directive lifetime is a hard preflight check, not a recommendation: a propagation delay at or above the directive lifetime means a revocation could never reach a consumer before the directive it revokes expires anyway, which would make the feed pointless and is treated as misconfiguration.
 

@@ -46,18 +46,20 @@ def test_forbidden_packages_absent() -> None:
 
 
 def test_only_expected_top_level_packages() -> None:
-    children = {p.name for p in SRC.iterdir() if p.is_dir() and not p.name.startswith("_")}
-    assert children <= {
+    children = {
+        p.name for p in SRC.iterdir() if p.is_dir() and not p.name.startswith("_")
+    }
+    allowed = {
         "alerts",
         "auth",
+        "config",
         "contracts",
         "hashing",
         "runtime",
         "state",
         "tickets",
-    }, (
-        f"unexpected packages: {children - {'alerts', 'auth', 'contracts', 'hashing', 'runtime', 'state', 'tickets'}}"
-    )
+    }
+    assert children <= allowed, f"unexpected packages: {children - allowed}"
 
 
 def test_docs_changes_limited_to_contracts_md() -> None:
@@ -72,7 +74,8 @@ def test_docs_changes_limited_to_contracts_md() -> None:
         pytest.skip("git not available or not a git repo")
     changed = [line.strip() for line in result.stdout.splitlines() if line.strip()]
     unexpected = [path for path in changed if path != "docs/contracts.md"]
-    assert unexpected == [], f"only docs/contracts.md may change in hashing tasks: {unexpected}"
+    msg = f"only docs/contracts.md may change under docs/: {unexpected}"
+    assert unexpected == [], msg
 
 
 def test_no_bare_begin_outside_sqlite_guard() -> None:

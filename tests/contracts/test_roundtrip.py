@@ -51,6 +51,10 @@ def _roundtrip(model: BaseModel, model_type: type[BaseModel]) -> None:
         ("canonical_account_identity", CanonicalAccountIdentity),
     ],
 )
-def test_contract_roundtrip(fixture_name: str, model_type: type[BaseModel], request: pytest.FixtureRequest) -> None:
+def test_contract_roundtrip(
+    fixture_name: str,
+    model_type: type[BaseModel],
+    request: pytest.FixtureRequest,
+) -> None:
     model = request.getfixturevalue(fixture_name)
     _roundtrip(model, model_type)

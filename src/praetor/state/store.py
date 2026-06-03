@@ -16,20 +16,16 @@ from pathlib import Path
 from typing import Any
 
 from praetor.contracts.ledger import DirectiveRevocationRecord, RevocationReason
-from praetor.state.attempts import (
-    AllocationResult,
-    ProcessingAttempt,
-    allocate_attempt,
-)
+from praetor.state.attempts import AllocationResult, allocate_attempt
 from praetor.state.idempotency import (
     clear_idempotency_key,
-    fetch_active_idempotency_key,
     insert_active_idempotency_key,
 )
 from praetor.state.sqlite_guard import (
     create_guarded_connection,
     critical_transaction,
     init_state_dir,
+    require_critical_transaction,
 )
 
 SCHEMA_VERSION = 1
@@ -188,38 +184,66 @@ class StateStore:
         clear_idempotency_key_value: str | None,
     ) -> RevocationWriteResult:
         with critical_transaction(self.conn):
-            sequence_number = _next_feed_sequence(self.conn)
-            record_json = record.model_dump_json()
-            self.conn.execute(
-                """
-                INSERT INTO directive_revocation_records (
-                    revocation_id, directive_id, record_json, ledger_commit_at
-                ) VALUES (?, ?, ?, ?)
-                """,
-                (
-                    record.revocation_id,
-                    record.directive_id,
-                    record_json,
-                    record.ledger_commit_at.isoformat(),
-                ),
+            return self._write_revocation_in_transaction(
+                record,
+                clear_idempotency_key_value=clear_idempotency_key_value,
             )
-            created_at = datetime.now(UTC).isoformat()
-            self.conn.execute(
-                """
-                INSERT INTO revocation_feed_outbox (
-                    sequence_number, revocation_id, directive_id, status, created_at
-                ) VALUES (?, ?, ?, 'pending', ?)
-                """,
-                (
-                    sequence_number,
-                    record.revocation_id,
-                    record.directive_id,
-                    created_at,
-                ),
-            )
-            if clear_idempotency_key_value is not None:
-                clear_idempotency_key(self.conn, clear_idempotency_key_value)
-            return RevocationWriteResult(record=record, sequence_number=sequence_number)
+
+    def _write_revocation_in_transaction(
+        self,
+        record: DirectiveRevocationRecord,
+        *,
+        clear_idempotency_key_value: str | None,
+    ) -> RevocationWriteResult:
+        """Insert revocation + feed row; caller must hold BEGIN IMMEDIATE."""
+        sequence_number = _next_feed_sequence(self.conn)
+        record_json = record.model_dump_json()
+        self.conn.execute(
+            """
+            INSERT INTO directive_revocation_records (
+                revocation_id, directive_id, record_json, ledger_commit_at
+            ) VALUES (?, ?, ?, ?)
+            """,
+            (
+                record.revocation_id,
+                record.directive_id,
+                record_json,
+                record.ledger_commit_at.isoformat(),
+            ),
+        )
+        created_at = datetime.now(UTC).isoformat()
+        self.conn.execute(
+            """
+            INSERT INTO revocation_feed_outbox (
+                sequence_number, revocation_id, directive_id, status, created_at
+            ) VALUES (?, ?, ?, 'pending', ?)
+            """,
+            (
+                sequence_number,
+                record.revocation_id,
+                record.directive_id,
+                created_at,
+            ),
+        )
+        if clear_idempotency_key_value is not None:
+            clear_idempotency_key(self.conn, clear_idempotency_key_value)
+        return RevocationWriteResult(record=record, sequence_number=sequence_number)
+
+    def write_automated_revocation_in_transaction(
+        self, record: DirectiveRevocationRecord
+    ) -> RevocationWriteResult:
+        """Automated revocation when caller already holds critical_transaction."""
+        require_critical_transaction(self.conn)
+        if record.idempotency_key_cleared:
+            msg = "automated revocation must not clear idempotency key"
+            raise ValueError(msg)
+        if record.reason == RevocationReason.MANUAL:
+            msg = "automated path cannot use reason=manual"
+            raise ValueError(msg)
+        return self._write_revocation_in_transaction(
+            record,
+            clear_idempotency_key_value=None,
+        )
 
     def close(self) -> None:
         self.conn.close()
@@ -296,10 +320,12 @@ def open_state_store(db_path: Path) -> StateStore:
             (SCHEMA_VERSION_KEY, str(SCHEMA_VERSION)),
         )
     from praetor.alerts.outbox import init_health_alert_outbox_schema
+    from praetor.config.state import init_config_schema
     from praetor.tickets.outbox import init_stamp_outbox_schema
 
     init_stamp_outbox_schema(conn)
     init_health_alert_outbox_schema(conn)
+    init_config_schema(conn)
     return StateStore(conn=conn, db_path=db_path)
 
 

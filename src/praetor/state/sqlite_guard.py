@@ -71,6 +71,13 @@ def verify_connection_isolation(conn: sqlite3.Connection) -> None:
         raise StartupGuardError(msg)
 
 
+def require_critical_transaction(conn: sqlite3.Connection) -> None:
+    """Require caller to hold an open critical_transaction on this connection."""
+    if not _in_critical.get(id(conn), False):
+        msg = "operation requires an active critical_transaction"
+        raise StartupGuardError(msg)
+
+
 def verify_critical_transaction_support(conn: sqlite3.Connection) -> None:
     """Probe that BEGIN IMMEDIATE is usable on this connection."""
     verify_connection_isolation(conn)

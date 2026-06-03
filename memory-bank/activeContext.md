@@ -2,12 +2,13 @@
 
 ## Current focus
 
-**TASK-008 verification hardening complete** — awaiting sign-off before TASK-009. Do not start Task 9 until TASK-008 reopen is accepted.
+**TASK-009 complete** — org config loader, preflight, activation, emergency never-contain (55 config tests, 254 suite). Next: **TASK-010** hash-chained ledger.
 
 **Hard gate:** Three role-tagged external surfaces exist; ledger/feed/directive emission remain internal-only. Startup singleton + WAL guard operational.
 
 ## Recently changed
 
+- TASK-009: `src/praetor/config/` — YAML loader, preflight, snapshot hash, activation + reconciliation, emergency never-contain; `configs/example_org.yaml`.
 - TASK-008 reopen: test fakes removed from production; sink exception taxonomy; nested critical-tx boundary; duplicate `alert_id` idempotency; 14 new hardening tests; DEC-026/027.
 - TASK-008: `src/praetor/alerts/{outbox,system_health}.py` — durable health alert outbox; per-channel delivery; JSONL + stdout v1 sinks.
 - TASK-007 reopen: ambiguous backend errors → `unknown`; 10 new hardening tests; DEC-023 processing_attempt_identity semantics.
@@ -17,7 +18,7 @@
 ## Current blockers
 
 - Operator docs still absent: `docs/operator_runbook.md`, `docs/architecture.md`, `docs/eval_gates.md` (Task 35).
-- Provisional alert-rate targets — **TODO** before Sprint 1 ends (Tasks 9 / 11).
+- Provisional alert-rate targets validated in org-config preflight (Task 9); eval harness wiring remains Tasks 11+.
 
 ## Important notes for agents
 
@@ -32,4 +33,5 @@
 9. State store is v1 single-writer — one process with singleton lock; `allocate_attempt` / revocation paths require that constraint.
 10. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.
 11. Ticket stamp: `derive_stamp_id` from three-tuple; `execute_stamp` writes pending before backend call; transport/timeout ambiguity → `unknown` (not `failed`); recovery resends same `stamp_id` with durable payload; `processing_attempt_identity` is first-writer only (DEC-023).
-12. SystemHealthAlert: `emit_system_health_alert` persists pending before delivery; per-channel status in `system_health_delivery_attempts`; v1 channels `jsonl` + `stdout`; failed channels retry via `deliver_health_alerts`; alerts are outbox-only (not hash chain). Duplicate `alert_id` idempotent when payload matches. Must not call persist/emit inside an open `critical_transaction` (Task 9 boundary). JSONL is at-least-once — consumers dedupe on `alert_id`.
+12. SystemHealthAlert: `emit_system_health_alert` persists pending before delivery; per-channel status in `system_health_delivery_attempts`; v1 channels `jsonl` + `stdout`; failed channels retry via `deliver_health_alerts`; alerts are outbox-only (not hash chain). Duplicate `alert_id` idempotent when payload matches. Must not call persist/emit inside an open `critical_transaction`. JSONL is at-least-once — consumers dedupe on `alert_id`.
+13. Org config: `activate_org_config` / `add_emergency_never_contain` require `soc_lead`; verbatim budget on source bytes; binding hash canonical; `org_config_verbatim_renders` per render id; health alerts queued in tx with stable ids and `drain_unflushed_health_alerts` before flush; emergencies/policy reads inside `critical_transaction`.

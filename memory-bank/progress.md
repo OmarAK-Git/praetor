@@ -1,5 +1,32 @@
 # Progress Log
 
+## 2026-06-03 — TASK-009 complete
+
+- Org config package, example YAML, contracts §3a pins, cross-cutting store/hashing/contracts wiring.
+- Verification: config **55**, suite **254**, `mypy src` OK, VERIFY-004/004b ruff OK.
+- Flight Recorder: `.workflow/TASK-009/` closed.
+
+## 2026-06-03 — TASK-009 third reopen (verification green, not closed)
+
+- Local gaps: strict policy integers, `PreflightError` on binding serialize failures, fetch verifies JSON `snapshot_hash`, multi-verbatim per binding hash, stable health pending ids + activation/emergency drain.
+- Tests: `tests/config/` — **55**; full `pytest -q` → **254**; `mypy src` OK; scoped TASK-009 `ruff` OK.
+- `docs/contracts.md` §3a updated (hash vector, verbatim render rows, fetch integrity).
+- Deferred: ledger chain (Task 10), intake `config_over_budget` gate (Task 12), repo-wide ruff E501.
+
+## 2026-06-03 — TASK-009 reopen (gate review) — superseded
+
+- Earlier pass claimed 29/228; superseded by third reopen evidence above.
+
+## 2026-06-03 — TASK-009 complete (superseded by reopen)
+
+- **`src/praetor/config/`:** loader, preflight, snapshot hash, activation with post-activation reconciliation, emergency never-contain, SQLite state for active config / emergencies / outstanding directives.
+- **`configs/example_org.yaml`:** valid reference config.
+- **`StateStore.write_automated_revocation_in_transaction`:** avoids nested `critical_transaction` during activation/emergency scans.
+- Tests: `tests/config/` — **22** tests.
+- Verification: `pytest -q` → 218 passed; `mypy src` → 47 files pass.
+- Flight Recorder: `.workflow/TASK-009/`.
+- Gap: ledger hash-chain append (Task 10); provisional hard character budget constant; intake `config_over_budget` gate (Task 12).
+
 ## 2026-06-01 — TASK-008 verification hardening (reopen)
 
 - **G-1 fixed:** `FailingJsonlSink` moved to `tests/alerts/_fakes.py`; removed from production API.
