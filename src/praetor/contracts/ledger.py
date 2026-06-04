@@ -9,6 +9,7 @@ from typing import Any, Literal
 from pydantic import model_validator
 
 from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel, SchemaVersionV1
+from praetor.hashing.domains import compute_never_contain_entries_hash
 
 EMERGENCY_MAX_LIFETIME = timedelta(hours=48)
 
@@ -34,6 +35,15 @@ class NeverContainSnapshotRecord(ContractModel):
     snapshot_content: list[dict[str, Any]]
     evaluated_at: datetime
     triggered_by_decision_id: str
+
+    @model_validator(mode="after")
+    def validate_snapshot_hash(self) -> NeverContainSnapshotRecord:
+        expected = compute_never_contain_entries_hash(self.snapshot_content)
+        if self.snapshot_hash != expected:
+            raise ValueError(
+                "snapshot_hash must equal canonical hash of snapshot_content"
+            )
+        return self
 
 
 class EmergencyNeverContainRecord(ContractModel):

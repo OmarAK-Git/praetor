@@ -307,8 +307,15 @@
       "type": "string"
     },
     "ledger_previous_hash": {
-      "title": "Ledger Previous Hash",
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Ledger Previous Hash"
     },
     "live_never_contain_hash": {
       "title": "Live Never Contain Hash",

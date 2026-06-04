@@ -321,11 +321,16 @@ def open_state_store(db_path: Path) -> StateStore:
         )
     from praetor.alerts.outbox import init_health_alert_outbox_schema
     from praetor.config.state import init_config_schema
+    from praetor.ledger.store import init_ledger_schema
     from praetor.tickets.outbox import init_stamp_outbox_schema
 
     init_stamp_outbox_schema(conn)
     init_health_alert_outbox_schema(conn)
     init_config_schema(conn)
+    init_ledger_schema(conn)
+    from praetor.ledger.startup import run_ledger_startup_hook
+
+    run_ledger_startup_hook(conn)
     return StateStore(conn=conn, db_path=db_path)
 
 

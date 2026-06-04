@@ -146,10 +146,13 @@ def decision_edict(
 
 @pytest.fixture
 def never_contain_snapshot_record() -> NeverContainSnapshotRecord:
+    from praetor.hashing import compute_never_contain_entries_hash
+
+    content: list[dict[str, object]] = []
     return NeverContainSnapshotRecord(
         snapshot_id="snap-1",
-        snapshot_hash="sha256:snap:abc",
-        snapshot_content=[],
+        snapshot_hash=compute_never_contain_entries_hash(content),
+        snapshot_content=content,
         evaluated_at=NOW,
         triggered_by_decision_id="dec-1",
     )

@@ -13,6 +13,9 @@ from praetor.contracts.schema_export import (
     export_schemas,
 )
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+COMMITTED_SCHEMAS = REPO_ROOT / "schemas"
+
 EXPECTED_SCHEMA_FILES = {filename for _, filename in SCHEMA_EXPORTS}
 
 
@@ -46,3 +49,24 @@ def test_schema_export_is_byte_stable(schemas_dir: Path) -> None:
 def test_canonical_schema_bytes_sorted() -> None:
     b = canonical_schema_bytes({"z": 1, "a": 2})
     assert b.index(b'"a"') < b.index(b'"z"')
+
+
+def test_decision_edict_ledger_previous_hash_nullable_in_repo() -> None:
+    path = COMMITTED_SCHEMAS / "decision_edict.json"
+    schema = json.loads(path.read_text(encoding="utf-8"))
+    previous = schema["properties"]["ledger_previous_hash"]
+    types = {entry.get("type") for entry in previous.get("anyOf", [])}
+    assert "string" in types
+    assert "null" in types
+
+
+def test_committed_decision_edict_schema_matches_export() -> None:
+    """Drift check: committed decision_edict.json matches current model export."""
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        export_schemas(out)
+        exported = (out / "decision_edict.json").read_bytes()
+    committed = (COMMITTED_SCHEMAS / "decision_edict.json").read_bytes()
+    assert exported == committed

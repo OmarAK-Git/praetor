@@ -1,5 +1,9 @@
 # Progress Log
 
+## 2026-06-04 — TASK-010 complete
+
+- TASK-010 (revised): contracts §7a pin, startup hook in `open_state_store`, 29 ledger tests, schema drift check, audit/deletion/error-normalization coverage.
+
 ## 2026-06-03 — TASK-009 complete
 
 - Org config package, example YAML, contracts §3a pins, cross-cutting store/hashing/contracts wiring.
@@ -145,9 +149,11 @@
 | State store / lifecycle | Task 6 done — `src/praetor/state/{store,attempts,completed_decisions,idempotency}.py` |
 | Ticket stamp outbox | Task 7 done — `src/praetor/tickets/{outbox,stamp}.py` |
 | SystemHealthAlert outbox | Task 8 done — `src/praetor/alerts/{outbox,system_health}.py` |
+| Org config | Task 9 done — `src/praetor/config/` |
+| Ledger hash chain | Task 10 done — `src/praetor/ledger/` |
 | CI / eval harness | Not started (Task 26+) |
 | Operator runbooks | Not in repo yet (Task 35) |
 
 ## Next recommended steps
 
-1. TASK-008 reopen sign-off, then TASK-009 — org config loader per `docs/plan.md`.
+1. TASK-011 — revocation feed exporter and startup recovery per `docs/plan.md`.

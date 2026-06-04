@@ -31,7 +31,7 @@ class DecisionEdict(ContractModel):
     fault_flags: list[str]
     stamp_status: str
     timing_metadata: dict[str, Any]
-    ledger_previous_hash: str
+    ledger_previous_hash: str | None
     ledger_current_hash: str
     ticket_stamp_payload: dict[str, Any]
     containment_directive: ContainmentDirective | None = None

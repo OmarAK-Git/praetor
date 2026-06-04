@@ -1,15 +1,24 @@
-"""Domain-separation constants and hash derivations (docs/contracts.md §2–§9)."""
+"""Hash derivations (docs/contracts.md §2–§7a, §8–§9)."""
 
 from __future__ import annotations
 
 from collections.abc import Mapping
 from typing import Any
 
-from praetor.hashing.canonical import canonical_hash, delimited, sha256_hex
+from praetor.hashing.canonical import (
+    canonical_hash,
+    canonical_serialize,
+    delimited,
+    sha256_hex,
+)
 
 DOMAIN_DECISION_ID = "praetor:v1:decision_id"
 DOMAIN_IDEMPOTENCY_KEY = "praetor:v1:idempotency_key"
 DOMAIN_STAMP_ID = "praetor:v1:stamp_id"
+DOMAIN_LEDGER_LINK = "praetor:v1:ledger_link"
+
+# Genesis previous-hash token for delimited link preimages (docs/contracts.md §7a).
+LEDGER_GENESIS_PREVIOUS_HASH = "null"
 
 # OrgConfigSnapshot binding body keys (docs/contracts.md §3a); excludes snapshot_hash.
 ORG_CONFIG_SNAPSHOT_HASH_KEYS: frozenset[str] = frozenset(
@@ -123,3 +132,14 @@ def compute_feed_record_checksum(record: Mapping[str, Any]) -> str:
 def compute_never_contain_entries_hash(entries: list[dict[str, Any]]) -> str:
     """Embedded never-contain integrity hash per docs/contracts.md §9."""
     return canonical_hash(entries)
+
+
+def compute_ledger_link_hash(
+    *,
+    previous_hash: str | None,
+    record: Mapping[str, Any],
+) -> str:
+    """Hash-chain link over canonical record body (docs/contracts.md §7a)."""
+    prev = previous_hash if previous_hash is not None else LEDGER_GENESIS_PREVIOUS_HASH
+    body_bytes = canonical_serialize(record)
+    return sha256_hex(delimited([DOMAIN_LEDGER_LINK, prev, body_bytes]))

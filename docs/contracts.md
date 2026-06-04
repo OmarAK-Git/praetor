@@ -246,6 +246,77 @@ praetor:v1:empty_bundle
 
 ---
 
+## 7a. Ledger hash-chain link
+
+The v1 ledger is a hash-chained append-only audit log (see `docs/spec.md` § Ledger). Each appended row receives a `ledger_current_hash` linking it to the prior tip. Tamper evidence comes from recomputing these links at startup and on verification walks; it is distinct from the revocation-feed `record_checksum` (§8.1), which detects corruption only.
+
+Field-level shapes of the four interleaved record types are in `schemas/decision_edict.json`, `schemas/directive_revocation_record.json`, `schemas/never_contain_snapshot_record.json`, and `schemas/emergency_never_contain_record.json`. The link construction is pinned here.
+
+### Domain constant
+
+| Purpose | Constant (exact bytes) |
+|---|---|
+| Ledger chain link | `praetor:v1:ledger_link` |
+
+Defined once as `DOMAIN_LEDGER_LINK` in `src/praetor/hashing/domains.py`. No computation site may use an inline literal.
+
+### Genesis previous-hash token
+
+The first row in the chain has `ledger_previous_hash = null` in stored JSON (and `NULL` in the SQLite column). In the delimited link preimage, that absence is represented by the literal ASCII token:
+
+```
+null
+```
+
+Defined as `LEDGER_GENESIS_PREVIOUS_HASH` in `domains.py`. It is **not** the JSON `null` token inside the canonical body; it is the second delimited part of the link hash only.
+
+### Body and excluded fields
+
+```
+body = canonical_serialization(record_mapping)
+```
+
+- For `record_type = decision_edict`, **`ledger_previous_hash` and `ledger_current_hash` are excluded** from the body before canonical serialization (they are outputs of the link computation, not inputs).
+- For all other ledger record types, the **full contract mapping** is serialized — those types carry no embedded chain-hash fields in v1.
+
+The body uses the canonical algorithm from §1 on Python-native values (timezone-aware `datetime` objects, not Pydantic JSON strings with imprecise fractional seconds). Stored `record_json` in SQLite is the canonical UTF-8 JSON bytes of the post-append mapping (including populated chain-hash fields on `DecisionEdict`).
+
+### Link construction
+
+```
+ledger_current_hash = SHA256( delimited([
+    DOMAIN_LEDGER_LINK,                 # always first
+    ledger_previous_hash or "null",     # genesis uses LEDGER_GENESIS_PREVIOUS_HASH
+    body_bytes                          # canonical_serialization(body)
+]) )
+```
+
+Output is lowercase hex SHA-256. Order is part of the contract.
+
+### Test vector (genesis link)
+
+Minimal genesis body (`DirectiveRevocationRecord`, no chain-hash fields):
+
+```json
+{"directive_id":"dir-task010-vector","idempotency_key_cleared":true,"ledger_commit_at":"2026-06-04T12:00:00.000000Z","reason":"manual","reason_code":"manual_revocation","record_type":"directive_revocation","revocation_id":"rev-task010-vector","revoked_at":"2026-06-04T12:00:00.000000Z","schema_version":"1","superseded_by_directive_id":null,"triggered_by":"soc-lead-vector"}
+```
+
+With `ledger_previous_hash = null` (genesis):
+
+```
+ledger_current_hash = 4a702d2467a6763bfb76a23016b46d7f30cdb245514e4c3183b5d643306074e0
+```
+
+### Chain verification boundaries (v1)
+
+- **Middle deletion** — removing any non-genesis row breaks the next row's `ledger_previous_hash` link and is detected at verification.
+- **In-place tampering** — altering `record_json` or `ledger_current_hash` without recomputing the chain is detected.
+- **Tail truncation** — deleting the latest row(s) leaves a prefix that still verifies internally; v1 has no anchored external tip, so tail truncation is **not detectable** from the chain alone. Production hardening (signed records, WORM storage) is out of scope for v1.
+
+Unrecognized `record_type` values, malformed JSON, missing required fields, or canonical-serialization violations during verification are chain integrity failures.
+
+---
+
 ## 8. Revocation feed: checksum and sequence semantics
 
 The revocation feed is an append-only JSONL **projection** of `DirectiveRevocationRecord`s. It is not the system of record; the hash chain is (see spec, RevocationFeed v1). The feed exists so consumers can perform the pre-actuation revocation check (§10) without a live query API.
