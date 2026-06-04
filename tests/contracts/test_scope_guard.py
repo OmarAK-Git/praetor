@@ -56,6 +56,7 @@ def test_only_expected_top_level_packages() -> None:
         "contracts",
         "hashing",
         "ledger",
+        "revocation",
         "runtime",
         "state",
         "tickets",

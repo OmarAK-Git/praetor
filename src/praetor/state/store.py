@@ -328,9 +328,25 @@ def open_state_store(db_path: Path) -> StateStore:
     init_health_alert_outbox_schema(conn)
     init_config_schema(conn)
     init_ledger_schema(conn)
+    from praetor.revocation.outbox import init_revocation_feed_export_schema
+
+    init_revocation_feed_export_schema(conn)
+    from praetor.config.state import fetch_active_snapshot
     from praetor.ledger.startup import run_ledger_startup_hook
+    from praetor.revocation.exporter import run_feed_startup_hook_for_db
 
     run_ledger_startup_hook(conn)
+    snapshot = fetch_active_snapshot(conn)
+    if snapshot is not None:
+        feed_policy = snapshot.revocation_feed_policy
+        run_feed_startup_hook_for_db(
+            conn,
+            db_path,
+            max_feed_export_retries=feed_policy.max_feed_export_retries,
+            propagation_delay_seconds=(
+                feed_policy.max_revocation_feed_propagation_delay_seconds
+            ),
+        )
     return StateStore(conn=conn, db_path=db_path)
 
 
