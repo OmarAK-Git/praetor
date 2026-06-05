@@ -43,6 +43,8 @@ select = ["E", "F", "I", "UP", "B"]
 [tool.ruff.lint.per-file-ignores]
 "src/praetor/config/**/*.py" = ["E501"]
 "tests/config/**/*.py" = ["E501"]
+"src/praetor/engine/**/*.py" = ["E501"]
+"tests/engine/**/*.py" = ["E501"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/praetor"]

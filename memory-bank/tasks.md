@@ -6,7 +6,7 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-012 | Walking skeleton decision flow and recovery | pending | **Phase 1 gate** ends here |
+| — | — | — | Phase 1 complete; next work starts Phase 2 (Task 13+) |
 
 ## Upcoming (by phase)
 
@@ -34,3 +34,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-009 | Org config loader, preflight, activation, emergency never-contain | `.workflow/TASK-009/verification.md` — `pytest` 254 / config 55; contracts §3a; flight recorder closed |
 | TASK-010 | Hash-chained audit log and snapshot records | `.workflow/TASK-010/verification.md` — `pytest` 285 / ledger 29; contracts §7a; startup hook |
 | TASK-011 | Revocation feed exporter, startup recovery, smoke benchmark | `.workflow/TASK-011/verification.md` — `pytest` 302 / revocation 11; `src/praetor/revocation/` |
+| TASK-012 | Walking skeleton decision flow and recovery | `.workflow/TASK-012/verification.md` — `pytest` 341 / engine 25; `src/praetor/engine/` — **Phase 1 gate** |

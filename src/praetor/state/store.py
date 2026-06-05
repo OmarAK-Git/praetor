@@ -336,6 +336,12 @@ def open_state_store(db_path: Path) -> StateStore:
     from praetor.revocation.exporter import run_feed_startup_hook_for_db
 
     run_ledger_startup_hook(conn)
+    from praetor.engine.recovery import run_engine_startup_recovery
+
+    store = StateStore(conn=conn, db_path=db_path)
+    # Spec startup steps 4,5,7 (attempts, ledger gaps, directive never-contain scan)
+    # run before feed recovery (step 8). Step 6 is not yet implemented (no v1 containment).
+    run_engine_startup_recovery(store)
     snapshot = fetch_active_snapshot(conn)
     if snapshot is not None:
         feed_policy = snapshot.revocation_feed_policy
@@ -347,7 +353,7 @@ def open_state_store(db_path: Path) -> StateStore:
                 feed_policy.max_revocation_feed_propagation_delay_seconds
             ),
         )
-    return StateStore(conn=conn, db_path=db_path)
+    return store
 
 
 def read_feed_sequence_next(conn: sqlite3.Connection) -> int:

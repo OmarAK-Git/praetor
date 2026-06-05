@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-06-04 — TASK-012 complete (Phase 1 gate)
+
+- Walking skeleton: `src/praetor/engine/` — intake orchestrator, edict builder, citation check, startup recovery for attempts/directives.
+- `open_state_store` runs engine recovery (step 7) before feed hook (step 8).
+- Verification (re-run 2026-06-05): engine **25**, suite **341**, `mypy src` OK, ruff OK.
+- Review hardening: single-site EMPTY_BUNDLE (DEC-006), crash-window/unknown-abort/failed-autocontain/correlation-redelivery tests, docstring step 4,5,7 (DEC-007).
+- Flight Recorder: `.workflow/TASK-012/`.
+
 ## 2026-06-04 — TASK-011 complete
 
 - Revocation feed package: outbox export metadata, JSONL exporter, startup recovery hook, PolicyGate age probe, unhealthy transition + health alert.
@@ -159,9 +167,10 @@
 | Org config | Task 9 done — `src/praetor/config/` |
 | Ledger hash chain | Task 10 done — `src/praetor/ledger/` |
 | Revocation feed export | Task 11 done — `src/praetor/revocation/` |
+| Walking skeleton / recovery | Task 12 done — `src/praetor/engine/` (**Phase 1 complete**) |
 | CI / eval harness | Not started (Task 26+) |
 | Operator runbooks | Not in repo yet (Task 35) |
 
 ## Next recommended steps
 
-1. TASK-012 — walking skeleton decision flow and recovery per `docs/plan.md`.
+1. TASK-013 — provider abstraction and FakeProvider per `docs/plan.md`.

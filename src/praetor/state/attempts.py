@@ -130,6 +130,22 @@ def _fetch_attempt_by_id(
     return _row_to_attempt(row)
 
 
+def fetch_all_non_terminal_attempts(
+    conn: sqlite3.Connection,
+) -> list[ProcessingAttempt]:
+    """Return all attempts not in completed or aborted state."""
+    rows = conn.execute(
+        """
+        SELECT attempt_id, alert_identity, evidence_bundle_hash,
+               org_config_snapshot_hash, state, created_at, updated_at
+        FROM processing_attempts
+        WHERE state NOT IN ('completed', 'aborted')
+        ORDER BY attempt_id
+        """
+    ).fetchall()
+    return [_row_to_attempt(row) for row in rows]
+
+
 def _fetch_non_terminal_for_alert(
     conn: sqlite3.Connection, alert_identity: str
 ) -> ProcessingAttempt | None:

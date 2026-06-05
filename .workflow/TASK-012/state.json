@@ -1,0 +1,16 @@
+{
+  "run": "TASK-012",
+  "status": "complete",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-04",
+  "tasks": [
+    {
+      "id": "TASK-012",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Walking skeleton + startup recovery"
+    }
+  ]
+}
