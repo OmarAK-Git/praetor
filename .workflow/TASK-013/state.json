@@ -1,0 +1,46 @@
+{
+  "run": "TASK-013",
+  "status": "complete",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-08",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Red check failed with missing praetor.judgment package."
+    },
+    {
+      "id": "TASK-002",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Added Protocol, exceptions, request/probe result, retry policy/helper."
+    },
+    {
+      "id": "TASK-003",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Added valid, malformed JSON, timeout, refusal, fabricated citation modes."
+    },
+    {
+      "id": "TASK-004",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Added no-network Protocol stub with probe result."
+    },
+    {
+      "id": "TASK-005",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Engine now uses judgment provider Protocol and provider fault edicts."
+    },
+    {
+      "id": "TASK-006",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Provider tests, engine tests, full pytest, mypy, and ruff are green."
+    }
+  ]
+}

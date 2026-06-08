@@ -325,6 +325,47 @@ def test_unknown_stamp_recovery_at_stamp_resolved_states(
     assert_edict_snapshot_pairing(activated.conn, edicts[0])
 
 
+def test_pending_stamp_recovery_creates_missing_stamp_outbox_row(
+    activated,
+) -> None:
+    alloc = activated.allocate_attempt(
+        alert_identity="ALERT-PENDING-NO-STAMP-ROW",
+        evidence_bundle_hash=SKELETON_BUNDLE_HASH,
+        org_config_snapshot_hash=EXAMPLE_SNAPSHOT_HASH,
+    )
+    assert alloc.attempt is not None
+    aid = alloc.attempt.processing_attempt_identity
+    transition_attempt(activated.conn, aid, AttemptState.ACTIVE)
+    transition_attempt(activated.conn, aid, AttemptState.PENDING_STAMP)
+    stamp_id = derive_stamp_id(
+        alloc.attempt.alert_identity,
+        stamp_evidence_hash(
+            evidence_bundle_hash_value=alloc.attempt.evidence_bundle_hash
+        ),
+        alloc.attempt.org_config_snapshot_hash,
+    )
+    assert fetch_stamp_outbox(activated.conn, stamp_id) is None
+
+    run_engine_startup_recovery(
+        activated,
+        stamp_backend=SucceedingStampBackend(),
+    )
+
+    entry = fetch_stamp_outbox(activated.conn, stamp_id)
+    assert entry is not None
+    assert entry.status == StampStatus.SUCCEEDED
+    edicts = fetch_ledger_edicts(activated.conn)
+    assert len(edicts) == 1
+    assert edicts[0].final_disposition != Disposition.AUTO_CONTAIN
+    assert_edict_snapshot_pairing(activated.conn, edicts[0])
+    row = activated.conn.execute(
+        "SELECT state FROM processing_attempts WHERE attempt_id = ?",
+        (int(aid),),
+    ).fetchone()
+    assert row is not None
+    assert str(row["state"]) == AttemptState.COMPLETED.value
+
+
 def test_failed_stamp_recovery_preserves_standard_review(activated) -> None:
     alloc = activated.allocate_attempt(
         alert_identity="ALERT-STAMP-FAIL",

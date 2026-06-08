@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-06-08 — TASK-013 complete
+
+- Judgment provider layer: `src/praetor/judgment/` — Protocol, request/probe types, typed provider failures, bounded timeout retry, scenario-scoped FakeProvider modes, and Vertex stub.
+- Engine provider integration: `process_alert_intake` maps provider malformed JSON, timeout, and refusal to Outcome Matrix edicts; fabricated citation mode reaches existing citation validation.
+- T2 prerequisite closed: `pending_stamp` recovery now has direct no-stamp-outbox-row coverage.
+- Verification: judgment **10**, engine **26**, suite **354**, `mypy src` OK (70 files), ruff OK.
+- Flight Recorder: `.workflow/TASK-013/`.
+
 ## 2026-06-04 — TASK-012 complete (Phase 1 gate)
 
 - Walking skeleton: `src/praetor/engine/` — intake orchestrator, edict builder, citation check, startup recovery for attempts/directives.

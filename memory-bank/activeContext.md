@@ -2,12 +2,14 @@
 
 ## Current focus
 
-**Phase 1 gate cleared** — durable walking skeleton, ledger append coverage, stamp integration, revocation feed, org config, and startup recovery are verified.
+**TASK-013 complete** — provider abstraction, scenario-scoped FakeProvider injection modes, bounded timeout retry, provider failure Outcome Matrix paths, and Vertex provider stub are verified.
 
-Next: **TASK-013** (provider abstraction / FakeProvider).
+Next: **TASK-014** (prompt construction and excerpt hygiene).
 
 ## Recently changed
 
+- TASK-013: `src/praetor/judgment/` — shared `JudgmentProvider` Protocol, `JudgmentRequest`, `ProviderRetryPolicy`, typed provider failures, scenario-scoped FakeProvider modes (`valid`, `malformed_json`, `timeout`, `refusal`, `fabricated_citation`), and no-network `VertexProvider` stub.
+- `src/praetor/engine/orchestrator.py` now calls the shared provider Protocol and maps `provider_malformed_json`, `provider_timeout`, and `provider_refusal` to `escalate` with `system_fault_escalation=true`; fabricated citations continue through citation validation.
 - README updated with phase structure, Phase 1 status, built-so-far summary, and browse/demo guidance.
 - Phase 1 punch-list cleared: live emergency records/revocations and activation revocations now append to the hash-chain ledger; guarded `open_state_store(..., singleton=...)` fails closed when the singleton/WAL guard is not satisfied; repo-wide ruff is clean.
 - TASK-012: `src/praetor/engine/` — hardcoded bundle/judgment intake, fault paths (`correlation_failure`, `config_over_budget`, `invalid_model_citation`), `run_engine_startup_recovery` wired in `open_state_store`; no recovery `auto_contain`.
@@ -29,4 +31,5 @@ Next: **TASK-013** (provider abstraction / FakeProvider).
 5. `docs/contracts.md` is SSOT; `schemas/` are generated artifacts only.
 6. Startup order: singleton lock → SQLite guard → `open_state_store` (ledger verify, **engine recovery**, then feed recovery if active config) → intake.
 7. Engine intake: `process_alert_intake` / `WalkingSkeletonEngine` after active org config; never emits `auto_contain` in v1 skeleton.
-8. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.
+8. Provider layer: Task 13 request shape is minimal; Task 14 owns prompt/excerpt contents. FakeProvider modes are scenario-scoped and no real Vertex call exists yet.
+9. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.
