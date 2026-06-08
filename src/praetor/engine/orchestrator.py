@@ -28,6 +28,7 @@ from praetor.engine.edict import (
 from praetor.engine.skeleton import (
     SKELETON_ALERT_ID,
     SKELETON_BUNDLE_HASH,
+    SKELETON_EVIDENCE_BUNDLE,
     SKELETON_EVIDENCE_CATALOG,
     skeleton_model_judgment,
 )
@@ -207,7 +208,7 @@ def process_alert_intake(
         )
     calls = getattr(judgment_provider, "calls", 0)
 
-    if not validate_skeleton_citations(judgment, SKELETON_EVIDENCE_CATALOG):
+    if not validate_skeleton_citations(judgment, SKELETON_EVIDENCE_BUNDLE):
         return _finish_invalid_citation(store, attempt, judgment, calls)
 
     disposition = skeleton_policy_result(judgment)

@@ -6,7 +6,7 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-015 | Evidence Citation Validator | Next | Validate evidence IDs and field paths; do not implement PolicyGate |
+| TASK-016 | Canonical Account Identity and Synthetic Provenance Tests | Next | Depends on TASK-015; keep PolicyGate out of scope until TASK-017 |
 
 ## Gate prerequisites
 
@@ -15,6 +15,11 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
   limits, or breakers until this reconciliation is added.
 - Task 19 provider-health breaker must define/map `ProviderUnavailableError`
   from the Vertex stub; do not catch it in intake until an Outcome Matrix row exists.
+- TASK-015 citation surface (TASK-017 reuse): citable field paths are normalized
+  evidence fields (bare or `normalized_fields.*`), nested normalized paths, plus
+  `source_event_reference` and `provenance_path` (TASK-014 prompt excerpts).
+  `raw_source` is unciteable at any path depth. Fact-envelope keys such as
+  `evidence_id` are not citable field paths.
 
 ## Upcoming (by phase)
 
@@ -46,3 +51,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | PHASE-1-GATE | Gate closure punch-list | `.workflow/phase-1-gate-punchlist.md` — `python -m pytest -q` 343 passed; `python -m mypy src` clean; `python -m ruff check src tests` clean |
 | TASK-013 | Provider abstraction / FakeProvider injection modes | `.workflow/TASK-013/verification.md` — `pytest` 354 / judgment 10 / engine 26; `src/praetor/judgment/`; `pending_stamp` no-row recovery regression |
 | TASK-014 | Prompt construction and excerpt hygiene | `.workflow/TASK-014/verification.md` — `pytest` 359 / judgment 15 / engine 26; `src/praetor/judgment/{excerpt,prompt}.py`; sanitized `PromptExcerptSet` provider payload |
+| TASK-015 | Evidence Citation Validator | `.workflow/TASK-015/verification.md` — `pytest` 366 / evidence 7 / engine-provider citations 15; `src/praetor/evidence/citations.py`; shared validator for structural citation refs |

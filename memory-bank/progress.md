@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-06-08 — TASK-015 complete
+
+- Evidence citation validator: `src/praetor/evidence/citations.py` — validates cited evidence IDs and field paths against `EvidenceBundle`, requires citations for `escalate` / `auto_contain`, excludes `raw_source`, and returns resolved citation metadata including `ambiguity_flag`.
+- Engine integration: walking-skeleton citation validation now delegates to the shared validator via `src/praetor/engine/citations.py`; `src/praetor/engine/skeleton.py` supplies the skeleton `EvidenceBundle`.
+- Scope guard: `tests/contracts/test_scope_guard.py` now allows the intentional `evidence` package.
+- Verification: evidence **7**, engine/provider citation regressions **15**, suite **366**, `mypy src` OK (74 files), ruff OK.
+- Flight Recorder: `.workflow/TASK-015/`.
+
 ## 2026-06-08 — TASK-014 complete
 
 - Prompt/excerpt hygiene: `src/praetor/judgment/excerpt.py` and `src/praetor/judgment/prompt.py` — sanitized `PromptExcerptSet`, 200-character head+tail truncation with exact omission markers, recursive `raw_source` exclusion, incomplete-content warning, and structured-output instructions.

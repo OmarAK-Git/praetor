@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from typing import Any
 
 from praetor.contracts.disposition import Disposition
+from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
 from praetor.contracts.judgment import CitedEvidenceRef, ModelJudgment
 from praetor.engine.ids import evidence_bundle_hash
 
@@ -19,6 +21,20 @@ SKELETON_EVIDENCE_CATALOG: dict[str, dict[str, Any]] = {
         "ambiguity_flag": False,
     },
 }
+
+SKELETON_EVIDENCE_BUNDLE = EvidenceBundle(
+    facts=[
+        EvidenceFact(
+            evidence_id=SKELETON_EVIDENCE_ID,
+            normalized_fields={"process_name": "cmd.exe"},
+            source_event_reference="synthetic:walking-skeleton",
+            raw_source="synthetic walking skeleton event",
+            provenance_path="synthetic/walking_skeleton",
+            ambiguity_flag=False,
+            timestamp=datetime(2026, 1, 1, tzinfo=UTC),
+        )
+    ]
+)
 
 SKELETON_BUNDLE_BODY: dict[str, Any] = {
     "schema_version": "1.0",

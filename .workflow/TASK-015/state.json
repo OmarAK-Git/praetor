@@ -1,0 +1,34 @@
+{
+  "run": "TASK-015",
+  "status": "completed",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-08",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "status": "completed",
+      "owner": "agent",
+      "notes": "Focused citation validator tests added and watched fail on missing praetor.evidence module."
+    },
+    {
+      "id": "TASK-002",
+      "status": "completed",
+      "owner": "agent",
+      "notes": "Shared validator implemented in praetor.evidence.citations."
+    },
+    {
+      "id": "TASK-003",
+      "status": "completed",
+      "owner": "agent",
+      "notes": "Walking-skeleton citation adapter now delegates to the shared validator."
+    },
+    {
+      "id": "TASK-004",
+      "status": "completed",
+      "owner": "agent",
+      "notes": "Focused tests, regressions, full suite, mypy, and ruff completed."
+    }
+  ]
+}

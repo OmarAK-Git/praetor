@@ -237,3 +237,29 @@ def test_provider_fabricated_citation_flows_to_citation_validator(
         proposed_disposition=Disposition.STANDARD_REVIEW,
     )
     assert_edict_snapshot_pairing(activated.conn, result.edict)
+
+
+def test_auto_contain_fabricated_citation_escalates_before_policy_downgrade(
+    activated: StateStore,
+) -> None:
+    provider = FakeProvider(
+        mode=FakeProviderMode.FABRICATED_CITATION,
+        proposed_disposition=Disposition.AUTO_CONTAIN,
+    )
+
+    result = process_alert_intake(
+        activated,
+        judgment_provider=provider,
+        stamp_backend=SucceedingStampBackend(),
+        alert_identity="ALERT-AUTO-CONTAIN-FABRICATED-CITATION",
+    )
+
+    assert result.edict is not None
+    assert_outcome_matrix_edict(
+        result.edict,
+        final_disposition=Disposition.ESCALATE,
+        fault_flags=["invalid_model_citation"],
+        system_fault_escalation=True,
+        proposed_disposition=Disposition.AUTO_CONTAIN,
+    )
+    assert_edict_snapshot_pairing(activated.conn, result.edict)

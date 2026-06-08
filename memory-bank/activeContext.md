@@ -2,12 +2,13 @@
 
 ## Current focus
 
-**TASK-014 complete** — prompt construction and excerpt hygiene are verified: provider-facing evidence now flows through sanitized `PromptExcerptSet`, org config verbatim text is included after budget enforcement, and structured-output instructions are present.
+**TASK-015 complete** — evidence citation validation is shared: `praetor.evidence.citations` validates cited evidence IDs and field paths against `EvidenceBundle`, requires citations for `escalate` / `auto_contain`, exposes cited fact `ambiguity_flag`, and the walking skeleton now delegates to it.
 
-Next: **TASK-015** (evidence citation validator).
+Next: **TASK-016** (canonical account identity and synthetic provenance tests).
 
 ## Recently changed
 
+- TASK-015: `src/praetor/evidence/citations.py` and `tests/evidence/test_citation_validation.py` add the shared structural citation validator; `src/praetor/engine/citations.py` now adapts the walking skeleton to the shared path, with `src/praetor/engine/skeleton.py` providing an `EvidenceBundle` fixture.
 - TASK-014: `src/praetor/judgment/excerpt.py` and `src/praetor/judgment/prompt.py` add 200-character head+tail prompt excerpts, recursive `raw_source` exclusion, incomplete-content warnings, verbatim org-config prompt payloads, and structured-output instructions.
 - `src/praetor/engine/orchestrator.py` now builds `JudgmentRequest.payload` from sanitized prompt output (`prompt_excerpt_set`) instead of minimal hash-only Task 13 payloads; `config_over_budget` still blocks the provider before prompt construction.
 - TASK-013: `src/praetor/judgment/` — shared `JudgmentProvider` Protocol, `JudgmentRequest`, `ProviderRetryPolicy`, typed provider failures, scenario-scoped FakeProvider modes (`valid`, `malformed_json`, `timeout`, `refusal`, `fabricated_citation`), and no-network `VertexProvider` stub.
@@ -34,4 +35,5 @@ Next: **TASK-015** (evidence citation validator).
 6. Startup order: singleton lock → SQLite guard → `open_state_store` (ledger verify, **engine recovery**, then feed recovery if active config) → intake.
 7. Engine intake: `process_alert_intake` / `WalkingSkeletonEngine` after active org config; never emits `auto_contain` in v1 skeleton.
 8. Provider layer: Task 14 request payload includes sanitized `prompt_excerpt_set`, verbatim org config, incomplete-content notice, and structured-output instructions. FakeProvider modes are scenario-scoped and no real Vertex call exists yet.
-9. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.
+9. Citation validation: Task 15 shared validator lives in `src/praetor/evidence/citations.py`; unresolved evidence IDs/field paths and missing `escalate` / `auto_contain` citations are invalid. PolicyGate must reuse this validator when implemented.
+10. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.
