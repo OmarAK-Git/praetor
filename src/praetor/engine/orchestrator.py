@@ -31,6 +31,7 @@ from praetor.engine.skeleton import (
     SKELETON_EVIDENCE_CATALOG,
     skeleton_model_judgment,
 )
+from praetor.judgment.prompt import build_judgment_prompt_payload
 from praetor.judgment.provider import (
     JudgmentProvider,
     JudgmentRequest,
@@ -159,17 +160,23 @@ def process_alert_intake(
     if not correlate:
         return _finish_correlation_failure(store, attempt)
 
+    verbatim = fetch_verbatim_render_text(store.conn, snap_hash)
     if enforce_config_budget:
-        verbatim = fetch_verbatim_render_text(store.conn, snap_hash)
-        if verbatim is not None and verbatim_character_count(verbatim) > HARD_CONFIG_CHARACTER_BUDGET:
+        if (
+            verbatim is not None
+            and verbatim_character_count(verbatim) > HARD_CONFIG_CHARACTER_BUDGET
+        ):
             return _finish_config_over_budget(store, attempt, judgment_provider)
 
+    prompt_payload = build_judgment_prompt_payload(
+        evidence_facts=SKELETON_EVIDENCE_CATALOG.values(),
+        evidence_bundle_hash=bundle_hash,
+        org_config_snapshot_hash=snap_hash,
+        org_config_verbatim=verbatim or "",
+    )
     request = JudgmentRequest(
         scenario_id=alert_identity,
-        payload={
-            "evidence_bundle_hash": bundle_hash,
-            "org_config_snapshot_hash": snap_hash,
-        },
+        payload=prompt_payload,
     )
     try:
         judgment = call_provider_with_retries(

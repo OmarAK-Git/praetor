@@ -6,7 +6,7 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-014 | Prompt construction and excerpt hygiene | Next | Build on Task 13 provider abstraction; do not implement citation validator or PolicyGate |
+| TASK-015 | Evidence Citation Validator | Next | Validate evidence IDs and field paths; do not implement PolicyGate |
 
 ## Gate prerequisites
 
@@ -45,3 +45,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-012 | Walking skeleton decision flow and recovery | `.workflow/TASK-012/verification.md` — `pytest` 341 / engine 25; `src/praetor/engine/` — **Phase 1 gate** |
 | PHASE-1-GATE | Gate closure punch-list | `.workflow/phase-1-gate-punchlist.md` — `python -m pytest -q` 343 passed; `python -m mypy src` clean; `python -m ruff check src tests` clean |
 | TASK-013 | Provider abstraction / FakeProvider injection modes | `.workflow/TASK-013/verification.md` — `pytest` 354 / judgment 10 / engine 26; `src/praetor/judgment/`; `pending_stamp` no-row recovery regression |
+| TASK-014 | Prompt construction and excerpt hygiene | `.workflow/TASK-014/verification.md` — `pytest` 359 / judgment 15 / engine 26; `src/praetor/judgment/{excerpt,prompt}.py`; sanitized `PromptExcerptSet` provider payload |

@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-06-08 — TASK-014 complete
+
+- Prompt/excerpt hygiene: `src/praetor/judgment/excerpt.py` and `src/praetor/judgment/prompt.py` — sanitized `PromptExcerptSet`, 200-character head+tail truncation with exact omission markers, recursive `raw_source` exclusion, incomplete-content warning, and structured-output instructions.
+- Engine provider request: `process_alert_intake` now passes provider payload with `prompt_excerpt_set`, `org_config_verbatim`, hashes, and instructions; `config_over_budget` remains pre-provider.
+- Review hardening: added regressions for normalized/nested `raw_source` leaks and walking-skeleton `process_name` prompt availability.
+- Verification: prompt **5**, judgment **15**, engine **26**, suite **359**, `mypy src` OK (72 files), ruff OK.
+- Flight Recorder: `.workflow/TASK-014/`.
+
 ## 2026-06-08 — TASK-013 complete
 
 - Judgment provider layer: `src/praetor/judgment/` — Protocol, request/probe types, typed provider failures, bounded timeout retry, scenario-scoped FakeProvider modes, and Vertex stub.
