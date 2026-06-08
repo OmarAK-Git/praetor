@@ -6,8 +6,8 @@ Durable core first: contracts, canonical hashing, startup guards, lifecycle/outb
 
 ## Sprint Groupings
 
-- Sprint 1: Tasks 1-11. Contracts, canonical serialization, auth, startup guards, SQLite lifecycle/outboxes, config, ledger, revocation feed, walking skeleton, provisional alert-rate targets, smoke benchmark.
-- Sprint 2: Tasks 12-26. Judgment, prompt construction, PolicyGate, breakers, half-open probes, directive lifecycle, consumer verifier, metrics, annotations, Phase 2 eval harness, real-provider adversarial probe.
+- Sprint 1: Tasks 1-12. Contracts, canonical serialization, auth, startup guards, SQLite lifecycle/outboxes, config, ledger, revocation feed, walking skeleton, provisional alert-rate targets, smoke benchmark, and Phase 1 gate recovery.
+- Sprint 2: Tasks 13-26. Judgment, prompt construction, PolicyGate, breakers, half-open probes, directive lifecycle, consumer verifier, metrics, annotations, Phase 2 eval harness, real-provider adversarial probe.
 - Sprint 3: Tasks 27-30. Correlation normalization, identity compliance, accuracy gate, Phase 3 harness.
 - Sprint 4: Tasks 31-32. Detection portability and Splunk demo.
 - Sprint 5: Tasks 33-34. Codification, production throughput benchmark, operator runbooks.
@@ -287,6 +287,11 @@ Done when: account containment eligibility is testable before real correlation e
 
 ## Task 17 - Deterministic PolicyGate v1
 Complexity: L | Depends on: Tasks 9, 11, 12, 14-16
+
+**Blocking Phase 1 gate prerequisites (must land before this task starts):**
+
+- Startup recovery step 6 — idempotency-key, rate-counter, and breaker reconciliation in `src/praetor/engine/recovery.py` (currently absent and documented as such at the `run_engine_startup_recovery` docstring). PolicyGate introduces the rate-limit / breaker / idempotency state this step is meant to reconcile across a crash; without it, recovery cannot restore that state safely.
+- Production startup must pass a held `SingletonLock` to `open_state_store(..., singleton=...)`, and a test must assert the lockless open path is rejected for the production entrypoint. The fail-closed guard path exists (Task 5 / `run_startup_sqlite_guard`) but is not yet forced on callers.
 
 Test first:
 

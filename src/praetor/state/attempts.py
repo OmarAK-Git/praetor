@@ -5,7 +5,7 @@ from __future__ import annotations
 import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 
 from praetor.hashing import derive_decision_id
 from praetor.state.completed_decisions import (
@@ -27,7 +27,7 @@ NON_TERMINAL_STATES = frozenset(
 )
 
 
-class AttemptState(str, Enum):
+class AttemptState(StrEnum):
     ALLOCATED = "allocated"
     ACTIVE = "active"
     PENDING_STAMP = "pending_stamp"
@@ -170,7 +170,10 @@ def allocate_attempt(
     evidence_bundle_hash: str,
     org_config_snapshot_hash: str,
 ) -> AllocationResult:
-    """Allocate or return existing completed edict (docs/contracts.md §6 intake-race rule)."""
+    """Allocate or return existing completed edict.
+
+    See docs/contracts.md §6 for the intake-race rule.
+    """
     with critical_transaction(conn):
         existing = fetch_completed_decision(
             conn,

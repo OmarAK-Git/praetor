@@ -6,7 +6,15 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| — | — | — | Phase 1 complete; next work starts Phase 2 (Task 13+) |
+| TASK-013 | Provider abstraction / FakeProvider injection modes | Next | Start Phase 2 after confirming gate artifacts are committed or intentionally left uncommitted |
+
+## Gate prerequisites
+
+- Startup recovery step 6 (idempotency-key, rate-counter, breaker reconciliation)
+  is a hard prerequisite for Tasks 17–19; do not implement PolicyGate, rate
+  limits, or breakers until this reconciliation is added.
+- Add or confirm a regression for `pending_stamp` recovery when no stamp-outbox
+  row exists before Task 13 provider work introduces real stamp integrations.
 
 ## Upcoming (by phase)
 
@@ -35,3 +43,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-010 | Hash-chained audit log and snapshot records | `.workflow/TASK-010/verification.md` — `pytest` 285 / ledger 29; contracts §7a; startup hook |
 | TASK-011 | Revocation feed exporter, startup recovery, smoke benchmark | `.workflow/TASK-011/verification.md` — `pytest` 302 / revocation 11; `src/praetor/revocation/` |
 | TASK-012 | Walking skeleton decision flow and recovery | `.workflow/TASK-012/verification.md` — `pytest` 341 / engine 25; `src/praetor/engine/` — **Phase 1 gate** |
+| PHASE-1-GATE | Gate closure punch-list | `.workflow/phase-1-gate-punchlist.md` — `python -m pytest -q` 343 passed; `python -m mypy src` clean; `python -m ruff check src tests` clean |

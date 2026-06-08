@@ -2,20 +2,28 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 from pydantic import ValidationError
 
 from praetor.contracts.alert import AlertEnvelope
-from praetor.contracts.containment import ContainmentDirective, DirectiveStatus, TargetType
+from praetor.contracts.containment import (
+    ContainmentDirective,
+    DirectiveStatus,
+    TargetType,
+)
 from praetor.contracts.disposition import Disposition
 from praetor.contracts.edict import DecisionEdict
 from praetor.contracts.governance import AnalystAnnotation
 from praetor.contracts.judgment import ModelJudgment
-from praetor.contracts.ledger import DirectiveRevocationRecord, EmergencyNeverContainRecord, RevocationReason
+from praetor.contracts.ledger import (
+    DirectiveRevocationRecord,
+    EmergencyNeverContainRecord,
+    RevocationReason,
+)
 
-UTC = timezone.utc
+UTC = UTC
 NOW = datetime(2026, 6, 1, 12, 0, 0, tzinfo=UTC)
 
 
@@ -60,27 +68,38 @@ def test_analyst_annotation_forbids_correction_when_correct() -> None:
         )
 
 
-def test_decision_edict_record_type_and_fault_flag(containment_directive, decision_edict: DecisionEdict) -> None:
+def test_decision_edict_record_type_and_fault_flag(
+    containment_directive,
+    decision_edict: DecisionEdict,
+) -> None:
     assert decision_edict.record_type == "decision_edict"
     assert decision_edict.system_fault_escalation is False
     _ = containment_directive  # fixture ensures directive model exists
 
 
-def test_containment_directive_rejects_revocation_feed_id(containment_directive: ContainmentDirective) -> None:
+def test_containment_directive_rejects_revocation_feed_id(
+    containment_directive: ContainmentDirective,
+) -> None:
     data = containment_directive.model_dump(mode="json")
     data["revocation_feed_id"] = "feed-99"
     with pytest.raises(ValidationError):
         ContainmentDirective.model_validate(data)
 
 
-def test_containment_directive_max_lifetime(containment_directive: ContainmentDirective) -> None:
+def test_containment_directive_max_lifetime(
+    containment_directive: ContainmentDirective,
+) -> None:
     data = containment_directive.model_dump(mode="json")
-    data["expires_at"] = (containment_directive.issued_at + timedelta(seconds=301)).isoformat()
+    data["expires_at"] = (
+        containment_directive.issued_at + timedelta(seconds=301)
+    ).isoformat()
     with pytest.raises(ValidationError):
         ContainmentDirective.model_validate(data)
 
 
-def test_containment_directive_account_requires_sid(containment_directive: ContainmentDirective) -> None:
+def test_containment_directive_account_requires_sid(
+    containment_directive: ContainmentDirective,
+) -> None:
     data = containment_directive.model_dump(mode="json")
     data["target_type"] = "account"
     data["target_id"] = "not-a-sid"
@@ -149,7 +168,9 @@ def test_revocation_supersession_requires_superseded_id() -> None:
         )
 
 
-def test_revocation_non_supersession_forbids_superseded_id(directive_revocation_record: DirectiveRevocationRecord) -> None:
+def test_revocation_non_supersession_forbids_superseded_id(
+    directive_revocation_record: DirectiveRevocationRecord,
+) -> None:
     record = directive_revocation_record.model_copy(
         update={
             "reason": RevocationReason.SUPERSESSION,
@@ -175,10 +196,14 @@ def test_revocation_non_supersession_forbids_superseded_id(directive_revocation_
 
 def test_extra_field_forbidden() -> None:
     with pytest.raises(ValidationError):
-        AlertEnvelope.model_validate({"schema_version": "1", "alert_identity": "A", "unknown": True})
+        AlertEnvelope.model_validate(
+            {"schema_version": "1", "alert_identity": "A", "unknown": True}
+        )
 
 
-def test_containment_directive_required_fields_present(containment_directive: ContainmentDirective) -> None:
+def test_containment_directive_required_fields_present(
+    containment_directive: ContainmentDirective,
+) -> None:
     assert containment_directive.status == DirectiveStatus.PROPOSED
     assert containment_directive.live_never_contain_hash
     assert containment_directive.embedded_never_contain_entries == []
@@ -233,7 +258,7 @@ def test_ledger_record_type_unknown_or_wrong_rejected(
     wrong_record_type: str,
     request: pytest.FixtureRequest,
 ) -> None:
-    """Unrecognized or mismatched record_type must fail validation (docs/spec chain integrity)."""
+    """Unrecognized or mismatched record_type must fail validation."""
     model = request.getfixturevalue(fixture_name)
     data = model.model_dump(mode="json")
     data["record_type"] = wrong_record_type

@@ -38,6 +38,7 @@ from praetor.contracts.ledger import (
     EmergencyNeverContainRecord,
     RevocationReason,
 )
+from praetor.ledger.store import append_ledger_record
 from praetor.state.sqlite_guard import critical_transaction
 from praetor.state.store import StateStore
 
@@ -132,6 +133,7 @@ def add_emergency_never_contain(
             audit_reason=audit_reason,
         )
         insert_emergency_record(store.conn, record)
+        append_ledger_record(store.conn, record)
         entry_dict = emergency_entry_as_never_contain(record)
         for directive in fetch_outstanding_unrevoked_directives(store.conn):
             if not directive_matches_entry(directive, entry_dict):
@@ -148,6 +150,7 @@ def add_emergency_never_contain(
                 idempotency_key_cleared=False,
             )
             store.write_automated_revocation_in_transaction(rev)
+            append_ledger_record(store.conn, rev)
             mark_directive_revoked(store.conn, directive.directive_id)
             revoked_ids.append(directive.directive_id)
 

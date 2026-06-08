@@ -1,4 +1,4 @@
-"""Durable SQLite ticket stamp outbox (docs/spec.md § Ticket Stamp Contract and Outbox)."""
+"""Durable SQLite ticket stamp outbox."""
 
 from __future__ import annotations
 

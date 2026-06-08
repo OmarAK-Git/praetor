@@ -62,7 +62,8 @@ def fetch_active_idempotency_key(
 ) -> ActiveIdempotencyKey | None:
     row = conn.execute(
         """
-        SELECT idempotency_key, alert_identity, target_type, target_id, scope, created_at
+        SELECT idempotency_key, alert_identity, target_type, target_id,
+               scope, created_at
         FROM idempotency_keys
         WHERE idempotency_key = ? AND cleared_at IS NULL
         """,

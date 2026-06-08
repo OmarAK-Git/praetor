@@ -5,13 +5,11 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any
 
-from pydantic import Field
-
 from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel, SchemaVersionV1
 
 
 class EvidenceFact(ContractModel):
-    """Normalized fact; ``normalized_fields`` shape is source-specific (deferred to correlation)."""
+    """Normalized fact; normalized fields are source-specific."""
 
     evidence_id: str
     normalized_fields: dict[str, Any]

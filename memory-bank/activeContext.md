@@ -2,21 +2,23 @@
 
 ## Current focus
 
-**TASK-012 complete** — walking skeleton intake, ledger append, stamp integration, startup recovery (attempts + outstanding directives). **Phase 1 gate closed.**
+**Phase 1 gate cleared** — durable walking skeleton, ledger append coverage, stamp integration, revocation feed, org config, and startup recovery are verified.
 
 Next: **TASK-013** (provider abstraction / FakeProvider).
 
 ## Recently changed
 
-- TASK-012: `src/praetor/engine/` — hardcoded bundle/judgment intake, fault paths (`correlation_failure`, `config_over_budget`, `invalid_model_citation`), `run_engine_startup_recovery` wired in `open_state_store`; ledger append on startup never-contain revocations; no recovery `auto_contain`.
+- README updated with phase structure, Phase 1 status, built-so-far summary, and browse/demo guidance.
+- Phase 1 punch-list cleared: live emergency records/revocations and activation revocations now append to the hash-chain ledger; guarded `open_state_store(..., singleton=...)` fails closed when the singleton/WAL guard is not satisfied; repo-wide ruff is clean.
+- TASK-012: `src/praetor/engine/` — hardcoded bundle/judgment intake, fault paths (`correlation_failure`, `config_over_budget`, `invalid_model_citation`), `run_engine_startup_recovery` wired in `open_state_store`; no recovery `auto_contain`.
 - TASK-011: revocation feed JSONL exporter, startup recovery hook, feed-health probes, smoke benchmark.
 - TASK-010: hash-chained ledger, startup integrity hook.
 
 ## Current blockers
 
 - Operator docs still absent: `docs/operator_runbook.md`, `docs/architecture.md`, `docs/eval_gates.md` (Task 35).
-- PolicyGate not yet implemented (Task 16); skeleton policy inline only.
-- Ledger append on activation/emergency revocation paths (partial — startup directive scan in Task 12).
+- PolicyGate not yet implemented (Task 17); skeleton policy inline only.
+- Startup recovery step 6 is not implemented and is a hard prerequisite for Tasks 17-19.
 
 ## Important notes for agents
 

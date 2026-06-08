@@ -99,7 +99,7 @@ class TestAttemptAllocation:
     def test_completed_tuple_returns_existing_under_critical_transaction(
         self, store: StateStore
     ) -> None:
-        """After completion, allocate returns existing edict at start of BEGIN IMMEDIATE."""
+        """After completion, allocate returns existing edict inside BEGIN IMMEDIATE."""
         alloc = store.allocate_attempt(
             alert_identity="ALERT-2",
             evidence_bundle_hash="bundle-x",
@@ -121,7 +121,7 @@ class TestAttemptAllocation:
     def test_active_holder_blocks_different_tuple_then_returns_completed(
         self, store: StateStore
     ) -> None:
-        """Non-terminal blocks different tuple; same tuple returns completed after finish."""
+        """Non-terminal blocks different tuple until same tuple completes."""
         active = store.allocate_attempt(
             alert_identity="ALERT-RACE2",
             evidence_bundle_hash="bundle-a",
@@ -331,7 +331,7 @@ class TestAttemptTransitions:
         assert second.completed is None
 
     def test_aborted_allows_same_input_retry(self, store: StateStore) -> None:
-        """Aborted attempts do not write completed edicts; same tuple may re-allocate."""
+        """Aborted attempts do not block same-tuple retry."""
         first = store.allocate_attempt(
             alert_identity="ALERT-6B",
             evidence_bundle_hash="bundle-same",
@@ -561,7 +561,7 @@ class TestOpenStateStoreContract:
     def test_open_state_store_does_not_acquire_singleton(
         self, tmp_path: Path
     ) -> None:
-        """Two handles on one DB path are possible; production must hold SingletonLock."""
+        """Two handles can open; production must pass a SingletonLock."""
         db = tmp_path / "multi.db"
         a = open_state_store(db)
         b = open_state_store(db)

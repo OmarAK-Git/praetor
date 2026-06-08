@@ -1,9 +1,9 @@
 # Praetor
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-196%20passed-brightgreen.svg)](#getting-started)
-[![Phase](https://img.shields.io/badge/phase-1%20(durable%20core)-orange.svg)](#whats-built-so-far)
-[![Plan](https://img.shields.io/badge/tasks-8%2F35%20complete-lightgrey.svg)](docs/plan.md)
+[![Tests](https://img.shields.io/badge/tests-343%20passed-brightgreen.svg)](#getting-started)
+[![Phase](https://img.shields.io/badge/phase-1%20complete-brightgreen.svg)](#where-we-are)
+[![Plan](https://img.shields.io/badge/tasks-12%2F35%20complete-lightgrey.svg)](docs/plan.md)
 
 > **Elevator pitch:** Detection tells you something fired. Praetor decides what happens next — with LLM judgment you can actually trust, because every action passes deterministic policy gates and lands in a tamper-evident audit trail.
 
@@ -92,28 +92,54 @@ These are the product's load-bearing decisions. Full rationale lives in [`docs/p
 
 ---
 
+## Where we are
+
+**Phase 1 is complete:** the durable walking skeleton is built and verified.
+That means Praetor now has the safety-critical foundation: stable contracts,
+canonical hashes, SQLite lifecycle state, startup guards, org config activation,
+never-contain handling, the hash-chained audit ledger, revocation-feed export,
+ticket/health outboxes, and a minimal end-to-end decision path.
+
+In non-technical terms: the foundation is poured, the safety rails are installed,
+and the system can already show how a decision is recorded and recovered after
+failure. It is not yet connected to a real LLM provider or a real SOC data stream.
+That comes next.
+
+### Phase Structure
+
+| Phase | Tasks | Plain-English milestone | Status |
+|---|---:|---|---|
+| Phase 1 — Durable walking skeleton | 1-12 | Make decisions durable, auditable, recoverable, and safe-by-default | **Complete** |
+| Phase 2 — Judgment and policy discipline | 13-27 | Add provider abstraction, prompt building, PolicyGate, breakers, metrics, evals | Next |
+| Phase 3 — Correlation | 28-31 | Build real telemetry correlation and identity compliance gates | Planned |
+| Phase 4 — Detection portability | 32-33 | Package Sigma/SPL/Splunk demo flow | Planned |
+| Phase 5 — Operator readiness | 34-35 | Org-config sweep, production benchmark, runbooks | Planned |
+
 ## What's built so far
 
-**Phase 1 (durable core)** — Tasks 1–8 complete · **~23% of the 35-task plan**
+**Phase 1 (durable core)** — Tasks 1-12 complete · **~34% of the 35-task plan**
 
 | Area | Status | Location |
 |---|---|---|
-| Repo, test harness, strict typing | Done | `pyproject.toml`, `pytest`, `mypy`, `ruff` |
+| Repo, test harness, strict typing, lint | Done | `pyproject.toml`, `pytest`, `mypy`, `ruff` |
 | 14 versioned Pydantic v2 contracts + JSON Schema export | Done | `src/praetor/contracts/`, `schemas/` |
 | Canonical serialization & hash derivations | Done | `src/praetor/hashing/`, `docs/contracts.md` |
-| Auth primitives (role-tagged write surfaces) | Done | `src/praetor/auth/` |
-| Process singleton + SQLite startup guard | Done | `src/praetor/runtime/`, `src/praetor/state/sqlite_guard.py` |
+| Auth primitives for role-tagged write surfaces | Done | `src/praetor/auth/` |
+| Process singleton + SQLite WAL startup guard | Done | `src/praetor/runtime/`, `src/praetor/state/sqlite_guard.py` |
 | Attempt lifecycle, idempotency, revocations in SQLite | Done | `src/praetor/state/` |
-| Ticket stamp outbox (durable, idempotent recovery) | Done | `src/praetor/tickets/` |
-| SystemHealthAlert outbox (per-channel delivery) | Done | `src/praetor/alerts/` |
-| Org config loader | Next | Task 9 |
-| Hash-chained audit ledger | Next | Task 10 |
-| Revocation feed exporter + walking skeleton | Planned | Tasks 11–12 (**Phase 1 gate**) |
-| LLM judgment, PolicyGate, eval harness | Planned | Phase 2 |
-| Correlation + identity compliance | Planned | Phase 3 |
-| Sigma / Splunk demo spine | Planned | Phase 4 |
+| Ticket stamp outbox with idempotent retry semantics | Done | `src/praetor/tickets/` |
+| SystemHealthAlert outbox | Done | `src/praetor/alerts/` |
+| Org config loader, preflight, activation, emergency never-contain | Done | `src/praetor/config/`, `configs/example_org.yaml` |
+| Hash-chained audit ledger + tamper-detection startup hook | Done | `src/praetor/ledger/` |
+| Revocation feed exporter + startup feed recovery | Done | `src/praetor/revocation/` |
+| Walking skeleton decision flow and crash recovery | Done | `src/praetor/engine/` |
+| Smoke benchmark for serialized path | Done | `benchmarks/smoke_serialized_path.py` |
 
-**Not yet:** application entrypoint, live alert intake, LLM provider wiring, PolicyGate, ledger append, or end-to-end decision flow. The foundation is deliberately **durable core first** — contracts, hashing, lifecycle, and outboxes before judgment.
+**Not yet:** real LLM provider calls, real prompt construction, PolicyGate,
+rate limits, circuit breakers, directive emission, reference consumer verifier,
+real correlation, identity compliance, and the Splunk demo harness. The current
+walking skeleton uses hardcoded evidence and judgment fixtures so the durability
+and safety behavior can be proven before the intelligent parts are added.
 
 ---
 
@@ -124,6 +150,10 @@ src/praetor/
 ├── contracts/     # Versioned domain models (AlertEnvelope, DecisionEdict, …)
 ├── hashing/       # Canonical serialization, decision_id, stamp_id, feed checksum
 ├── auth/          # Principal, TokenVerifier, role-guarded surfaces
+├── config/        # Org config load/preflight/activation, emergency never-contain
+├── engine/        # Walking skeleton intake, edict building, startup recovery
+├── ledger/        # Hash-chained audit log and startup integrity checks
+├── revocation/    # Sequential revocation-feed JSONL exporter
 ├── runtime/       # OS singleton lock
 ├── state/         # SQLite store, attempt FSM, idempotency, revocations
 ├── tickets/       # Stamp outbox (ticketing integration boundary)
@@ -131,6 +161,8 @@ src/praetor/
 
 schemas/           # Generated JSON Schema (not authoritative — models are)
 docs/              # PRD, spec, plan, contracts (source of truth)
+configs/           # Example org config
+benchmarks/        # Smoke benchmark for the serialized path
 tests/             # Contract, hashing, auth, state, outbox test suites
 ```
 
@@ -174,9 +206,33 @@ Praetor is **not** a detection engine, severity scorer, live enforcer, external 
 
 ---
 
-## Demo (coming soon)
+## Browse It / See It In Action
 
-End-to-end walkthrough is planned for **Phase 4** (Sigma rules → Splunk detection → Praetor disposition → consumer pre-actuation). Until then, the architecture diagram above and the [durable core progress](#whats-built-so-far) table reflect what is implemented today.
+There is not a product UI yet. The best way to inspect Phase 1 is through the
+tests, example config, schemas, and generated artifacts.
+
+| What you want to see | Where to look or what to run |
+|---|---|
+| The current org policy shape | `configs/example_org.yaml` |
+| Public contracts Praetor emits/consumes | `schemas/` and `src/praetor/contracts/` |
+| The walking skeleton happy path | `pytest -q tests/engine/test_walking_skeleton.py::test_hardcoded_bundle_produces_valid_decision_edict` |
+| Safety downgrades instead of unsafe action | `pytest -q tests/engine/test_walking_skeleton.py::test_config_over_budget_escalates_without_judgment_provider_call` |
+| Crash recovery never auto-contains | `pytest -q tests/engine/test_crash_recovery.py::test_crash_at_lifecycle_state_recovery_never_autocontains` |
+| Revocation feed startup recovery | `pytest -q tests/runtime/test_feed_startup_recovery.py` |
+| Ledger tamper detection | `pytest -q tests/ledger/test_startup_verification.py` |
+| Full confidence check | Run `pytest -q`, then `mypy src`, then `ruff check src tests` |
+
+In plain language, Phase 1 can demonstrate:
+
+1. A synthetic alert becomes a durable `DecisionEdict`.
+2. Faults like missing correlation, oversized config, or invalid citations become
+   human-visible escalations instead of silent or unsafe actions.
+3. Every decision is written with audit context into a hash-chained ledger.
+4. Never-contain conflicts create revocations and revocation-feed entries.
+5. Startup recovery reconciles interrupted work before intake resumes.
+
+End-to-end visual walkthrough is planned for **Phase 4**: Sigma rule → Splunk
+detection → Praetor disposition → consumer pre-actuation checks.
 
 <!-- Screenshot placeholder: docs/assets/demo-flow.png -->
 <!-- Replace with: ![Praetor decision flow](docs/assets/demo-flow.png) -->

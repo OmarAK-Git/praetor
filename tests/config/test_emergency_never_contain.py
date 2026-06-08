@@ -28,6 +28,7 @@ from praetor.contracts.containment import (
     TargetType,
 )
 from praetor.contracts.ledger import EmergencyNeverContainRecord, RevocationReason
+from praetor.ledger.store import fetch_ledger_rows
 from praetor.state.store import StateStore
 
 
@@ -99,6 +100,11 @@ def test_emergency_persists_outbox_and_revokes_conflict(
     assert json.loads(str(row["record_json"]))["reason"] == (
         RevocationReason.NEVER_CONTAIN_CONFLICT.value
     )
+    ledger_rows = fetch_ledger_rows(activated.conn)
+    assert [row.record_type for row in ledger_rows] == [
+        "emergency_never_contain",
+        "directive_revocation",
+    ]
 
 
 def test_emergency_lifetime_bounded_by_org_policy(activated: StateStore, verifier) -> None:

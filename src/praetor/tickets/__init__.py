@@ -1,9 +1,9 @@
 """Ticket stamp outbox and external integration (docs/plan.md Task 7)."""
 
 from praetor.tickets.outbox import (
+    TERMINAL_STAMP_STATUSES,
     StampOutboxEntry,
     StampStatus,
-    TERMINAL_STAMP_STATUSES,
     ensure_stamp_outbox_schema,
     fetch_stamp_outbox,
     init_stamp_outbox_schema,

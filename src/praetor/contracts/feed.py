@@ -19,6 +19,8 @@ class RevocationFeedRecord(ContractModel):
     ledger_commit_at: datetime
     record_checksum: str = Field(
         ...,
-        description="Corruption detection only; computed per docs/contracts.md (Task 3).",
+        description=(
+            "Corruption detection only; computed per docs/contracts.md (Task 3)."
+        ),
     )
     public_detail: str | None = None

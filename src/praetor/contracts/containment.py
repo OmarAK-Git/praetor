@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import re
 from datetime import datetime, timedelta
-from enum import Enum
-from typing import Any, Literal
+from enum import StrEnum
+from typing import Any
 
-from pydantic import ConfigDict, Field, ValidationInfo, field_validator, model_validator
+from pydantic import ConfigDict, ValidationInfo, field_validator, model_validator
 
 from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel, SchemaVersionV1
 
@@ -17,18 +17,21 @@ DIRECTIVE_MAX_LIFETIME = timedelta(seconds=300)
 _SID_PATTERN = re.compile(r"^S-1-5(?:-\d+)+$", re.IGNORECASE)
 
 
-class DirectiveStatus(str, Enum):
+class DirectiveStatus(StrEnum):
     PROPOSED = "proposed"
     EMITTED = "emitted"
 
 
-class TargetType(str, Enum):
+class TargetType(StrEnum):
     HOST = "host"
     ACCOUNT = "account"
 
 
 class ContainmentDirective(ContractModel):
-    """v1 integration directive; ``revocation_feed_id`` reserved post-v1 (must not appear)."""
+    """v1 integration directive.
+
+    ``revocation_feed_id`` is reserved post-v1 and must not appear.
+    """
 
     schema_version: SchemaVersionV1 = SCHEMA_VERSION_V1
     directive_id: str

@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 
-class Disposition(str, Enum):
+class Disposition(StrEnum):
     STANDARD_REVIEW = "standard_review"
     ESCALATE = "escalate"
     AUTO_CONTAIN = "auto_contain"

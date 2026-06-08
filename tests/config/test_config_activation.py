@@ -23,6 +23,7 @@ from praetor.contracts.containment import (
     TargetType,
 )
 from praetor.contracts.ledger import RevocationReason
+from praetor.ledger.store import fetch_ledger_rows
 from praetor.state.attempts import allocate_attempt
 from praetor.state.sqlite_guard import StartupGuardError
 from praetor.state.store import (
@@ -146,6 +147,9 @@ def test_post_activation_reconciliation_writes_feed_outbox_and_keeps_idempotency
     ).fetchone()
     assert outbox_count is not None
     assert int(outbox_count["c"]) >= 1
+
+    ledger_rows = fetch_ledger_rows(store.conn)
+    assert [row.record_type for row in ledger_rows] == ["directive_revocation"]
 
 
 def test_reconciliation_skips_expired_and_already_revoked(

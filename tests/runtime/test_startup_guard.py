@@ -26,6 +26,7 @@ from praetor.state.sqlite_guard import (
     verify_journal_mode,
     verify_synchronous,
 )
+from praetor.state.store import open_state_store
 
 
 def _wal_db(path: Path) -> None:
@@ -382,3 +383,23 @@ class TestStartupGuard:
             with pytest.raises(StartupGuardError) as exc_info:
                 run_startup_sqlite_guard(db_path, singleton=lock)
             assert exc_info.value.exit_code != 0
+
+    def test_open_state_store_with_unheld_singleton_fails_closed(
+        self, tmp_path: Path
+    ) -> None:
+        db_path = tmp_path / "state.db"
+        init_state_dir(db_path)
+        lock = SingletonLock(tmp_path)
+
+        with pytest.raises(StartupGuardError, match="singleton lock"):
+            open_state_store(db_path, singleton=lock)
+
+    def test_open_state_store_with_singleton_rejects_non_wal(
+        self, tmp_path: Path
+    ) -> None:
+        db_path = tmp_path / "state.db"
+        _delete_journal_db(db_path)
+
+        with SingletonLock(tmp_path) as lock:
+            with pytest.raises(StartupGuardError, match="journal_mode"):
+                open_state_store(db_path, singleton=lock)

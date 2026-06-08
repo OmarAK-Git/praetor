@@ -1,8 +1,12 @@
 """Versioned Praetor v1 contracts (Pydantic models)."""
 
-from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel, SchemaVersionV1, SchemaVersionV1
+from praetor.contracts._base import SCHEMA_VERSION_V1, ContractModel, SchemaVersionV1
 from praetor.contracts.alert import AlertEnvelope
-from praetor.contracts.containment import ContainmentDirective, DirectiveStatus, TargetType
+from praetor.contracts.containment import (
+    ContainmentDirective,
+    DirectiveStatus,
+    TargetType,
+)
 from praetor.contracts.disposition import Disposition
 from praetor.contracts.edict import DecisionEdict
 from praetor.contracts.evidence import EvidenceBundle, EvidenceFact

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timedelta
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import model_validator
@@ -18,7 +18,7 @@ RecordTypeEmergencyNeverContain = Literal["emergency_never_contain"]
 RecordTypeDirectiveRevocation = Literal["directive_revocation"]
 
 
-class RevocationReason(str, Enum):
+class RevocationReason(StrEnum):
     """Internal revocation reason (ledger); maps to external reason_code."""
 
     SUPERSESSION = "supersession"
@@ -87,9 +87,10 @@ class DirectiveRevocationRecord(ContractModel):
             raise ValueError(
                 "superseded_by_directive_id must be null unless reason is supersession"
             )
-        # docs/contracts.md §11: cleared only for SOC-lead manual revocation (RevocationReason.MANUAL).
+        # docs/contracts.md §11: cleared only for SOC-lead manual revocation.
         if self.idempotency_key_cleared and self.reason != RevocationReason.MANUAL:
             raise ValueError(
-                "idempotency_key_cleared may be true only when reason is manual revocation"
+                "idempotency_key_cleared may be true only when reason is "
+                "manual revocation"
             )
         return self

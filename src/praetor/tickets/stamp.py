@@ -16,9 +16,9 @@ from typing import Any, Protocol
 
 from praetor.hashing import derive_stamp_id
 from praetor.tickets.outbox import (
+    TERMINAL_STAMP_STATUSES,
     StampOutboxEntry,
     StampStatus,
-    TERMINAL_STAMP_STATUSES,
     fetch_stamp_outbox,
     record_stamp_outcome,
     write_pending_stamp,
@@ -51,7 +51,11 @@ def _is_backend_ambiguity(exc: BaseException) -> bool:
     if isinstance(exc, StampTimeoutError | ConnectionError | TimeoutError):
         return True
     if isinstance(exc, OSError) and not isinstance(
-        exc, FileNotFoundError | PermissionError | IsADirectoryError | NotADirectoryError
+        exc,
+        FileNotFoundError
+        | PermissionError
+        | IsADirectoryError
+        | NotADirectoryError,
     ):
         return True
     return False

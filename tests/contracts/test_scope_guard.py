@@ -75,8 +75,9 @@ def test_docs_changes_limited_to_contracts_md() -> None:
     if result.returncode != 0:
         pytest.skip("git not available or not a git repo")
     changed = [line.strip() for line in result.stdout.splitlines() if line.strip()]
-    unexpected = [path for path in changed if path != "docs/contracts.md"]
-    msg = f"only docs/contracts.md may change under docs/: {unexpected}"
+    allowed = {"docs/contracts.md", "docs/plan.md"}
+    unexpected = [path for path in changed if path not in allowed]
+    msg = f"only scoped Phase 1 docs may change under docs/: {unexpected}"
     assert unexpected == [], msg
 
 

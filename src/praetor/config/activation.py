@@ -32,6 +32,7 @@ from praetor.config.state import (
 from praetor.contracts.containment import ContainmentDirective
 from praetor.contracts.health import SystemHealthAlert
 from praetor.contracts.ledger import DirectiveRevocationRecord, RevocationReason
+from praetor.ledger.store import append_ledger_record
 from praetor.state.sqlite_guard import critical_transaction
 from praetor.state.store import StateStore
 
@@ -103,6 +104,7 @@ def activate_org_config(
                 triggered_by=triggered_by,
             )
             store.write_automated_revocation_in_transaction(record)
+            append_ledger_record(store.conn, record)
             mark_directive_revoked(store.conn, directive.directive_id)
             revoked_ids.append(directive.directive_id)
 

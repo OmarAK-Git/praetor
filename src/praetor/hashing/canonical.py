@@ -6,7 +6,7 @@ import hashlib
 import json
 import math
 from collections.abc import Mapping, Sequence
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 # Sentinel preimage for correlation-failure substitution (docs/contracts.md §7).
@@ -41,7 +41,7 @@ def delimited(parts: Sequence[str | bytes]) -> bytes:
 def _format_datetime_utc(value: datetime) -> str:
     if value.tzinfo is None:
         raise CanonicalSerializationError("datetime must be timezone-aware")
-    utc = value.astimezone(timezone.utc)
+    utc = value.astimezone(UTC)
     base = utc.strftime("%Y-%m-%dT%H:%M:%S")
     micros = utc.microsecond
     return f"{base}.{micros:06d}Z"
@@ -50,7 +50,8 @@ def _format_datetime_utc(value: datetime) -> str:
 def _validate_rfc3339_micros_z(value: str) -> None:
     if not _RFC3339_MICROS_Z.match(value):
         raise CanonicalSerializationError(
-            "timestamp strings must be UTC RFC3339 with exactly six fractional digits and Z suffix"
+            "timestamp strings must be UTC RFC3339 with exactly six "
+            "fractional digits and Z suffix"
         )
 
 
@@ -70,14 +71,18 @@ def _serialize_value(value: Any) -> Any:
     if isinstance(value, float):
         if math.isnan(value) or math.isinf(value):
             raise CanonicalSerializationError("NaN and Infinity are not allowed")
-        raise CanonicalSerializationError("float values are not allowed in canonical serialization")
+        raise CanonicalSerializationError(
+            "float values are not allowed in canonical serialization"
+        )
     if isinstance(value, datetime):
         return _format_datetime_utc(value)
     if isinstance(value, Mapping):
         return {key: _serialize_value(value[key]) for key in sorted(value.keys())}
     if isinstance(value, (list, tuple)):
         return [_serialize_value(item) for item in value]
-    raise CanonicalSerializationError(f"unsupported type for canonical serialization: {type(value)!r}")
+    raise CanonicalSerializationError(
+        f"unsupported type for canonical serialization: {type(value)!r}"
+    )
 
 
 def canonical_serialize(

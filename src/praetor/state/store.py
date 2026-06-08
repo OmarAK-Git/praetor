@@ -13,7 +13,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from praetor.contracts.ledger import DirectiveRevocationRecord, RevocationReason
 from praetor.state.attempts import AllocationResult, allocate_attempt
@@ -26,7 +26,11 @@ from praetor.state.sqlite_guard import (
     critical_transaction,
     init_state_dir,
     require_critical_transaction,
+    run_startup_sqlite_guard,
 )
+
+if TYPE_CHECKING:
+    from praetor.runtime.singleton import SingletonLock
 
 SCHEMA_VERSION = 1
 SCHEMA_VERSION_KEY = "schema_version"
@@ -301,14 +305,22 @@ def init_state_schema(conn: sqlite3.Connection) -> None:
         verify_schema_version(conn)
 
 
-def open_state_store(db_path: Path) -> StateStore:
-    """Bootstrap WAL, open guarded connection, verify schema, initialize if new.
+def open_state_store(
+    db_path: Path,
+    *,
+    singleton: SingletonLock | None = None,
+) -> StateStore:
+    """Open state DB; production callers pass a held singleton lock.
 
-    Does not acquire the Task 5 singleton lock; production callers must hold
-    ``SingletonLock`` for the state directory before calling this function.
+    The default path is the bootstrap/dev path used by tests and setup helpers:
+    it initializes WAL if needed. Production entrypoints pass ``singleton`` so
+    startup fails closed unless the lock is held and WAL already verifies.
     """
-    init_state_dir(db_path)
-    conn = create_guarded_connection(db_path)
+    if singleton is None:
+        init_state_dir(db_path)
+        conn = create_guarded_connection(db_path)
+    else:
+        conn = run_startup_sqlite_guard(db_path, singleton=singleton)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys=ON")
     conn.executescript(_SCHEMA_SQL)
@@ -339,8 +351,8 @@ def open_state_store(db_path: Path) -> StateStore:
     from praetor.engine.recovery import run_engine_startup_recovery
 
     store = StateStore(conn=conn, db_path=db_path)
-    # Spec startup steps 4,5,7 (attempts, ledger gaps, directive never-contain scan)
-    # run before feed recovery (step 8). Step 6 is not yet implemented (no v1 containment).
+    # Spec startup steps 4,5,7 run before feed recovery (step 8).
+    # Step 6 is not yet implemented (no v1 containment).
     run_engine_startup_recovery(store)
     snapshot = fetch_active_snapshot(conn)
     if snapshot is not None:

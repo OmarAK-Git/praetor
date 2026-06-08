@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import math
 import re
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -31,7 +31,7 @@ from praetor.hashing.domains import (
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC = REPO_ROOT / "src" / "praetor"
-UTC = timezone.utc
+UTC = UTC
 
 RFC3339_MICROS_Z = re.compile(
     r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{6}Z$"
@@ -114,7 +114,10 @@ class TestDomainConstants:
                     continue
                 if path.resolve() == domains_file.resolve():
                     continue
-                pytest.fail(f"inline domain literal {literal!r} in {path.relative_to(REPO_ROOT)}")
+                pytest.fail(
+                    f"inline domain literal {literal!r} in "
+                    f"{path.relative_to(REPO_ROOT)}"
+                )
 
     def test_derived_hashes_use_distinct_domains(self) -> None:
         alert = "ALERT-001"
@@ -142,7 +145,9 @@ class TestDecisionId:
                 attempt,
             ]
         )
-        assert derive_decision_id(alert, bundle, org, attempt) == sha256_hex(expected_input)
+        assert derive_decision_id(alert, bundle, org, attempt) == sha256_hex(
+            expected_input
+        )
 
 
 class TestIdempotencyKey:
@@ -241,7 +246,7 @@ class TestFeedRecordChecksum:
         )
 
     def test_checksum_is_corruption_detection_not_tamper_evidence(self) -> None:
-        """Documented intent: recomputing checksum detects truncation/corruption only."""
+        """Recomputing checksum detects truncation/corruption only."""
         record = {
             "schema_version": "1",
             "sequence_number": 2,
@@ -252,7 +257,11 @@ class TestFeedRecordChecksum:
             "ledger_commit_at": datetime(2026, 6, 1, 12, 0, 1, tzinfo=UTC),
         }
         checksum = compute_feed_record_checksum(record)
-        tampered = {**record, "reason_code": "manual_revocation", "record_checksum": checksum}
+        tampered = {
+            **record,
+            "reason_code": "manual_revocation",
+            "record_checksum": checksum,
+        }
         assert compute_feed_record_checksum(tampered) != checksum
 
 
