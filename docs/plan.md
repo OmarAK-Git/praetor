@@ -160,7 +160,7 @@ Test first:
 - In-flight alert keeps original snapshot after config edit.
 - Post-activation reconciliation revokes outstanding unexpired directives matching new never-contain list and emits health alerts.
 - Emergency never-contain writes EmergencyNeverContainRecord, emits health alert, expires correctly, participates in live check under the same serializable lock, and cannot authorize containment.
-Adding an emergency entry synchronously scans already-committed outstanding unexpired directives for the target and writes one never_contain_conflict DirectiveRevocationRecord plus feed outbox row per match, in the same transaction, without clearing idempotency keys; the conflict SystemHealthAlert is emitted to the outbox outside the chain transaction.
+Adding an emergency entry synchronously scans already-committed outstanding unexpired directives for the target and writes one never_contain_conflict DirectiveRevocationRecord plus feed outbox row per match, in the same transaction, without clearing idempotency keys; the conflict SystemHealthAlert is enqueued in the same transaction and flushed after commit.
 A directive committed before the emergency-entry transaction is revoked by the scan; a directive whose live-check lock predates the commit is not caught (race case, covered by expiry and consumer feed check).
 
 Files: `src/praetor/config/loader.py`, `src/praetor/config/snapshot.py`, `src/praetor/config/preflight.py`, `src/praetor/config/activation.py`, `src/praetor/config/emergency.py`, `configs/example_org.yaml`, `tests/config/test_org_config_loader.py`, `tests/config/test_config_activation.py`, `tests/config/test_emergency_never_contain.py`.

@@ -167,6 +167,7 @@ def add_emergency_never_contain(
             )
             for _ in revoked_ids
         )
+        # Keep alert enqueue atomic with the emergency record, ledger appends, and feed rows.
         enqueue_health_alerts_in_transaction(store.conn, alerts, batch_id=batch_id)
 
     emitted.extend(flush_health_alert_batch(store.conn, batch_id=batch_id))
