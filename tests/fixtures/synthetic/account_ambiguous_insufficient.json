@@ -1,0 +1,25 @@
+{
+  "identity": {
+    "schema_version": "1",
+    "sid": "S-1-5-21-1234567890-123456789-123456789-1001",
+    "domain": "CORP",
+    "account_name": "jdoe",
+    "account_type": "user",
+    "authority_source": "windows_security_log",
+    "ambiguity_flag": true
+  },
+  "facts": [
+    {
+      "evidence_id": "syn-ev-sysmon-only",
+      "normalized_fields": {
+        "process_name": "cmd.exe",
+        "user": "CORP\\jdoe"
+      },
+      "source_event_reference": "sysmon:1:1001",
+      "raw_source": "{\"EventID\":1}",
+      "provenance_path": "sysmon_event_log",
+      "ambiguity_flag": true,
+      "timestamp": "2026-06-08T12:00:00.000000Z"
+    }
+  ]
+}

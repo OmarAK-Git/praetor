@@ -5,16 +5,19 @@ from __future__ import annotations
 import sqlite3
 
 from praetor.contracts.containment import ContainmentDirective
-from praetor.state.sqlite_guard import critical_transaction
+from praetor.state.sqlite_guard import (
+    critical_transaction,
+    require_critical_transaction,
+)
 
 
-def commit_outstanding_directive(
+def insert_outstanding_directive_in_transaction(
     conn: sqlite3.Connection,
     directive: ContainmentDirective,
 ) -> None:
-    """Record a committed directive for reconciliation scans (internal/tests)."""
-    with critical_transaction(conn):
-        conn.execute(
+    """Record a committed directive; caller must hold ``critical_transaction``."""
+    require_critical_transaction(conn)
+    conn.execute(
             """
             INSERT INTO outstanding_containment_directives (
                 directive_id, directive_json, issued_at, expires_at,
@@ -30,3 +33,12 @@ def commit_outstanding_directive(
                 directive.target_id,
             ),
         )
+
+
+def commit_outstanding_directive(
+    conn: sqlite3.Connection,
+    directive: ContainmentDirective,
+) -> None:
+    """Record a committed directive for reconciliation scans (internal/tests)."""
+    with critical_transaction(conn):
+        insert_outstanding_directive_in_transaction(conn, directive)

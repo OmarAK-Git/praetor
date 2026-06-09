@@ -351,8 +351,7 @@ def open_state_store(
     from praetor.engine.recovery import run_engine_startup_recovery
 
     store = StateStore(conn=conn, db_path=db_path)
-    # Spec startup steps 4,5,7 run before feed recovery (step 8).
-    # Step 6 is not yet implemented (no v1 containment).
+    # Spec startup steps 4,5,6,7 run before feed recovery (step 8).
     run_engine_startup_recovery(store)
     snapshot = fetch_active_snapshot(conn)
     if snapshot is not None:

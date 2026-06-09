@@ -1,0 +1,40 @@
+{
+  "run": "TASK-016",
+  "status": "complete",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-08",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Tests and synthetic fixtures"
+    },
+    {
+      "id": "TASK-002",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "provenance module"
+    },
+    {
+      "id": "TASK-003",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "policy identity module"
+    },
+    {
+      "id": "TASK-004",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "scope guard update"
+    },
+    {
+      "id": "TASK-005",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "verification and memory bank"
+    }
+  ]
+}

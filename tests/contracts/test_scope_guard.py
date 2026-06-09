@@ -13,7 +13,6 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC = REPO_ROOT / "src" / "praetor"
 
 FORBIDDEN_PACKAGES = (
-    "policy",
     "containment",
 )
 
@@ -54,10 +53,11 @@ def test_only_expected_top_level_packages() -> None:
         "config",
         "contracts",
         "engine",
-            "evidence",
+        "evidence",
         "hashing",
         "judgment",
         "ledger",
+        "policy",
         "revocation",
         "runtime",
         "state",

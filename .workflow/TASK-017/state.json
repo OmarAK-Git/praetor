@@ -1,0 +1,40 @@
+{
+  "run": "TASK-017",
+  "status": "complete",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-08",
+  "tasks": [
+    {
+      "id": "T-001",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "policy state schema + recovery step 6"
+    },
+    {
+      "id": "T-002",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "containment_policy + directive_builder"
+    },
+    {
+      "id": "T-003",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "PolicyGate gate.py"
+    },
+    {
+      "id": "T-004",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "tests + production entrypoint"
+    },
+    {
+      "id": "T-005",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "verification + memory bank"
+    }
+  ]
+}

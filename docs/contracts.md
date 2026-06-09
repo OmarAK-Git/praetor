@@ -180,8 +180,9 @@ Order is fixed. The key does **not** include the evidence bundle hash or org-con
 
 The key has states active / expired / cleared.
 
-- A duplicate key with an **active, unexpired** directive suppresses new emission.
-- An **expired** key permits a new directive carrying a supersession reference to the prior directive.
+- A duplicate key with an **active, unexpired, unrevoked** directive suppresses new emission.
+- An **expired** directive (past `expires_at`, still unrevoked) permits a **fresh** re-issue for the same alert-target-scope: same idempotency key, new `directive_id`, `supersedes_directive_id` unset, and **no** `DirectiveRevocationRecord` for the expired directive.
+- **Supersession** replaces a **still-live** (outstanding, unexpired, unrevoked) directive and requires a `DirectiveRevocationRecord` with `reason = supersession`, a feed row, and `superseded_by_directive_id`; the replacement directive may set `supersedes_directive_id`. v1 PolicyGate suppresses re-issue while a directive is live via idempotency, so supersession is defined here but **not exercised** by PolicyGate in v1.
 - The key is **cleared** only by SOC-lead manual revocation, in the same SQLite transaction that writes the `DirectiveRevocationRecord` — after which a new directive for that target is again possible.
 - Automated revocations (never-contain conflict, supersession) write the revocation record and feed row but **do not** clear the key; the target stays blocked.
 

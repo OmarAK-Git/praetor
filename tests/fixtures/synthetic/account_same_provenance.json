@@ -1,0 +1,28 @@
+{
+  "facts": [
+    {
+      "evidence_id": "syn-ev-sysmon-a",
+      "normalized_fields": {
+        "process_name": "cmd.exe",
+        "event_id": 1
+      },
+      "source_event_reference": "sysmon:1:1001",
+      "raw_source": "{\"EventID\":1}",
+      "provenance_path": "sysmon_event_log",
+      "ambiguity_flag": false,
+      "timestamp": "2026-06-08T12:00:00.000000Z"
+    },
+    {
+      "evidence_id": "syn-ev-sysmon-b",
+      "normalized_fields": {
+        "process_name": "powershell.exe",
+        "event_id": 3
+      },
+      "source_event_reference": "sysmon:3:1002",
+      "raw_source": "{\"EventID\":3}",
+      "provenance_path": "sysmon_event_log",
+      "ambiguity_flag": false,
+      "timestamp": "2026-06-08T12:00:02.000000Z"
+    }
+  ]
+}

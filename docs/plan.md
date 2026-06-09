@@ -305,7 +305,7 @@ Test first:
 - Target-scoped policy conflict produces `escalate(policy_ambiguity)`.
 - Rate limit exceeded produces `escalate(rate_limit_exceeded)`.
 - Duplicate idempotency key suppresses new emission.
-- Expired directive idempotency key allows new directive with supersession reference.
+- Expired directive idempotency key allows fresh re-issue (same key, no supersession reference, no revocation record).
 - Feed unhealthy or oldest pending row past SLO produces `escalate(revocation_feed_unhealthy)`.
 - Live never-contain, feed health, idempotency, and rate-limit updates occur in one serializable transaction.
 - `proposed_disposition` and `final_disposition` separately recorded.

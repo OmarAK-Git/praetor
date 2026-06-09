@@ -1,5 +1,25 @@
 # Progress Log
 
+## 2026-06-08 — TASK-017 complete
+
+- PolicyGate v1: `src/praetor/policy/gate.py` — deterministic gate with Outcome Matrix paths, single-transaction auto-contain emit, idempotency supersession, feed-health block.
+- Containment policy: `src/praetor/policy/containment_policy.py` — host/account target resolution, snapshot/live never-contain, target-scoped policy ambiguity.
+- Directive builder: `src/praetor/policy/directive_builder.py` — `ContainmentDirective` construction with embedded never-contain entries.
+- Policy state: `src/praetor/policy/state.py` — rate counters, breaker rows, startup step 6 reconciliation.
+- Production entrypoint: `src/praetor/runtime/startup.py` — `open_production_state_store` requires held singleton.
+- Engine recovery: `run_engine_startup_recovery` now runs step 6 before step 7.
+- Verification: policy **21**, suite **416**, `mypy src` OK (82 files), ruff OK.
+- Flight Recorder: `.workflow/TASK-017/`.
+
+## 2026-06-08 — TASK-016 complete
+
+- Account identity and provenance: `src/praetor/evidence/provenance.py` — v1 Windows/Sysmon corroboration (`sysmon_event_log` + `windows_security_log`); same-provenance facts rejected.
+- Policy identity: `src/praetor/policy/identity.py` — two-outcome evaluator: SID-backed + corroborated → `AUTO_CONTAIN` eligible; otherwise unconditional `escalate(ambiguous_target_identity)` per Outcome Matrix.
+- Synthetic fixtures: `tests/fixtures/synthetic/*.json` drive corroboration tests before real correlation.
+- Scope guard: `tests/contracts/test_scope_guard.py` now allows the intentional `policy` package.
+- Verification: evidence corroboration **20**, suite **395**, `mypy src` OK (77 files), ruff OK.
+- Flight Recorder: `.workflow/TASK-016/`.
+
 ## 2026-06-08 — TASK-015 complete
 
 - Evidence citation validator: `src/praetor/evidence/citations.py` — validates cited evidence IDs and field paths against `EvidenceBundle`, requires citations for `escalate` / `auto_contain`, excludes `raw_source`, and returns resolved citation metadata including `ambiguity_flag`.

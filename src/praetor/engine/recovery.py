@@ -41,6 +41,7 @@ from praetor.engine.ids import decision_id_for_attempt, stamp_evidence_hash
 from praetor.engine.skeleton import skeleton_model_judgment
 from praetor.hashing import derive_stamp_id
 from praetor.ledger.store import append_ledger_record, fetch_ledger_rows
+from praetor.policy.state import reconcile_policy_state
 from praetor.state.attempts import (
     AttemptState,
     ProcessingAttempt,
@@ -331,18 +332,18 @@ def run_engine_startup_recovery(
     *,
     stamp_backend: TicketStampBackend | None = None,
 ) -> StartupRecoveryResult:
-    """Spec startup steps 4, 5, and 7 (not 6).
+    """Spec startup steps 4, 5, 6, and 7.
 
     Implements: enumerate/resolve non-terminal attempts (4), append safe edicts for
-    stamp-resolved/ready-to-append attempts missing a ledger edict (5), and scan
-    outstanding directives against current never-contain (7). Step 6 (idempotency
-    key / rate-counter / breaker reconciliation) is **not** performed here — it has
-    no effect for the v1 skeleton (no containment is emitted) and is owned by the
-    PolicyGate/breaker tasks.
+    stamp-resolved/ready-to-append attempts missing a ledger edict (5), reconcile
+    idempotency keys / rate counters / breaker state (6), and scan outstanding
+    directives against current never-contain (7).
     """
     backend = stamp_backend or _NoOpStampBackend()
     for attempt in fetch_all_non_terminal_attempts(store.conn):
         recover_single_attempt(store, attempt, backend)
+    reconcile_policy_state(store.conn)
+    store.conn.commit()
     revoked, emitted = reconcile_outstanding_directives_never_contain(store)
     return StartupRecoveryResult(
         revoked_directive_ids=revoked,

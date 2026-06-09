@@ -6,13 +6,12 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-016 | Canonical Account Identity and Synthetic Provenance Tests | Next | Depends on TASK-015; keep PolicyGate out of scope until TASK-017 |
+| TASK-018 | Transactional Rate Limits and Containment Breaker | Next | Depends on TASK-017 |
 
 ## Gate prerequisites
 
-- Startup recovery step 6 (idempotency-key, rate-counter, breaker reconciliation)
-  is a hard prerequisite for Tasks 17–19; do not implement PolicyGate, rate
-  limits, or breakers until this reconciliation is added.
+- Startup recovery step 6 is implemented in TASK-017 (`reconcile_policy_state`).
+- Engine orchestrator still uses skeleton inline policy; wire PolicyGate into intake as follow-on.
 - Task 19 provider-health breaker must define/map `ProviderUnavailableError`
   from the Vertex stub; do not catch it in intake until an Outcome Matrix row exists.
 - TASK-015 citation surface (TASK-017 reuse): citable field paths are normalized
@@ -52,3 +51,5 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-013 | Provider abstraction / FakeProvider injection modes | `.workflow/TASK-013/verification.md` — `pytest` 354 / judgment 10 / engine 26; `src/praetor/judgment/`; `pending_stamp` no-row recovery regression |
 | TASK-014 | Prompt construction and excerpt hygiene | `.workflow/TASK-014/verification.md` — `pytest` 359 / judgment 15 / engine 26; `src/praetor/judgment/{excerpt,prompt}.py`; sanitized `PromptExcerptSet` provider payload |
 | TASK-015 | Evidence Citation Validator | `.workflow/TASK-015/verification.md` — `pytest` 366 / evidence 7 / engine-provider citations 15; `src/praetor/evidence/citations.py`; shared validator for structural citation refs |
+| TASK-016 | Canonical Account Identity and Synthetic Provenance Tests | `.workflow/TASK-016/verification.md` — `pytest` 395 / evidence corroboration 20; `src/praetor/evidence/provenance.py`, `src/praetor/policy/identity.py`; synthetic fixtures under `tests/fixtures/synthetic/` |
+| TASK-017 | Deterministic PolicyGate v1 | `.workflow/TASK-017/verification.md` — `pytest` 416 / policy 21; `src/praetor/policy/{gate,containment_policy,directive_builder,state}.py`; startup step 6 + `open_production_state_store` |
