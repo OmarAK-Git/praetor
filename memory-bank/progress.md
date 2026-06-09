@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-06-09 — TASK-018 complete (+ gatekeeper follow-up)
+
+- Rate limits: `src/praetor/policy/rate_limit.py` — sliding-window per-host/subnet/asset-group scopes; DEC-030 documents v1 `per_asset_group` = host asset_id.
+- Containment breaker: window-elapse recovery on open-check (DEC-031); `_RateLimitRaceLoss` commits failure outside rolled-back emit tx.
+- Health emit: `init_health_alert_emit_schema` at gate entry; race/ recovery/outbox tests exercise real paths.
+- Verification: policy **43**, suite **437**, `mypy src` OK (84 files), ruff OK.
+- Flight Recorder: `.workflow/TASK-018/`.
+
 ## 2026-06-08 — TASK-017 complete
 
 - PolicyGate v1: `src/praetor/policy/gate.py` — deterministic gate with Outcome Matrix paths, single-transaction auto-contain emit, idempotency supersession, feed-health block.

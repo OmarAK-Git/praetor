@@ -6,7 +6,7 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-018 | Transactional Rate Limits and Containment Breaker | Next | Depends on TASK-017 |
+| TASK-019 | Provider-Health Breaker with Half-Open Probes | Next | Depends on TASK-018 |
 
 ## Gate prerequisites
 
@@ -53,3 +53,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-015 | Evidence Citation Validator | `.workflow/TASK-015/verification.md` — `pytest` 366 / evidence 7 / engine-provider citations 15; `src/praetor/evidence/citations.py`; shared validator for structural citation refs |
 | TASK-016 | Canonical Account Identity and Synthetic Provenance Tests | `.workflow/TASK-016/verification.md` — `pytest` 395 / evidence corroboration 20; `src/praetor/evidence/provenance.py`, `src/praetor/policy/identity.py`; synthetic fixtures under `tests/fixtures/synthetic/` |
 | TASK-017 | Deterministic PolicyGate v1 | `.workflow/TASK-017/verification.md` — `pytest` 416 / policy 21; `src/praetor/policy/{gate,containment_policy,directive_builder,state}.py`; startup step 6 + `open_production_state_store` |
+| TASK-018 | Transactional Rate Limits and Containment Breaker | `.workflow/TASK-018/verification.md` — `pytest` 434 / policy 39; `src/praetor/policy/{rate_limit,circuit_breaker}.py`; sliding-window scopes + containment breaker alerts |

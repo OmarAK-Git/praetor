@@ -61,7 +61,9 @@ def init_policy_state_schema(conn: sqlite3.Connection) -> None:
 
 
 def rate_limit_scope_key(scope: str, *, target_type: str, target_id: str) -> str:
-    return f"{scope}:{target_type}:{target_id}"
+    from praetor.policy.rate_limit import rate_limit_scope_key as _key
+
+    return _key(scope, target_type=target_type, target_id=target_id)
 
 
 def read_rate_counter(conn: sqlite3.Connection, scope_key: str) -> int:
@@ -116,6 +118,7 @@ def is_rate_limit_exceeded(
     scope_key: str,
     limit: int = _V1_DEFAULT_SCOPE_LIMIT,
 ) -> bool:
+    """Legacy single-scope check; prefer is_rate_limit_exceeded_for_target."""
     return read_rate_counter(conn, scope_key) >= limit
 
 

@@ -3,10 +3,15 @@
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from praetor.config.directives import insert_outstanding_directive_in_transaction
+from praetor.config.health_emit import (
+    flush_health_alert_batch,
+    init_health_alert_emit_schema,
+)
 from praetor.config.state import (
     fetch_outstanding_unrevoked_directives,
     read_live_never_contain_entries,
@@ -19,6 +24,12 @@ from praetor.contracts.org_config import OrgConfigSnapshot
 from praetor.contracts.policy import PolicyGateResult
 from praetor.evidence.citations import validate_evidence_citations
 from praetor.hashing import derive_idempotency_key
+from praetor.policy.circuit_breaker import (
+    BreakerTripResult,
+    is_containment_breaker_open,
+    record_containment_success_in_transaction,
+    record_rate_limit_failure_in_transaction,
+)
 from praetor.policy.containment_policy import (
     NEVER_CONTAIN_LIVE_CONFLICT,
     NEVER_CONTAIN_SNAPSHOT,
@@ -36,13 +47,14 @@ from praetor.policy.identity import (
     AMBIGUOUS_TARGET_IDENTITY,
     evaluate_account_containment_eligibility,
 )
+from praetor.policy.rate_limit import (
+    increment_rate_limits_for_target_in_transaction,
+    is_rate_limit_exceeded_for_target,
+)
 from praetor.policy.state import (
     BreakerDomain,
-    increment_rate_counter_in_transaction,
     init_policy_state_schema,
     is_breaker_open,
-    is_rate_limit_exceeded,
-    rate_limit_scope_key,
 )
 from praetor.revocation.exporter import is_feed_actuation_blocked
 from praetor.state.idempotency import (
@@ -69,6 +81,10 @@ class _PolicyGateRollback(Exception):
         super().__init__()
 
 
+class _RateLimitRaceLoss(Exception):
+    """Emit transaction lost rate-limit race; record failure after rollback."""
+
+
 @dataclass(frozen=True)
 class PolicyGateEvaluation:
     proposed_disposition: Disposition
@@ -92,6 +108,26 @@ def _escalate(
         fault_flags=[fault_flag],
         system_fault_escalation=system_fault,
     )
+
+
+def _record_rate_limit_failure(
+    conn: sqlite3.Connection,
+    org_snapshot: OrgConfigSnapshot,
+    *,
+    now: datetime,
+) -> BreakerTripResult:
+    with critical_transaction(conn):
+        require_critical_transaction(conn)
+        return record_rate_limit_failure_in_transaction(
+            conn,
+            policy=org_snapshot.containment_circuit_breaker_policy,
+            now=now,
+        )
+
+
+def _flush_breaker_trip_alerts(conn: sqlite3.Connection, batch_id: str | None) -> None:
+    if batch_id is not None:
+        flush_health_alert_batch(conn, batch_id=batch_id)
 
 
 def _pass_through(judgment: ModelJudgment) -> PolicyGateEvaluation:
@@ -128,11 +164,13 @@ def evaluate_policy_gate(
     provider_health_breaker_open: bool = False,
     latency_sla_exceeded: bool = False,
     queue_aging_exceeded: bool = False,
+    _test_before_emit_transaction: Callable[[], None] | None = None,
 ) -> PolicyGateEvaluation:
     """Deterministically convert model judgment into final disposition."""
     moment = now or datetime.now(UTC)
     proposed = judgment.proposed_disposition
     init_policy_state_schema(conn)
+    init_health_alert_emit_schema(conn)
 
     if provider_health_breaker_open or is_breaker_open(
         conn, BreakerDomain.PROVIDER_HEALTH
@@ -187,7 +225,11 @@ def evaluate_policy_gate(
     if policy_eval.action != PolicyAction.ALLOW:
         return _escalate(proposed, POLICY_AMBIGUITY, system_fault=False)
 
-    if is_breaker_open(conn, BreakerDomain.CONTAINMENT):
+    if is_containment_breaker_open(
+        conn,
+        policy=org_snapshot.containment_circuit_breaker_policy,
+        now=moment,
+    ):
         return _escalate(proposed, CONTAINMENT_BREAKER_OPEN, system_fault=False)
 
     feed_policy = org_snapshot.revocation_feed_policy
@@ -220,15 +262,22 @@ def evaluate_policy_gate(
             live_never_contain_entries=tuple(live_entries),
         )
 
-    scope_key = rate_limit_scope_key(
-        "per_host", target_type=target.target_type, target_id=target.target_id
+    exceeded, _scope_key = is_rate_limit_exceeded_for_target(
+        conn,
+        snapshot=org_snapshot,
+        target=target,
+        now=moment,
     )
-    if is_rate_limit_exceeded(conn, scope_key=scope_key):
+    if exceeded:
+        trip = _record_rate_limit_failure(conn, org_snapshot, now=moment)
+        _flush_breaker_trip_alerts(conn, trip.health_alert_batch_id)
         return _escalate(proposed, RATE_LIMIT_EXCEEDED, system_fault=False)
 
     key_already_active = fetch_active_idempotency_key(conn, idempotency_key) is not None
 
     evidence_refs = [ref.evidence_id for ref in judgment.cited_evidence_refs]
+    if _test_before_emit_transaction is not None:
+        _test_before_emit_transaction()
     try:
         with critical_transaction(conn):
             require_critical_transaction(conn)
@@ -245,10 +294,14 @@ def evaluate_policy_gate(
                 raise _PolicyGateRollback(
                     _escalate(proposed, NEVER_CONTAIN_LIVE_CONFLICT, system_fault=False)
                 )
-            if is_rate_limit_exceeded(conn, scope_key=scope_key):
-                raise _PolicyGateRollback(
-                    _escalate(proposed, RATE_LIMIT_EXCEEDED, system_fault=False)
-                )
+            tx_exceeded, _ = is_rate_limit_exceeded_for_target(
+                conn,
+                snapshot=org_snapshot,
+                target=target,
+                now=moment,
+            )
+            if tx_exceeded:
+                raise _RateLimitRaceLoss()
 
             directive = build_containment_directive_in_transaction(
                 conn,
@@ -270,8 +323,22 @@ def evaluate_policy_gate(
                     target_id=target.target_id,
                     scope=target.scope,
                 )
-            increment_rate_counter_in_transaction(conn, scope_key)
+            increment_rate_limits_for_target_in_transaction(
+                conn,
+                snapshot=org_snapshot,
+                target=target,
+                now=moment,
+            )
+            record_containment_success_in_transaction(
+                conn,
+                policy=org_snapshot.containment_circuit_breaker_policy,
+                now=moment,
+            )
             insert_outstanding_directive_in_transaction(conn, directive)
+    except _RateLimitRaceLoss:
+        trip = _record_rate_limit_failure(conn, org_snapshot, now=moment)
+        _flush_breaker_trip_alerts(conn, trip.health_alert_batch_id)
+        return _escalate(proposed, RATE_LIMIT_EXCEEDED, system_fault=False)
     except _PolicyGateRollback as rollback:
         return rollback.evaluation
 

@@ -4,10 +4,32 @@ from __future__ import annotations
 
 import sqlite3
 
-from praetor.alerts.outbox import write_pending_health_alert
+from praetor.alerts.outbox import (
+    init_health_alert_outbox_schema,
+    write_pending_health_alert,
+)
 from praetor.contracts.health import SystemHealthAlert
 from praetor.hashing.canonical import delimited, sha256_hex
 from praetor.state.sqlite_guard import require_critical_transaction
+
+_PENDING_FLUSH_DDL = """
+CREATE TABLE IF NOT EXISTS health_alert_pending_flush (
+    pending_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    batch_id TEXT NOT NULL,
+    alert_id TEXT NOT NULL UNIQUE,
+    alert_json TEXT NOT NULL,
+    flushed INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE INDEX IF NOT EXISTS idx_health_alert_pending_unflushed
+    ON health_alert_pending_flush(flushed, batch_id);
+"""
+
+
+def init_health_alert_emit_schema(conn: sqlite3.Connection) -> None:
+    """Ensure outbox + pending-flush tables exist for PolicyGate health alerts."""
+    init_health_alert_outbox_schema(conn)
+    conn.executescript(_PENDING_FLUSH_DDL)
 
 
 def stable_health_alert_id(

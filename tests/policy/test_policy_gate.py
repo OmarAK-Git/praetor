@@ -378,6 +378,14 @@ def test_auto_contain_blocked_when_containment_breaker_open(
 ) -> None:
     init_policy_state_schema(activated.conn)
     set_breaker_open(activated.conn, BreakerDomain.CONTAINMENT, open_=True)
+    activated.conn.execute(
+        """
+        UPDATE circuit_breaker_state
+        SET window_started_at = ?
+        WHERE domain = ?
+        """,
+        (NOW.isoformat(), BreakerDomain.CONTAINMENT.value),
+    )
     activated.conn.commit()
     result = _gate(activated, org_snapshot, alert_identity="ALERT-BREAKER")
     assert result.final_disposition == Disposition.ESCALATE
