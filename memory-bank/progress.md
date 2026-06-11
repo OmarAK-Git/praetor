@@ -1,5 +1,21 @@
 # Progress Log
 
+## 2026-06-11 — TASK-019 gatekeeper follow-up
+
+- Probe-failure cooldown: `_record_probe_failure` sets `opened_at=now` (DEC-033); timer half-open reuse documented (DEC-032).
+- Startup: `init_provider_health_breaker_schema` wired into `reconcile_policy_state` (step 6); `forbid_during_critical_transaction` guards schema init inside open tx.
+- Race guards: `require_critical_transaction` on SOC-lead trigger and timer half-open entry.
+- Tests: +10 (25 judgment provider-health tests); production-store and init-forbidden coverage.
+- Verification: suite **462**, `mypy src` OK (85 files), ruff OK.
+
+## 2026-06-11 — TASK-019 complete
+
+- Provider-health breaker: `src/praetor/judgment/provider_health_breaker.py` — failure tripping, distinct health alert, half-open via SOC-lead or `window_seconds` timer, rate-limited canary probes, independent probe/production metrics.
+- Canary payload: `PROVIDER_HEALTH_CANARY_PAYLOAD` on provider Protocol module.
+- `provider_failure_trips_breaker()` includes `ProviderUnavailableError`; intake catch deferred (no Outcome Matrix row).
+- Verification: judgment **15**, suite **452**, `mypy src` OK (85 files), ruff OK.
+- Flight Recorder: `.workflow/TASK-019/`.
+
 ## 2026-06-09 — TASK-018 complete (+ gatekeeper follow-up)
 
 - Rate limits: `src/praetor/policy/rate_limit.py` — sliding-window per-host/subnet/asset-group scopes; DEC-030 documents v1 `per_asset_group` = host asset_id.

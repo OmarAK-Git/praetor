@@ -78,6 +78,15 @@ def require_critical_transaction(conn: sqlite3.Connection) -> None:
         raise StartupGuardError(msg)
 
 
+def forbid_during_critical_transaction(
+    conn: sqlite3.Connection, *, operation: str
+) -> None:
+    """Reject schema/bootstrap work that would break an open critical_transaction."""
+    if _in_critical.get(id(conn), False):
+        msg = f"{operation} cannot run inside critical_transaction"
+        raise StartupGuardError(msg)
+
+
 def verify_critical_transaction_support(conn: sqlite3.Connection) -> None:
     """Probe that BEGIN IMMEDIATE is usable on this connection."""
     verify_connection_isolation(conn)

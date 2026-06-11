@@ -6,6 +6,7 @@ import json
 import time
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
+from types import MappingProxyType
 from typing import Any, Protocol, runtime_checkable
 
 from pydantic import ValidationError
@@ -31,6 +32,11 @@ class ProviderRefusalError(ProviderError):
 
 class ProviderUnavailableError(ProviderError):
     """Provider integration exists but is not configured for live calls."""
+
+
+PROVIDER_HEALTH_CANARY_PAYLOAD: Mapping[str, str] = MappingProxyType(
+    {"canary": "praetor-provider-health-probe-v1"}
+)
 
 
 @dataclass(frozen=True)

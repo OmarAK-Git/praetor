@@ -175,6 +175,11 @@ def _register_idempotency_for_directive(
 def reconcile_policy_state(conn: sqlite3.Connection) -> PolicyStateReconciliationResult:
     """Startup step 6: align idempotency keys and policy counters with durable state."""
     init_policy_state_schema(conn)
+    from praetor.judgment.provider_health_breaker import (
+        init_provider_health_breaker_schema,
+    )
+
+    init_provider_health_breaker_schema(conn)
     registered = 0
     with critical_transaction(conn):
         conn.execute("DELETE FROM containment_rate_counters")

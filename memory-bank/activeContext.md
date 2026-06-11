@@ -2,12 +2,14 @@
 
 ## Current focus
 
-**TASK-018 complete** — Transactional rate limits (`praetor.policy.rate_limit`) enforce per-host/subnet/asset-group sliding windows; containment circuit breaker (`praetor.policy.circuit_breaker`) trips on rate-limit failures, emits health alerts, and freezes counters while open.
+**TASK-019 complete** — Provider-health breaker (`praetor.judgment.provider_health_breaker`) trips on production provider failures, emits `provider_health_breaker_open` alerts, supports SOC-lead/timer half-open entry, and runs rate-limited synthetic canary probes with independent metrics.
 
-Next: **TASK-019** (Provider-Health Breaker with Half-Open Probes). Follow-on: wire PolicyGate into engine intake (orchestrator still uses skeleton inline policy).
+Next: **TASK-020** (Directive Lifecycle and Revocation). Follow-on: wire production failure recording and PolicyGate into engine intake.
 
 ## Recently changed
 
+- TASK-019 gatekeeper: probe-failure cooldown (`opened_at` reset), startup schema via `reconcile_policy_state`, `require_critical_transaction` on half-open transitions, `forbid_during_critical_transaction` on schema init; +10 tests (25 total).
+- TASK-019: `src/praetor/judgment/{provider_health_breaker,provider}.py` — half-open probes, canary payload, probe/production metrics; `tests/judgment/` (+15 tests).
 - TASK-018: `src/praetor/policy/{rate_limit,circuit_breaker}.py` — multi-scope sliding-window limits, breaker trip/reset, health alert on trip; `tests/policy/` (+10 tests, 39 total).
 - TASK-017: `src/praetor/policy/{gate,containment_policy,directive_builder,state}.py` — PolicyGate v1, step 6 reconciliation, `open_production_state_store`.
 - TASK-016: account corroboration and identity eligibility.

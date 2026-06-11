@@ -6,14 +6,14 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-019 | Provider-Health Breaker with Half-Open Probes | Next | Depends on TASK-018 |
+| TASK-020 | Directive Lifecycle and Revocation | Next | Depends on TASK-017, 018, 19 |
 
 ## Gate prerequisites
 
 - Startup recovery step 6 is implemented in TASK-017 (`reconcile_policy_state`).
 - Engine orchestrator still uses skeleton inline policy; wire PolicyGate into intake as follow-on.
-- Task 19 provider-health breaker must define/map `ProviderUnavailableError`
-  from the Vertex stub; do not catch it in intake until an Outcome Matrix row exists.
+- Provider-health breaker (`praetor.judgment.provider_health_breaker`) is implemented; wire production failure recording into intake as follow-on.
+- `ProviderUnavailableError` maps via `provider_failure_trips_breaker()` but is not caught in intake until an Outcome Matrix row exists.
 - TASK-015 citation surface (TASK-017 reuse): citable field paths are normalized
   evidence fields (bare or `normalized_fields.*`), nested normalized paths, plus
   `source_event_reference` and `provenance_path` (TASK-014 prompt excerpts).
@@ -54,3 +54,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-016 | Canonical Account Identity and Synthetic Provenance Tests | `.workflow/TASK-016/verification.md` — `pytest` 395 / evidence corroboration 20; `src/praetor/evidence/provenance.py`, `src/praetor/policy/identity.py`; synthetic fixtures under `tests/fixtures/synthetic/` |
 | TASK-017 | Deterministic PolicyGate v1 | `.workflow/TASK-017/verification.md` — `pytest` 416 / policy 21; `src/praetor/policy/{gate,containment_policy,directive_builder,state}.py`; startup step 6 + `open_production_state_store` |
 | TASK-018 | Transactional Rate Limits and Containment Breaker | `.workflow/TASK-018/verification.md` — `pytest` 434 / policy 39; `src/praetor/policy/{rate_limit,circuit_breaker}.py`; sliding-window scopes + containment breaker alerts |
+| TASK-019 | Provider-Health Breaker with Half-Open Probes | `.workflow/TASK-019/verification.md` — `pytest` 462 / judgment 25; gatekeeper: cooldown, startup init, tx guards |

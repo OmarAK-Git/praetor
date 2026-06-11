@@ -10,6 +10,7 @@ from praetor.judgment.excerpt import (
 from praetor.judgment.fake_provider import FakeProvider, FakeProviderMode
 from praetor.judgment.prompt import build_judgment_prompt_payload
 from praetor.judgment.provider import (
+    PROVIDER_HEALTH_CANARY_PAYLOAD,
     JudgmentProvider,
     JudgmentRequest,
     ProviderError,
@@ -22,6 +23,21 @@ from praetor.judgment.provider import (
     call_provider_with_retries,
     parse_model_judgment_json,
 )
+from praetor.judgment.provider_health_breaker import (
+    PROVIDER_HEALTH_BREAKER_ALERT_CODE,
+    ProviderHealthMetrics,
+    ProviderProbeExecutionResult,
+    execute_provider_health_probe,
+    init_provider_health_breaker_schema,
+    is_provider_health_breaker_blocking,
+    is_provider_health_half_open,
+    maybe_enter_half_open_from_timer,
+    provider_failure_trips_breaker,
+    read_provider_health_metrics,
+    record_provider_production_failure_in_transaction,
+    record_provider_production_success_in_transaction,
+    trigger_half_open_probes_by_soc_lead,
+)
 from praetor.judgment.vertex_provider import VertexProvider
 
 __all__ = [
@@ -30,11 +46,15 @@ __all__ = [
     "JudgmentProvider",
     "JudgmentRequest",
     "MAX_PROMPT_EXCERPT_CHARS",
+    "PROVIDER_HEALTH_BREAKER_ALERT_CODE",
+    "PROVIDER_HEALTH_CANARY_PAYLOAD",
     "PromptExcerpt",
     "PromptExcerptSet",
     "PromptFact",
     "ProviderError",
+    "ProviderHealthMetrics",
     "ProviderMalformedResponseError",
+    "ProviderProbeExecutionResult",
     "ProviderProbeResult",
     "ProviderRefusalError",
     "ProviderRetryPolicy",
@@ -44,5 +64,15 @@ __all__ = [
     "build_judgment_prompt_payload",
     "build_prompt_excerpt_set",
     "call_provider_with_retries",
+    "execute_provider_health_probe",
+    "init_provider_health_breaker_schema",
+    "is_provider_health_breaker_blocking",
+    "is_provider_health_half_open",
+    "maybe_enter_half_open_from_timer",
     "parse_model_judgment_json",
+    "provider_failure_trips_breaker",
+    "read_provider_health_metrics",
+    "record_provider_production_failure_in_transaction",
+    "record_provider_production_success_in_transaction",
+    "trigger_half_open_probes_by_soc_lead",
 ]

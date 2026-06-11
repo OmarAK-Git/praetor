@@ -35,5 +35,7 @@ Product and architecture decisions are **documented in `docs/prd.md`** (seven nu
 | DEC-029 | 2026-06-09 | Rate-limit ceiling = 1 event per configured scope per `containment_circuit_breaker_policy.window_seconds` | Org config `rate_limit_policy` lists scopes only (no numeric ceilings in schema); Task 17 fixed limit preserved with Task 18 sliding windows | TASK-018 |
 | DEC-030 | 2026-06-09 | v1 `per_asset_group` rate scope = host's own `asset_id` only | Real multi-host asset-group membership deferred (`docs/plan.md` deferred work); scope key differs from `per_host` but membership does not span hosts | TASK-018 follow-up |
 | DEC-031 | 2026-06-09 | Containment breaker recovers via window elapse on open-check | `is_containment_breaker_open` advances `_advance_breaker_window`; successes cannot recover while open because auto_contain is blocked; matches spec § Circuit Breakers recovery intent | TASK-018 follow-up |
+| DEC-032 | 2026-06-11 | Half-open auto-entry timer reuses `provider_health_circuit_breaker_policy.window_seconds` | Org config has no separate probe-timer field; elapsed time since `opened_at` gates timer-based half-open entry | TASK-019 |
+| DEC-033 | 2026-06-11 | Probe failure resets `opened_at` to restart half-open cooldown | Prevents immediate timer re-entry after failed probe when original open predates `window_seconds`; breaker returns fully open until cooldown elapses | TASK-019 gatekeeper |
 
 Add rows here when implementation choices diverge from or refine docs (with date and evidence).
