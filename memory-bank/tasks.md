@@ -6,7 +6,7 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-020 | Directive Lifecycle and Revocation | Next | Depends on TASK-017, 018, 19 |
+| TASK-021 | Reference Consumer Verifier | Next | Depends on TASK-003, 011, 020 |
 
 ## Gate prerequisites
 
@@ -55,3 +55,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-017 | Deterministic PolicyGate v1 | `.workflow/TASK-017/verification.md` — `pytest` 416 / policy 21; `src/praetor/policy/{gate,containment_policy,directive_builder,state}.py`; startup step 6 + `open_production_state_store` |
 | TASK-018 | Transactional Rate Limits and Containment Breaker | `.workflow/TASK-018/verification.md` — `pytest` 434 / policy 39; `src/praetor/policy/{rate_limit,circuit_breaker}.py`; sliding-window scopes + containment breaker alerts |
 | TASK-019 | Provider-Health Breaker with Half-Open Probes | `.workflow/TASK-019/verification.md` — `pytest` 462 / judgment 25; gatekeeper: cooldown, startup init, tx guards |
+| TASK-020 | Directive Lifecycle and Revocation | `.workflow/TASK-020/verification.md` — `pytest` 485 / containment 23 (lifecycle 15, revocation 8); manual revocation ledger (DEC-034); `src/praetor/containment/` |

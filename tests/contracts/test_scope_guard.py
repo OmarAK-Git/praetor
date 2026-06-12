@@ -12,9 +12,7 @@ import pytest
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC = REPO_ROOT / "src" / "praetor"
 
-FORBIDDEN_PACKAGES = (
-    "containment",
-)
+FORBIDDEN_PACKAGES: tuple[str, ...] = ()
 
 SQLITE_GUARD = SRC / "state" / "sqlite_guard.py"
 _BARE_BEGIN = re.compile(r"\bBEGIN\b(?!\s+IMMEDIATE\b)", re.IGNORECASE)
@@ -51,6 +49,7 @@ def test_only_expected_top_level_packages() -> None:
         "alerts",
         "auth",
         "config",
+        "containment",
         "contracts",
         "engine",
         "evidence",

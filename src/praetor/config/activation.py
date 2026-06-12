@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import uuid
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
 from pathlib import Path
 
 from praetor.auth.verifier import (
@@ -19,20 +17,20 @@ from praetor.config.health_emit import (
     flush_health_alert_batch,
     new_health_alert_batch_id,
 )
-from praetor.config.live import directive_matches_entry, permanent_never_contain_entries
+from praetor.config.live import permanent_never_contain_entries
 from praetor.config.loader import load_org_config_source
 from praetor.config.preflight import run_preflight
 from praetor.config.state import (
     activate_org_config_record,
     fetch_active_emergency_records,
     fetch_outstanding_unrevoked_directives,
-    mark_directive_revoked,
     retire_emergencies_absorbed_into_permanent,
 )
-from praetor.contracts.containment import ContainmentDirective
-from praetor.contracts.health import SystemHealthAlert
-from praetor.contracts.ledger import DirectiveRevocationRecord, RevocationReason
-from praetor.ledger.store import append_ledger_record
+from praetor.containment.revocation import (
+    post_activation_conflict_alerts,
+    revoke_directives_matching_never_contain,
+)
+from praetor.contracts.ledger import RevocationReason
 from praetor.state.sqlite_guard import critical_transaction
 from praetor.state.store import StateStore
 
@@ -44,25 +42,6 @@ class ActivationResult:
     retired_emergency_entry_ids: list[str] = field(default_factory=list)
     emitted_alert_ids: list[str] = field(default_factory=list)
     health_alert_batch_id: str = ""
-
-
-def _revocation_for_directive(
-    directive: ContainmentDirective,
-    *,
-    reason: RevocationReason,
-    triggered_by: str,
-) -> DirectiveRevocationRecord:
-    now = datetime.now(UTC)
-    return DirectiveRevocationRecord(
-        revocation_id=f"rev-{uuid.uuid4().hex}",
-        directive_id=directive.directive_id,
-        reason=reason,
-        reason_code=reason.value,
-        triggered_by=triggered_by,
-        revoked_at=now,
-        ledger_commit_at=now,
-        idempotency_key_cleared=False,
-    )
 
 
 def activate_org_config(
@@ -95,18 +74,14 @@ def activate_org_config(
 
         never_contain = reconciliation_never_contain_entries(permanent, emergencies)
         directives = fetch_outstanding_unrevoked_directives(store.conn)
-        for directive in directives:
-            if not any(directive_matches_entry(directive, e) for e in never_contain):
-                continue
-            record = _revocation_for_directive(
-                directive,
-                reason=RevocationReason.POST_ACTIVATION_RECONCILIATION,
-                triggered_by=triggered_by,
-            )
-            store.write_automated_revocation_in_transaction(record)
-            append_ledger_record(store.conn, record)
-            mark_directive_revoked(store.conn, directive.directive_id)
-            revoked_ids.append(directive.directive_id)
+        revoked_ids = revoke_directives_matching_never_contain(
+            store.conn,
+            store,
+            directives,
+            never_contain,
+            reason=RevocationReason.POST_ACTIVATION_RECONCILIATION,
+            triggered_by=triggered_by,
+        )
 
         retired_emergency = retire_emergencies_absorbed_into_permanent(
             store.conn, permanent
@@ -116,14 +91,11 @@ def activate_org_config(
             snapshot,
             verbatim_render_text=loaded.verbatim_text,
         )
-        alerts = [
-            SystemHealthAlert(
-                alert_code="never_contain_post_activation_conflict",
-                emitted_at=datetime.now(UTC),
-            )
-            for _ in revoked_ids
-        ]
-        enqueue_health_alerts_in_transaction(store.conn, alerts, batch_id=batch_id)
+        enqueue_health_alerts_in_transaction(
+            store.conn,
+            post_activation_conflict_alerts(len(revoked_ids)),
+            batch_id=batch_id,
+        )
 
     emitted.extend(flush_health_alert_batch(store.conn, batch_id=batch_id))
 

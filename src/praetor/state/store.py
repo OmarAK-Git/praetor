@@ -249,6 +249,25 @@ class StateStore:
             clear_idempotency_key_value=None,
         )
 
+    def write_manual_revocation_in_transaction(
+        self,
+        record: DirectiveRevocationRecord,
+        *,
+        idempotency_key: str,
+    ) -> RevocationWriteResult:
+        """Manual revocation when caller already holds critical_transaction."""
+        require_critical_transaction(self.conn)
+        if record.reason != RevocationReason.MANUAL:
+            msg = "write_manual_revocation_in_transaction requires reason=manual"
+            raise ValueError(msg)
+        if not record.idempotency_key_cleared:
+            msg = "manual revocation must set idempotency_key_cleared=true"
+            raise ValueError(msg)
+        return self._write_revocation_in_transaction(
+            record,
+            clear_idempotency_key_value=idempotency_key,
+        )
+
     def close(self) -> None:
         self.conn.close()
 

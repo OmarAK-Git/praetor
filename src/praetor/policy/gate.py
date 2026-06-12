@@ -7,7 +7,6 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from praetor.config.directives import insert_outstanding_directive_in_transaction
 from praetor.config.health_emit import (
     flush_health_alert_batch,
     init_health_alert_emit_schema,
@@ -15,6 +14,10 @@ from praetor.config.health_emit import (
 from praetor.config.state import (
     fetch_outstanding_unrevoked_directives,
     read_live_never_contain_entries,
+)
+from praetor.containment.lifecycle import (
+    build_proposed_directive_in_transaction,
+    insert_outstanding_directive_in_transaction,
 )
 from praetor.contracts.containment import ContainmentDirective
 from praetor.contracts.disposition import Disposition
@@ -41,7 +44,6 @@ from praetor.policy.containment_policy import (
     target_blocked_by_live,
     target_blocked_by_snapshot,
 )
-from praetor.policy.directive_builder import build_containment_directive_in_transaction
 from praetor.policy.identity import (
     ACCOUNT_CONTAINMENT_DISABLED,
     AMBIGUOUS_TARGET_IDENTITY,
@@ -303,7 +305,7 @@ def evaluate_policy_gate(
             if tx_exceeded:
                 raise _RateLimitRaceLoss()
 
-            directive = build_containment_directive_in_transaction(
+            directive = build_proposed_directive_in_transaction(
                 conn,
                 decision_id=decision_id,
                 alert_identity=alert_identity,
@@ -334,7 +336,7 @@ def evaluate_policy_gate(
                 policy=org_snapshot.containment_circuit_breaker_policy,
                 now=moment,
             )
-            insert_outstanding_directive_in_transaction(conn, directive)
+            directive = insert_outstanding_directive_in_transaction(conn, directive)
     except _RateLimitRaceLoss:
         trip = _record_rate_limit_failure(conn, org_snapshot, now=moment)
         _flush_breaker_trip_alerts(conn, trip.health_alert_batch_id)

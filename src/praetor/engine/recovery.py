@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import uuid
 from dataclasses import dataclass
-from datetime import UTC, datetime
 from typing import Any
 
 from praetor.config.health_emit import (
@@ -14,7 +12,6 @@ from praetor.config.health_emit import (
     new_health_alert_batch_id,
 )
 from praetor.config.live import (
-    directive_matches_entry,
     permanent_never_contain_entries,
     reconciliation_never_contain_entries,
 )
@@ -22,14 +19,16 @@ from praetor.config.state import (
     fetch_active_emergency_records,
     fetch_active_snapshot,
     fetch_outstanding_unrevoked_directives,
-    mark_directive_revoked,
     read_live_never_contain_entries,
+)
+from praetor.containment.revocation import (
+    never_contain_conflict_alerts,
+    revoke_directives_matching_never_contain,
 )
 from praetor.contracts.disposition import Disposition
 from praetor.contracts.edict import DecisionEdict
-from praetor.contracts.health import SystemHealthAlert
 from praetor.contracts.judgment import ModelJudgment
-from praetor.contracts.ledger import DirectiveRevocationRecord, RevocationReason
+from praetor.contracts.ledger import RevocationReason
 from praetor.engine.edict import (
     SkeletonDisposition,
     _finalize_attempt_with_edict_in_transaction,
@@ -40,7 +39,7 @@ from praetor.engine.edict import (
 from praetor.engine.ids import decision_id_for_attempt, stamp_evidence_hash
 from praetor.engine.skeleton import skeleton_model_judgment
 from praetor.hashing import derive_stamp_id
-from praetor.ledger.store import append_ledger_record, fetch_ledger_rows
+from praetor.ledger.store import fetch_ledger_rows
 from praetor.policy.state import reconcile_policy_state
 from praetor.state.attempts import (
     AttemptState,
@@ -54,8 +53,6 @@ from praetor.state.sqlite_guard import critical_transaction
 from praetor.state.store import StateStore
 from praetor.tickets.outbox import StampOutboxEntry, StampStatus, fetch_stamp_outbox
 from praetor.tickets.stamp import StampContext, TicketStampBackend, execute_stamp
-
-NEVER_CONTAIN_CONFLICT_ALERT = "never_contain_conflict"
 
 
 @dataclass(frozen=True)
@@ -294,35 +291,22 @@ def reconcile_outstanding_directives_never_contain(
     batch_id = new_health_alert_batch_id()
     # Recover any prior partial-failure alerts (side effect only; not returned).
     drain_unflushed_health_alerts(conn)
-    revoked: list[str] = []
     with critical_transaction(conn):
-        for directive in fetch_outstanding_unrevoked_directives(conn):
-            if not any(directive_matches_entry(directive, e) for e in never_contain):
-                continue
-            now = datetime.now(UTC)
-            record = DirectiveRevocationRecord(
-                revocation_id=f"rev-{uuid.uuid4().hex}",
-                directive_id=directive.directive_id,
-                reason=RevocationReason.NEVER_CONTAIN_CONFLICT,
-                reason_code=RevocationReason.NEVER_CONTAIN_CONFLICT.value,
-                triggered_by=triggered_by,
-                revoked_at=now,
-                ledger_commit_at=now,
-                idempotency_key_cleared=False,
-            )
-            store.write_automated_revocation_in_transaction(record)
-            append_ledger_record(conn, record)
-            mark_directive_revoked(conn, directive.directive_id)
-            revoked.append(directive.directive_id)
+        directives = fetch_outstanding_unrevoked_directives(conn)
+        revoked = revoke_directives_matching_never_contain(
+            conn,
+            store,
+            directives,
+            never_contain,
+            reason=RevocationReason.NEVER_CONTAIN_CONFLICT,
+            triggered_by=triggered_by,
+        )
         if revoked:
-            alerts = [
-                SystemHealthAlert(
-                    alert_code=NEVER_CONTAIN_CONFLICT_ALERT,
-                    emitted_at=datetime.now(UTC),
-                )
-                for _ in revoked
-            ]
-            enqueue_health_alerts_in_transaction(conn, alerts, batch_id=batch_id)
+            enqueue_health_alerts_in_transaction(
+                conn,
+                never_contain_conflict_alerts(len(revoked)),
+                batch_id=batch_id,
+            )
     emitted = flush_health_alert_batch(conn, batch_id=batch_id)
     return revoked, emitted
 

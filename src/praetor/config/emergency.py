@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -21,7 +22,6 @@ from praetor.config.health_emit import (
 )
 from praetor.config.live import (
     canonical_target_specification,
-    directive_matches_entry,
     emergency_entry_as_never_contain,
     target_in_never_contain_list,
 )
@@ -29,15 +29,14 @@ from praetor.config.state import (
     fetch_active_snapshot,
     fetch_outstanding_unrevoked_directives,
     insert_emergency_record,
-    mark_directive_revoked,
     read_live_never_contain_entries,
 )
-from praetor.contracts.health import SystemHealthAlert
-from praetor.contracts.ledger import (
-    DirectiveRevocationRecord,
-    EmergencyNeverContainRecord,
-    RevocationReason,
+from praetor.containment.revocation import (
+    never_contain_conflict_alerts,
+    revoke_directives_matching_never_contain,
 )
+from praetor.contracts.health import SystemHealthAlert
+from praetor.contracts.ledger import EmergencyNeverContainRecord, RevocationReason
 from praetor.ledger.store import append_ledger_record
 from praetor.state.sqlite_guard import critical_transaction
 from praetor.state.store import StateStore
@@ -88,6 +87,7 @@ def add_emergency_never_contain(
     lifetime_seconds: int,
     audit_reason: str,
     entry_id: str | None = None,
+    _test_before_conflict_revocation: Callable[[], None] | None = None,
 ) -> EmergencyEntryResult:
     principal = authenticate_emergency_never_contain(token, verifier)
     added_by = verified_record_identity(principal)
@@ -135,24 +135,18 @@ def add_emergency_never_contain(
         insert_emergency_record(store.conn, record)
         append_ledger_record(store.conn, record)
         entry_dict = emergency_entry_as_never_contain(record)
-        for directive in fetch_outstanding_unrevoked_directives(store.conn):
-            if not directive_matches_entry(directive, entry_dict):
-                continue
-            now = datetime.now(UTC)
-            rev = DirectiveRevocationRecord(
-                revocation_id=f"rev-{uuid.uuid4().hex}",
-                directive_id=directive.directive_id,
-                reason=RevocationReason.NEVER_CONTAIN_CONFLICT,
-                reason_code=RevocationReason.NEVER_CONTAIN_CONFLICT.value,
-                triggered_by=added_by,
-                revoked_at=now,
-                ledger_commit_at=now,
-                idempotency_key_cleared=False,
-            )
-            store.write_automated_revocation_in_transaction(rev)
-            append_ledger_record(store.conn, rev)
-            mark_directive_revoked(store.conn, directive.directive_id)
-            revoked_ids.append(directive.directive_id)
+        if _test_before_conflict_revocation is not None:
+            _test_before_conflict_revocation()
+        directives = fetch_outstanding_unrevoked_directives(store.conn)
+        revoked_ids = revoke_directives_matching_never_contain(
+            store.conn,
+            store,
+            directives,
+            [entry_dict],
+            reason=RevocationReason.NEVER_CONTAIN_CONFLICT,
+            triggered_by=added_by,
+            now=now,
+        )
 
         alerts: list[SystemHealthAlert] = [
             SystemHealthAlert(
@@ -160,13 +154,7 @@ def add_emergency_never_contain(
                 emitted_at=datetime.now(UTC),
             )
         ]
-        alerts.extend(
-            SystemHealthAlert(
-                alert_code="never_contain_conflict",
-                emitted_at=datetime.now(UTC),
-            )
-            for _ in revoked_ids
-        )
+        alerts.extend(never_contain_conflict_alerts(len(revoked_ids), now=now))
         # Keep alert enqueue atomic with the emergency record, ledger appends, and feed rows.
         enqueue_health_alerts_in_transaction(store.conn, alerts, batch_id=batch_id)
 

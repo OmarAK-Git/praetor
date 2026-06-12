@@ -8,6 +8,7 @@ from praetor.hashing import compute_never_contain_entries_hash
 from praetor.policy.containment_policy import ContainmentTarget
 from praetor.policy.directive_builder import build_containment_directive_in_transaction
 from praetor.policy.gate import evaluate_policy_gate
+from praetor.state.sqlite_guard import critical_transaction
 
 
 def test_directive_embedded_hash_matches_via_gate(activated, org_snapshot) -> None:
@@ -51,16 +52,17 @@ def test_directive_embedded_hash_includes_same_target_emergency_subset(
             "target_id": "dc-01",
         },
     ]
-    directive = build_containment_directive_in_transaction(
-        activated.conn,
-        decision_id="dec-hash-emergency",
-        alert_identity="ALERT-HASH-EM",
-        target=target,
-        evidence_refs=["ev-host-1"],
-        org_snapshot=org_snapshot,
-        live_never_contain_entries=live_entries,
-        now=NOW,
-    )
+    with critical_transaction(activated.conn):
+        directive = build_containment_directive_in_transaction(
+            activated.conn,
+            decision_id="dec-hash-emergency",
+            alert_identity="ALERT-HASH-EM",
+            target=target,
+            evidence_refs=["ev-host-1"],
+            org_snapshot=org_snapshot,
+            live_never_contain_entries=live_entries,
+            now=NOW,
+        )
     assert len(directive.embedded_never_contain_entries) == 1
     assert directive.embedded_never_contain_entries[0].get("source") == "emergency"
     assert (

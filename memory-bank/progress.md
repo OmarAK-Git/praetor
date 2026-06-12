@@ -1,5 +1,21 @@
 # Progress Log
 
+## 2026-06-11 — TASK-020 gatekeeper follow-up
+
+- Manual revocation: `manual_revoke_directive_in_transaction` appends hash-chain ledger + marks directive revoked in same tx as feed + key clear (DEC-034); `write_manual_revocation_in_transaction` on StateStore.
+- Builder: `require_critical_transaction`; caller `live_never_contain_entries` sole embed source; removed in-tx recompute fallback.
+- Tests: mid-export feed floor, §9 hash negatives, non-empty embed round-trip, reason/count assertions, emergency fault-injection rollback.
+- DEC-035: v1 emitted directives typically embed empty never-contain subset (exact-match relevance).
+- Verification: containment **23** (lifecycle 15, revocation 8), suite **485**, `mypy src` OK (88 files), ruff OK.
+
+## 2026-06-11 — TASK-020 complete
+
+- Containment package: `src/praetor/containment/{lifecycle,revocation}.py` — proposed→emitted on persist, consumer embedded-hash verify, differentiated revocation triggers (manual, never-contain conflict, post-activation, supersession API).
+- Refactored: `policy/gate.py`, `config/{activation,emergency}.py`, `engine/recovery.py`; thin re-exports in `policy/directive_builder.py` and `config/directives.py`.
+- Scope guard: `containment` package allowed.
+- Tests: `tests/containment/` — **16**; suite **478**, `mypy src` OK (88 files), ruff OK.
+- Flight Recorder: `.workflow/TASK-020/`.
+
 ## 2026-06-11 — TASK-019 gatekeeper follow-up
 
 - Probe-failure cooldown: `_record_probe_failure` sets `opened_at=now` (DEC-033); timer half-open reuse documented (DEC-032).
