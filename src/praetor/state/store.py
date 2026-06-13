@@ -351,6 +351,7 @@ def open_state_store(
             (SCHEMA_VERSION_KEY, str(SCHEMA_VERSION)),
         )
     from praetor.alerts.outbox import init_health_alert_outbox_schema
+    from praetor.annotations.store import init_annotation_schema
     from praetor.config.state import init_config_schema
     from praetor.ledger.store import init_ledger_schema
     from praetor.tickets.outbox import init_stamp_outbox_schema
@@ -359,6 +360,7 @@ def open_state_store(
     init_health_alert_outbox_schema(conn)
     init_config_schema(conn)
     init_ledger_schema(conn)
+    init_annotation_schema(conn)
     from praetor.revocation.outbox import init_revocation_feed_export_schema
 
     init_revocation_feed_export_schema(conn)

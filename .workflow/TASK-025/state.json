@@ -1,0 +1,28 @@
+{
+  "run": "TASK-025",
+  "status": "completed",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-13",
+  "tasks": [
+    {
+      "id": "T-001",
+      "status": "completed",
+      "owner": "agent",
+      "notes": "Workflow artifacts created"
+    },
+    {
+      "id": "T-002",
+      "status": "completed",
+      "owner": "agent",
+      "notes": "annotations/store.py + 8 tests"
+    },
+    {
+      "id": "T-003",
+      "status": "completed",
+      "owner": "agent",
+      "notes": "Verification + Memory Bank"
+    }
+  ]
+}

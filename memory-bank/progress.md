@@ -1,5 +1,11 @@
 # Progress Log
 
+## 2026-06-13 — TASK-025 complete
+
+- Analyst annotation storage: `src/praetor/annotations/store.py` — SQLite `analyst_annotations` table; `submit_annotation` with `authenticate_annotation_submission` + `verified_record_identity`; Pydantic cross-field validation; decision existence via `completed_decisions` or ledger edict; edict hash immutability.
+- Tests: `tests/annotations/test_annotations.py` — **8**; suite **578**, `mypy src` OK (96 files), ruff OK.
+- Flight Recorder: `.workflow/TASK-025/`.
+
 ## 2026-06-13 — TASK-024 gatekeeper follow-up
 
 - Metrics contract hardened: policy-gate owns disposition recording; breaker true edge counters + recovery/current state; per-channel health delivery; §13 fault-flag enum; stamp terminal/non-terminal views; bounded feed-lag window (1000); edge cases for lag clamp, p99 small-n, threshold boundary (>=).

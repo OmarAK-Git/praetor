@@ -47,6 +47,7 @@ def test_only_expected_top_level_packages() -> None:
     }
     allowed = {
         "alerts",
+        "annotations",
         "auth",
         "config",
         "containment",

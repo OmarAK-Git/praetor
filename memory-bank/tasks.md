@@ -6,7 +6,7 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-025 | Analyst Annotation Storage | Next | Depends on Tasks 2, 4, 10 |
+| TASK-026 | Mandatory Phase 2 Eval Harness | Next | Depends on Tasks 13–25 |
 
 ## Gate prerequisites
 
@@ -60,3 +60,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-022 | Latency SLA and Queue Aging | `.workflow/TASK-022/verification.md` — `pytest` 523 / engine latency+queue 14; gatekeeper: DEC-039 cumulative retry, DEC-040 recovery-only queue aging; `src/praetor/engine/{timeouts,queue_policy}.py` |
 | TASK-023 | Ticket Stamp Contract Integration | `.workflow/TASK-023/verification.md` — `pytest` 543 / tickets stamp sequencing 20; gatekeeper: DEC-042 fault-flag preservation, DEC-043 redelivery raises; `src/praetor/tickets/contract.py` |
 | TASK-024 | Metrics | `.workflow/TASK-024/verification.md` — `pytest` 556 / metrics 13; `src/praetor/metrics/{collector,events}.py`; in-process collector for all Task 24 criteria |
+| TASK-025 | Analyst Annotation Storage | `.workflow/TASK-025/verification.md` — `pytest` 578 / annotations 8; `src/praetor/annotations/store.py`; auth + schema validation + decision linkage |

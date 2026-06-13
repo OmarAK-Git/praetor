@@ -2,22 +2,21 @@
 
 ## Current focus
 
-**TASK-024 complete** — `metrics/{collector,events}.py` in-process collector covers all Task 24 criteria (dispositions, overrides, LLM faults, directives, queue aging, independent breaker/probe domains, stamp/health-alert counters, feed lag p99 + unhealthy transitions).
+**TASK-025 complete** — `annotations/store.py` persists analyst annotations with cross-field validation, verified reviewer identity, decision linkage, and edict hash immutability.
 
-Next: **TASK-025** (Analyst Annotation Storage). Follow-on: wire `MetricsCollector` into intake/export paths.
+Next: **TASK-026** (Mandatory Phase 2 Eval Harness). Follow-on: wire `init_annotation_schema` into startup; wire `MetricsCollector` into intake/export paths.
 
 ## Recently changed
 
-- TASK-024: `metrics/{collector,events}.py` — in-process metrics collector with independent breaker/probe domains, feed lag p99 + warning threshold; 13 metrics tests; suite **556**.
+- TASK-025: `annotations/store.py` — SQLite `analyst_annotations` table, `submit_annotation` with Task 4 auth; 8 annotation tests; suite **578**.
+- TASK-024: `metrics/{collector,events}.py` — in-process metrics collector with independent breaker/probe domains, feed lag p99 + unhealthy transitions; 13 metrics tests; suite **556**.
 - TASK-023: `tickets/contract.py` — stamp success/failure disposition sequencing; orchestrator in-flight defer; recovery delegation; 14 sequencing tests.
-- TASK-022: `engine/{timeouts,queue_policy}.py` — latency SLA tracking, queue age from org config; orchestrator + recovery wiring; 14 engine tests.
-- TASK-021 gatekeeper: expiry skew fail-closed (DEC-037); superseded-directive hole; feed checksum; truncation-tolerant gap (DEC-038); revocations in hand; `py.typed` + mypy consumer_sdk; +11 tests (24 consumer_sdk total).
 
 ## Current blockers
 
 - Operator docs still absent: `docs/operator_runbook.md`, `docs/architecture.md`, `docs/eval_gates.md` (Task 35).
 - PolicyGate module complete but not wired into `engine/orchestrator.py` intake path (stamp contract wired on skeleton path).
-- Metrics collector implemented but not wired into production call sites (DEC-046: single-writer when wired).
+- Metrics collector not wired into production call sites; no intake/UI surface for annotation submission.
 
 ## Important notes for agents
 
