@@ -54,6 +54,11 @@ from praetor.state.attempts import (
     transition_attempt,
 )
 from praetor.state.store import StateStore
+from praetor.tickets.contract import (
+    StampContractDisposition,
+    apply_terminal_stamp_to_disposition,
+    stamp_status_allows_edict_append,
+)
 from praetor.tickets.stamp import (
     StampBackendOutcome,
     StampBackendResult,
@@ -257,8 +262,23 @@ def process_alert_intake(
             },
         ),
     )
+    if not stamp_status_allows_edict_append(stamp_result.status):
+        return IntakeResult(
+            decision_id=None,
+            edict=None,
+            disposition=None,
+            fault_flags=(),
+            attempt_aborted=False,
+            judgment_provider_calls=calls,
+        )
     attempt = transition_attempt(
         store.conn, attempt.processing_attempt_identity, AttemptState.STAMP_RESOLVED
+    )
+    disposition = _stamp_contract_to_skeleton(
+        apply_terminal_stamp_to_disposition(
+            stamp_result.status,
+            pre_stamp_disposition=_skeleton_to_stamp_contract(disposition),
+        )
     )
     never_contain = read_live_never_contain_entries(store.conn)
     edict = build_decision_edict(
@@ -282,6 +302,28 @@ def process_alert_intake(
         fault_flags=tuple(stored.fault_flags),
         attempt_aborted=False,
         judgment_provider_calls=calls,
+    )
+
+
+def _skeleton_to_stamp_contract(
+    disposition: SkeletonDisposition,
+) -> StampContractDisposition:
+    return StampContractDisposition(
+        final_disposition=disposition.final_disposition,
+        fault_flags=list(disposition.fault_flags),
+        system_fault_escalation=disposition.system_fault_escalation,
+        proposed_disposition=disposition.proposed_disposition,
+    )
+
+
+def _stamp_contract_to_skeleton(
+    disposition: StampContractDisposition,
+) -> SkeletonDisposition:
+    return SkeletonDisposition(
+        final_disposition=disposition.final_disposition,
+        fault_flags=list(disposition.fault_flags),
+        system_fault_escalation=disposition.system_fault_escalation,
+        proposed_disposition=disposition.proposed_disposition,
     )
 
 

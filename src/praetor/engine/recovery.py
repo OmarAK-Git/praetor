@@ -54,6 +54,11 @@ from praetor.state.attempts import (
 )
 from praetor.state.sqlite_guard import critical_transaction
 from praetor.state.store import StateStore
+from praetor.tickets.contract import (
+    StampContractDisposition,
+    apply_terminal_stamp_to_disposition,
+    candidate_judgment_from_stamp_payload,
+)
 from praetor.tickets.outbox import StampOutboxEntry, StampStatus, fetch_stamp_outbox
 from praetor.tickets.stamp import StampContext, TicketStampBackend, execute_stamp
 
@@ -97,9 +102,9 @@ def _stamp_id_for_attempt(attempt: ProcessingAttempt) -> str:
 
 
 def _recovery_judgment_from_stamp(entry_payload: dict[str, Any]) -> ModelJudgment:
-    raw = entry_payload.get("candidate_judgment")
-    if isinstance(raw, dict):
-        return ModelJudgment.model_validate(raw)
+    recovered = candidate_judgment_from_stamp_payload(entry_payload)
+    if recovered is not None:
+        return recovered
     return skeleton_model_judgment()
 
 
@@ -108,26 +113,30 @@ def _recovery_disposition_for_stamp(
     judgment: ModelJudgment,
 ) -> SkeletonDisposition:
     """Map terminal stamp outcomes per docs/spec.md recovery rules."""
-    if stamp_status == StampStatus.FAILED:
-        proposed = judgment.proposed_disposition
-        final = proposed
-        if proposed == Disposition.AUTO_CONTAIN:
-            final = Disposition.ESCALATE
-        return SkeletonDisposition(
-            final_disposition=final,
-            fault_flags=["ticket_stamp_failed"],
-            system_fault_escalation=False,
-            proposed_disposition=proposed,
-        )
-    disposition = skeleton_policy_result(judgment)
-    if disposition.final_disposition == Disposition.AUTO_CONTAIN:
-        return SkeletonDisposition(
+    pre_stamp = skeleton_policy_result(judgment)
+    if pre_stamp.final_disposition == Disposition.AUTO_CONTAIN:
+        pre_stamp = SkeletonDisposition(
             final_disposition=Disposition.ESCALATE,
             fault_flags=[],
             system_fault_escalation=False,
             proposed_disposition=judgment.proposed_disposition,
         )
-    return disposition
+    contract_pre = StampContractDisposition(
+        final_disposition=pre_stamp.final_disposition,
+        fault_flags=list(pre_stamp.fault_flags),
+        system_fault_escalation=pre_stamp.system_fault_escalation,
+        proposed_disposition=pre_stamp.proposed_disposition,
+    )
+    contract_result = apply_terminal_stamp_to_disposition(
+        stamp_status,
+        pre_stamp_disposition=contract_pre,
+    )
+    return SkeletonDisposition(
+        final_disposition=contract_result.final_disposition,
+        fault_flags=list(contract_result.fault_flags),
+        system_fault_escalation=contract_result.system_fault_escalation,
+        proposed_disposition=contract_result.proposed_disposition,
+    )
 
 
 def _ensure_terminal_stamp(

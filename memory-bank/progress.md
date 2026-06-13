@@ -1,5 +1,18 @@
 # Progress Log
 
+## 2026-06-13 — TASK-023 gatekeeper follow-up
+
+- Stamp failure contract: preserve `final_disposition` + existing fault flags; append `ticket_stamp_failed` (DEC-042).
+- Redelivery while `PENDING_STAMP`: `ActiveAttemptExistsError` raised, not in-flight `IntakeResult` (DEC-043).
+- Tests: +6 sequencing tests (fault-flag preservation, non-terminal raise, redelivery, ESCALATE recovery round-trip, payload fallback); **20** stamp sequencing; suite **543**.
+
+## 2026-06-13 — TASK-023 complete
+
+- Ticket stamp contract: `src/praetor/tickets/contract.py` — `StampContractDisposition`, `apply_terminal_stamp_to_disposition`, `stamp_status_allows_edict_append`.
+- Intake: defer edict on in-flight stamp; apply terminal stamp disposition before ledger append.
+- Recovery: delegate `_recovery_disposition_for_stamp` to shared contract.
+- Tests: `tests/tickets/test_stamp_sequencing.py` — **14**; suite **537**, `mypy src` OK (91 files), ruff OK.
+
 ## 2026-06-13 — TASK-022 gatekeeper follow-up
 
 - Removed unreachable intake-time queue-aging check; recovery remains production detector (DEC-040).

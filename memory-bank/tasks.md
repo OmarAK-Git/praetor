@@ -6,7 +6,7 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-023 | Ticket Stamp Contract Integration | Next | Depends on TASK-007, 012, 017 |
+| TASK-024 | Metrics | Next | Depends on Tasks 17-22 |
 
 ## Gate prerequisites
 
@@ -58,3 +58,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-020 | Directive Lifecycle and Revocation | `.workflow/TASK-020/verification.md` — `pytest` 485 / containment 23 (lifecycle 15, revocation 8); manual revocation ledger (DEC-034); `src/praetor/containment/` |
 | TASK-021 | Reference Consumer Verifier | `.workflow/TASK-021/verification.md` — `pytest` 509 / consumer_sdk 24; gatekeeper: expiry skew (DEC-037), supersession hole, checksum, gap (DEC-038); `consumer_sdk/reference_verifier.py` |
 | TASK-022 | Latency SLA and Queue Aging | `.workflow/TASK-022/verification.md` — `pytest` 523 / engine latency+queue 14; gatekeeper: DEC-039 cumulative retry, DEC-040 recovery-only queue aging; `src/praetor/engine/{timeouts,queue_policy}.py` |
+| TASK-023 | Ticket Stamp Contract Integration | `.workflow/TASK-023/verification.md` — `pytest` 543 / tickets stamp sequencing 20; gatekeeper: DEC-042 fault-flag preservation, DEC-043 redelivery raises; `src/praetor/tickets/contract.py` |
