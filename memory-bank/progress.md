@@ -1,5 +1,19 @@
 # Progress Log
 
+## 2026-06-13 — TASK-022 gatekeeper follow-up
+
+- Removed unreachable intake-time queue-aging check; recovery remains production detector (DEC-040).
+- DEC-039 extended: latency SLA spans full retry loop including backoff.
+- Tests: slow AUTO_CONTAIN blocked by latency SLA; cumulative retry latency; queue boundary symmetry; PENDING_STAMP/STAMP_RESOLVED recovery scope; **14** engine latency+queue tests; suite **523**.
+
+## 2026-06-13 — TASK-022 complete
+
+- Latency SLA: `src/praetor/engine/timeouts.py` — monotonic-tracked provider calls; `latency_sla_exceeded` escalate with `system_fault_escalation=true` (DEC-039: v1 30s constant).
+- Queue aging: `src/praetor/engine/queue_policy.py` — attempt age vs `max_queue_age_seconds`; intake + recovery emit `queue_aging_exceeded`.
+- Orchestrator: queue check at ACTIVE; latency check after successful provider return; shared `_finish_system_fault`.
+- Recovery: aged ALLOCATED/ACTIVE attempts emit escalate edict instead of silent abort.
+- Tests: `tests/engine/test_latency_and_queue_aging.py` — **14**; suite **523**, `mypy src consumer_sdk` OK (92 files), ruff OK.
+
 ## 2026-06-12 — TASK-021 gatekeeper follow-up
 
 - Expiry skew fail-closed (DEC-037): `clock > expires_at - skew`; fixes 20s-past-expiry actuation hole.

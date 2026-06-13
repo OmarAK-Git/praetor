@@ -33,13 +33,16 @@ from praetor.engine.edict import (
     SkeletonDisposition,
     _finalize_attempt_with_edict_in_transaction,
     build_decision_edict,
+    escalate_disposition,
     persist_edict_and_complete_attempt,
     skeleton_policy_result,
 )
 from praetor.engine.ids import decision_id_for_attempt, stamp_evidence_hash
+from praetor.engine.queue_policy import queue_aging_exceeded_for_snapshot
 from praetor.engine.skeleton import skeleton_model_judgment
 from praetor.hashing import derive_stamp_id
 from praetor.ledger.store import fetch_ledger_rows
+from praetor.policy.gate import QUEUE_AGING_EXCEEDED
 from praetor.policy.state import reconcile_policy_state
 from praetor.state.attempts import (
     AttemptState,
@@ -216,6 +219,28 @@ def recover_single_attempt(
     never_contain = read_live_never_contain_entries(conn)
 
     if attempt.state in (AttemptState.ALLOCATED, AttemptState.ACTIVE):
+        # Queue aging applies only while the attempt has not entered stamp
+        # resolution; recovery is the production detector (DEC-040).
+        snapshot = fetch_active_snapshot(conn)
+        if snapshot is not None and queue_aging_exceeded_for_snapshot(
+            attempt, snapshot
+        ):
+            judgment = skeleton_model_judgment(proposed=Disposition.STANDARD_REVIEW)
+            disposition = escalate_disposition(
+                proposed=Disposition.STANDARD_REVIEW,
+                fault_flag=QUEUE_AGING_EXCEEDED,
+                system_fault=True,
+            )
+            append_recovery_edict_for_attempt(
+                conn,
+                attempt,
+                stamp_status="not_required",
+                ticket_stamp_payload={},
+                judgment=judgment,
+                disposition=disposition,
+                never_contain_entries=never_contain,
+            )
+            return
         abort_attempt(conn, attempt.processing_attempt_identity)
         return
 

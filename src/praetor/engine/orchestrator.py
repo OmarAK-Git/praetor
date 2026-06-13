@@ -32,6 +32,10 @@ from praetor.engine.skeleton import (
     SKELETON_EVIDENCE_CATALOG,
     skeleton_model_judgment,
 )
+from praetor.engine.timeouts import (
+    V1_DEFAULT_MAX_PROVIDER_JUDGMENT_LATENCY_SECONDS,
+    call_provider_with_latency_tracking,
+)
 from praetor.judgment.prompt import build_judgment_prompt_payload
 from praetor.judgment.provider import (
     JudgmentProvider,
@@ -41,8 +45,8 @@ from praetor.judgment.provider import (
     ProviderRefusalError,
     ProviderRetryPolicy,
     ProviderTimeoutError,
-    call_provider_with_retries,
 )
+from praetor.policy.gate import LATENCY_SLA_EXCEEDED
 from praetor.state.attempts import (
     AttemptState,
     ProcessingAttempt,
@@ -107,6 +111,9 @@ class WalkingSkeletonEngine:
         correlate: bool = True,
         enforce_config_budget: bool = True,
         provider_retry_policy: ProviderRetryPolicy | None = None,
+        max_provider_latency_seconds: int = (
+            V1_DEFAULT_MAX_PROVIDER_JUDGMENT_LATENCY_SECONDS
+        ),
     ) -> IntakeResult:
         return process_alert_intake(
             self.store,
@@ -117,6 +124,7 @@ class WalkingSkeletonEngine:
             correlate=correlate,
             enforce_config_budget=enforce_config_budget,
             provider_retry_policy=provider_retry_policy,
+            max_provider_latency_seconds=max_provider_latency_seconds,
         )
 
 
@@ -130,6 +138,7 @@ def process_alert_intake(
     correlate: bool = True,
     enforce_config_budget: bool = True,
     provider_retry_policy: ProviderRetryPolicy | None = None,
+    max_provider_latency_seconds: int = V1_DEFAULT_MAX_PROVIDER_JUDGMENT_LATENCY_SECONDS,
 ) -> IntakeResult:
     """Run one walking-skeleton intake; caller must have completed startup recovery."""
     snapshot = fetch_active_snapshot(store.conn)
@@ -180,10 +189,11 @@ def process_alert_intake(
         payload=prompt_payload,
     )
     try:
-        judgment = call_provider_with_retries(
+        tracked = call_provider_with_latency_tracking(
             judgment_provider,
             request,
             retry_policy=provider_retry_policy,
+            max_latency_seconds=max_provider_latency_seconds,
         )
     except ProviderMalformedResponseError:
         return _finish_provider_fault(
@@ -207,6 +217,17 @@ def process_alert_intake(
             fault_flag="provider_refusal",
         )
     calls = getattr(judgment_provider, "calls", 0)
+    judgment = tracked.judgment
+
+    if tracked.sla_exceeded:
+        return _finish_system_fault(
+            store,
+            attempt,
+            judgment_provider,
+            fault_flag=LATENCY_SLA_EXCEEDED,
+            judgment=judgment,
+            calls=calls,
+        )
 
     if not validate_skeleton_citations(judgment, SKELETON_EVIDENCE_BUNDLE):
         return _finish_invalid_citation(store, attempt, judgment, calls)
@@ -343,16 +364,36 @@ def _finish_provider_fault(
     *,
     fault_flag: str,
 ) -> IntakeResult:
-    judgment = skeleton_model_judgment(proposed=Disposition.STANDARD_REVIEW)
+    return _finish_system_fault(
+        store,
+        attempt,
+        judgment_provider,
+        fault_flag=fault_flag,
+    )
+
+
+def _finish_system_fault(
+    store: StateStore,
+    attempt: ProcessingAttempt,
+    judgment_provider: JudgmentProvider,
+    *,
+    fault_flag: str,
+    judgment: ModelJudgment | None = None,
+    calls: int | None = None,
+) -> IntakeResult:
+    resolved_judgment = judgment or skeleton_model_judgment(
+        proposed=Disposition.STANDARD_REVIEW
+    )
+    proposed = resolved_judgment.proposed_disposition
     disposition = escalate_disposition(
-        proposed=Disposition.STANDARD_REVIEW,
+        proposed=proposed,
         fault_flag=fault_flag,
         system_fault=True,
     )
     never_contain = read_live_never_contain_entries(store.conn)
     edict = build_decision_edict(
         attempt=attempt,
-        judgment=judgment,
+        judgment=resolved_judgment,
         disposition=disposition,
         live_never_contain_entries=never_contain,
         stamp_status="not_required",
@@ -364,14 +405,16 @@ def _finish_provider_fault(
         edict,
         never_contain_entries=never_contain,
     )
-    calls = getattr(judgment_provider, "calls", 0)
+    provider_calls = (
+        calls if calls is not None else getattr(judgment_provider, "calls", 0)
+    )
     return IntakeResult(
         decision_id=stored.decision_id,
         edict=stored,
         disposition=Disposition.ESCALATE,
         fault_flags=(fault_flag,),
         attempt_aborted=False,
-        judgment_provider_calls=calls,
+        judgment_provider_calls=provider_calls,
     )
 
 
