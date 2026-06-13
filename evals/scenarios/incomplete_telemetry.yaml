@@ -1,0 +1,13 @@
+schema_version: "1"
+scenario_id: incomplete_telemetry
+description: Incomplete account telemetry forbids auto_contain via ambiguous identity.
+runner: policy_gate
+setup:
+  alert_identity: incomplete_telemetry
+  bundle: incomplete_account
+  proposed_disposition: auto_contain
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - ambiguous_target_identity
+  system_fault_escalation: false

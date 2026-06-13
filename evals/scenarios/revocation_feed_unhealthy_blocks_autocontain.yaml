@@ -1,0 +1,17 @@
+schema_version: "1"
+scenario_id: revocation_feed_unhealthy_blocks_autocontain
+description: Unhealthy revocation feed blocks auto_contain only; standard_review still flows.
+runner: revocation_feed_degraded_mode
+setup:
+  feed_unhealthy: true
+  host_id: ws-01
+expectations:
+  auto_contain:
+    final_disposition: escalate
+    fault_flags:
+      - revocation_feed_unhealthy
+    system_fault_escalation: true
+  standard_review:
+    final_disposition: standard_review
+    fault_flags: []
+    system_fault_escalation: false

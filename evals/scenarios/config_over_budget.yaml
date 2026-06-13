@@ -1,0 +1,14 @@
+schema_version: "1"
+scenario_id: config_over_budget
+description: Config over budget escalates before any provider call.
+runner: engine_intake
+setup:
+  alert_identity: config_over_budget
+  provider_mode: valid
+  config_over_budget: true
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - config_over_budget
+  system_fault_escalation: true
+  judgment_provider_calls: 0

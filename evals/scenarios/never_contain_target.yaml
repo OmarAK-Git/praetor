@@ -1,0 +1,14 @@
+schema_version: "1"
+scenario_id: never_contain_target
+description: Snapshot never-contain target escalates with policy safety gate.
+runner: policy_gate
+setup:
+  alert_identity: never_contain_target
+  bundle: host
+  host_id: dc-01
+  proposed_disposition: auto_contain
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - never_contain_snapshot
+  system_fault_escalation: false

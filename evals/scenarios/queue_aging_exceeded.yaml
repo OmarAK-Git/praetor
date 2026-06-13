@@ -1,0 +1,16 @@
+schema_version: "1"
+scenario_id: queue_aging_exceeded
+description: Queue aging exceeded escalates with system_fault_escalation true.
+runner: policy_gate
+setup:
+  alert_identity: queue_aging_exceeded
+  bundle: host
+  host_id: ws-01
+  proposed_disposition: auto_contain
+  policy_gate_kwargs:
+    queue_aging_exceeded: true
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - queue_aging_exceeded
+  system_fault_escalation: true

@@ -1,0 +1,13 @@
+schema_version: "1"
+scenario_id: benign_admin_activity
+description: Benign admin activity receives standard_review with no policy override.
+runner: engine_intake
+setup:
+  alert_identity: benign_admin_activity
+  provider_mode: valid
+  provider_proposed_disposition: standard_review
+expectations:
+  final_disposition: standard_review
+  fault_flags: []
+  system_fault_escalation: false
+  no_policy_override: true

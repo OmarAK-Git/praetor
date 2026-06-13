@@ -1,0 +1,16 @@
+schema_version: "1"
+scenario_id: ticket_stamp_failed
+description: Stamp failure preserves standard_review candidate and appends ticket_stamp_failed.
+runner: engine_intake
+setup:
+  alert_identity: ticket_stamp_failed
+  provider_mode: valid
+  provider_proposed_disposition: standard_review
+  stamp_backend: failed
+expectations:
+  final_disposition: standard_review
+  fault_flags:
+    - ticket_stamp_failed
+  system_fault_escalation: false
+  candidate_disposition_preserved: true
+  proposed_disposition: standard_review

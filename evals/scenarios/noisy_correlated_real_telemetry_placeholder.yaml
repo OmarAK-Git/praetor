@@ -1,0 +1,13 @@
+schema_version: "1"
+scenario_id: noisy_correlated_real_telemetry_placeholder
+description: Synthetic correlated telemetry placeholder accepts valid standard_review judgment.
+runner: policy_gate
+setup:
+  alert_identity: noisy_correlated_real_telemetry_placeholder
+  bundle: synthetic_fixture
+  synthetic_fixture: tests/fixtures/synthetic/account_eligible_valid.json
+  proposed_disposition: standard_review
+expectations:
+  final_disposition: standard_review
+  fault_flags: []
+  system_fault_escalation: false

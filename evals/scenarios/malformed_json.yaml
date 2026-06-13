@@ -1,0 +1,12 @@
+schema_version: "1"
+scenario_id: malformed_json
+description: Malformed provider JSON escalates with system_fault_escalation true.
+runner: engine_intake
+setup:
+  alert_identity: malformed_json
+  provider_mode: malformed_json
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - provider_malformed_json
+  system_fault_escalation: true

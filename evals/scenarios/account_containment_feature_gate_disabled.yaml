@@ -1,0 +1,14 @@
+schema_version: "1"
+scenario_id: account_containment_feature_gate_disabled
+description: Valid account proposal escalates when production account gate is disabled.
+runner: policy_gate
+setup:
+  alert_identity: account_containment_feature_gate_disabled
+  bundle: synthetic_fixture
+  synthetic_fixture: tests/fixtures/synthetic/account_eligible_valid.json
+  proposed_disposition: auto_contain
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - account_containment_disabled
+  system_fault_escalation: false

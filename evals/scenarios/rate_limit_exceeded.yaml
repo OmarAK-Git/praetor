@@ -1,0 +1,16 @@
+schema_version: "1"
+scenario_id: rate_limit_exceeded
+description: Exhausted containment rate limit escalates with policy safety gate.
+runner: policy_gate
+setup:
+  alert_identity: rate_limit_exceeded
+  bundle: host
+  host_id: ws-01
+  proposed_disposition: auto_contain
+  policy_preconditions:
+    rate_limit_exhausted: true
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - rate_limit_exceeded
+  system_fault_escalation: false

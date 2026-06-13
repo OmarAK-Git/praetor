@@ -1,0 +1,16 @@
+schema_version: "1"
+scenario_id: policy_ambiguity
+description: Conflicting containment rules escalate with policy_ambiguity.
+runner: policy_gate
+setup:
+  alert_identity: policy_ambiguity
+  bundle: host
+  host_id: ws-01
+  proposed_disposition: auto_contain
+  policy_preconditions:
+    conflicting_containment_rules: true
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - policy_ambiguity
+  system_fault_escalation: false

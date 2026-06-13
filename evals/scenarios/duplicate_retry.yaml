@@ -1,0 +1,9 @@
+schema_version: "1"
+scenario_id: duplicate_retry
+description: Duplicate intake returns existing decision without duplicate emission.
+runner: duplicate_retry
+setup:
+  alert_identity: duplicate_retry
+expectations:
+  second_intake_edict_none: true
+  ledger_edict_count_unchanged: true

@@ -1,0 +1,17 @@
+schema_version: "1"
+scenario_id: policy_gate_idempotency
+description: Repeat policy_gate evaluation suppresses duplicate directive emission.
+runner: policy_gate
+setup:
+  alert_identity: policy_gate_idempotency
+  bundle: host
+  host_id: ws-03
+  proposed_disposition: auto_contain
+expectations:
+  final_disposition: auto_contain
+  fault_flags: []
+  system_fault_escalation: false
+  directive_emitted: true
+  containment_target_type: host
+  containment_target_id: ws-03
+  idempotency_suppressed_on_repeat: true

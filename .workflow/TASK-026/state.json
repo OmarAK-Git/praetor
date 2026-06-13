@@ -1,0 +1,28 @@
+{
+  "run": "TASK-026",
+  "status": "completed",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-13",
+  "tasks": [
+    {
+      "id": "T-001",
+      "status": "completed",
+      "owner": "agent",
+      "notes": "Workflow artifacts drafted"
+    },
+    {
+      "id": "T-002",
+      "status": "completed",
+      "owner": "agent",
+      "notes": "evals harness + 14 scenarios"
+    },
+    {
+      "id": "T-003",
+      "status": "completed",
+      "owner": "agent",
+      "notes": "19 tests; suite 601"
+    }
+  ]
+}

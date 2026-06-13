@@ -1,0 +1,16 @@
+schema_version: "1"
+scenario_id: containment_breaker_open
+description: Open containment circuit breaker escalates with policy safety gate.
+runner: policy_gate
+setup:
+  alert_identity: containment_breaker_open
+  bundle: host
+  host_id: ws-01
+  proposed_disposition: auto_contain
+  policy_preconditions:
+    containment_breaker_open: true
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - containment_breaker_open
+  system_fault_escalation: false

@@ -1,0 +1,13 @@
+schema_version: "1"
+scenario_id: correlation_failure
+description: Correlation failure escalates with system_fault_escalation true.
+runner: engine_intake
+setup:
+  alert_identity: correlation_failure
+  correlate: false
+  provider_mode: valid
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - correlation_failure
+  system_fault_escalation: true

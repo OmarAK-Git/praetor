@@ -1,0 +1,16 @@
+schema_version: "1"
+scenario_id: confirmed_malicious_sequence
+description: Confirmed malicious host sequence passes all gates and emits auto_contain.
+runner: policy_gate
+setup:
+  alert_identity: confirmed_malicious_sequence
+  bundle: host
+  host_id: ws-01
+  proposed_disposition: auto_contain
+expectations:
+  final_disposition: auto_contain
+  fault_flags: []
+  system_fault_escalation: false
+  directive_emitted: true
+  containment_target_type: host
+  containment_target_id: ws-01

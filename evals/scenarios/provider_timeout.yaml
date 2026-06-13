@@ -1,0 +1,12 @@
+schema_version: "1"
+scenario_id: provider_timeout
+description: Provider timeout escalates with system_fault_escalation true.
+runner: engine_intake
+setup:
+  alert_identity: provider_timeout
+  provider_mode: timeout
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - provider_timeout
+  system_fault_escalation: true

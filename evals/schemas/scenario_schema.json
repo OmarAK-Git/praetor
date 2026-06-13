@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://praetor.local/evals/schemas/scenario_schema.json",
+  "title": "PraetorEvalScenario",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "scenario_id", "description", "runner", "setup", "expectations"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1"
+    },
+    "scenario_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1
+    },
+    "runner": {
+      "type": "string",
+      "enum": [
+        "engine_intake",
+        "policy_gate",
+        "prompt_isolation",
+        "duplicate_retry",
+        "revocation_feed_degraded_mode"
+      ]
+    },
+    "setup": {
+      "type": "object"
+    },
+    "expectations": {
+      "type": "object",
+      "description": "Escalate outcomes must include final_disposition, fault_flags, and system_fault_escalation (enforced at load)."
+    }
+  }
+}

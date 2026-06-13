@@ -1,0 +1,16 @@
+schema_version: "1"
+scenario_id: latency_sla_exceeded
+description: Latency SLA exceeded escalates with system_fault_escalation true.
+runner: policy_gate
+setup:
+  alert_identity: latency_sla_exceeded
+  bundle: host
+  host_id: ws-01
+  proposed_disposition: auto_contain
+  policy_gate_kwargs:
+    latency_sla_exceeded: true
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - latency_sla_exceeded
+  system_fault_escalation: true

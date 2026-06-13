@@ -1,0 +1,16 @@
+schema_version: "1"
+scenario_id: provider_health_breaker_open
+description: Open provider-health breaker blocks auto_contain with system fault.
+runner: policy_gate
+setup:
+  alert_identity: provider_health_breaker_open
+  bundle: host
+  host_id: ws-01
+  proposed_disposition: auto_contain
+  policy_gate_kwargs:
+    provider_health_breaker_open: true
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - provider_health_breaker_open
+  system_fault_escalation: true

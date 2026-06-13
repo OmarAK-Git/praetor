@@ -1,0 +1,20 @@
+schema_version: "1"
+scenario_id: emergency_never_contain_blocks_inflight
+description: Live emergency never-contain blocks containment and writes ledger record.
+runner: policy_gate
+setup:
+  alert_identity: emergency_never_contain_blocks_inflight
+  bundle: host
+  host_id: ws-01
+  proposed_disposition: auto_contain
+  emergency_never_contain:
+    target_type: host
+    target_id: ws-01
+    lifetime_seconds: 3600
+    audit_reason: eval emergency block
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - never_contain_live_conflict
+  system_fault_escalation: false
+  ledger_record_type: emergency_never_contain

@@ -45,6 +45,7 @@ select = ["E", "F", "I", "UP", "B"]
 "tests/config/**/*.py" = ["E501"]
 "src/praetor/engine/**/*.py" = ["E501"]
 "tests/engine/**/*.py" = ["E501"]
+"evals/**/*.py" = ["E501"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/praetor"]

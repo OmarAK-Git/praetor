@@ -1,0 +1,12 @@
+schema_version: "1"
+scenario_id: provider_refusal
+description: Provider refusal escalates with system_fault_escalation true.
+runner: engine_intake
+setup:
+  alert_identity: provider_refusal
+  provider_mode: refusal
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - provider_refusal
+  system_fault_escalation: true

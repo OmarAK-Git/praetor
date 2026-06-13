@@ -1,0 +1,12 @@
+schema_version: "1"
+scenario_id: invalid_model_citation
+description: Fabricated provider citation escalates with invalid_model_citation.
+runner: engine_intake
+setup:
+  alert_identity: invalid_model_citation
+  provider_mode: fabricated_citation
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - invalid_model_citation
+  system_fault_escalation: true
