@@ -1,5 +1,17 @@
 # Progress Log
 
+## 2026-06-13 — TASK-024 gatekeeper follow-up
+
+- Metrics contract hardened: policy-gate owns disposition recording; breaker true edge counters + recovery/current state; per-channel health delivery; §13 fault-flag enum; stamp terminal/non-terminal views; bounded feed-lag window (1000); edge cases for lag clamp, p99 small-n, threshold boundary (>=).
+- Docs: `docs/contracts.md` §13 Metrics snapshot; DEC-045/046 in decisions.
+- Tests: **27** metrics tests; suite **570**, `mypy src` OK (94 files), ruff OK.
+
+## 2026-06-13 — TASK-024 complete
+
+- Metrics collector: `src/praetor/metrics/{collector,events}.py` — in-process counters for dispositions, PolicyGate overrides, LLM fault flags, containment directives, queue aging, independent breaker/probe/production domains, stamp statuses, health-alert delivery, feed export lag (p99 + warning threshold), revocation feed unhealthy transitions.
+- Tests: `tests/metrics/test_metrics.py` — **13**; suite **556**, `mypy src` OK (94 files), ruff OK.
+- Flight Recorder: `.workflow/TASK-024/`.
+
 ## 2026-06-13 — TASK-023 gatekeeper follow-up
 
 - Stamp failure contract: preserve `final_disposition` + existing fault flags; append `ticket_stamp_failed` (DEC-042).

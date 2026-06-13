@@ -459,6 +459,18 @@ Two behavioral notes the harness must assert beyond the per-row values:
 - Ticket stamp failure never promotes `standard_review` to `escalate`. It preserves the candidate disposition and adds `ticket_stamp_failed`.
 - `revocation_feed_unhealthy` blocks **new `auto_contain` only**. Alerts whose disposition is `standard_review` or `escalate` on grounds unrelated to containment continue to flow during feed-unhealthy degraded mode. The harness asserts the non-blocked paths still flow, not only that `auto_contain` is blocked — otherwise an implementation of "feed down ⇒ everything escalates" would pass, which is the wrong (over-restrictive) behavior.
 
+### Metrics snapshot (Task 24)
+
+In-process metrics (`src/praetor/metrics/`) export a `MetricsSnapshot` with these canonical key rules:
+
+- **Disposition counts** use `Disposition` enum `.value` strings. `record_policy_gate_result` records the final disposition; callers must not also call `record_disposition` for the same gated alert.
+- **LLM failure counters** key on Outcome Matrix fault flags (§13 table); unknown flags are rejected.
+- **Queue aging** counter is `queue_aging_exceeded_total` (Outcome Matrix row `queue_aging_exceeded`).
+- **Breaker metrics** track closed→open edges in `breaker_open_transitions`, open→closed recoveries in `breaker_recovery_transitions`, and current open state in `breaker_currently_open` per `BreakerMetricDomain`.
+- **Stamp status** keys use `StampStatus` enum `.value`; terminal vs non-terminal views derive from `TERMINAL_STAMP_STATUSES` in `tickets/outbox.py`.
+- **Health-alert delivery** is nested `health_alert_delivery_by_channel[channel][status]` where `channel ∈ {"jsonl","stdout"}` and `status ∈ {"succeeded","failed"}` only (`DeliveryStatus`; `pending` is not a recorded outcome).
+- **Feed export lag** retains the most recent `DEFAULT_FEED_LAG_SAMPLE_WINDOW` (1000) samples; p99 uses nearest-rank on that window; `feed_export_lag_warning_exceeded` is true when p99 ≥ configured threshold.
+
 ---
 
 ## 14. Generated-schema index
