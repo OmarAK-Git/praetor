@@ -1,5 +1,21 @@
 # Progress Log
 
+## 2026-06-12 — TASK-021 gatekeeper follow-up
+
+- Expiry skew fail-closed (DEC-037): `clock > expires_at - skew`; fixes 20s-past-expiry actuation hole.
+- Superseded-directive hole: live replacement supersedes verified directive → `lineage_conflict` (removed vacuous continue).
+- Feed checksum: `FEED_CHECKSUM_MISMATCH` via `compute_feed_record_checksum`.
+- Gap detection truncation-tolerant (DEC-038): contiguity for `seq <= cursor` only; read-ahead not a gap.
+- Revocations in hand: all held records count regardless of cursor position.
+- Tooling: `src/praetor/py.typed`, mypy `consumer_sdk`, hatchling force-include.
+- Tests: consumer_sdk **24**; suite **509**, `mypy src consumer_sdk` OK (90 files), ruff OK.
+
+## 2026-06-12 — TASK-021 complete
+
+- Reference consumer verifier: `consumer_sdk/reference_verifier.py` — §10 pre-actuation checks 1–5 (clock sync, expiry, embedded hash, feed floor/staleness/gap, revocation, lineage conflict).
+- Outcomes: `actionable`, `non_actionable` (expired/revoked), `escalate_human` (fail-closed).
+- Tests: `tests/consumer_sdk/` — **13**; suite **498**, `mypy src` OK (88 files), ruff OK.
+
 ## 2026-06-11 — TASK-020 gatekeeper follow-up
 
 - Manual revocation: `manual_revoke_directive_in_transaction` appends hash-chain ledger + marks directive revoked in same tx as feed + key clear (DEC-034); `write_manual_revocation_in_transaction` on StateStore.

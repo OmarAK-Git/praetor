@@ -2,12 +2,14 @@
 
 ## Current focus
 
-**TASK-020 complete** — `praetor.containment` consolidates directive lifecycle (proposed→emitted on persist) and differentiated revocation triggers (manual, never-contain conflict, post-activation, supersession API).
+**TASK-021 complete** — `consumer_sdk/reference_verifier.py` implements §10 consumer pre-actuation protocol outside `src/praetor/`.
 
-Next: **TASK-021** (Reference Consumer Verifier). Follow-on: wire production failure recording and PolicyGate into engine intake.
+Next: **TASK-022** (Latency SLA and Queue Aging). Follow-on: wire production failure recording and PolicyGate into engine intake.
 
 ## Recently changed
 
+- TASK-021 gatekeeper: expiry skew fail-closed (DEC-037); superseded-directive hole; feed checksum; truncation-tolerant gap (DEC-038); revocations in hand; `py.typed` + mypy consumer_sdk; +11 tests (24 consumer_sdk total).
+- TASK-021: `consumer_sdk/reference_verifier.py` — §10 ordered checks (clock, expiry, hash, feed floor/staleness/gap, revocation, lineage); 13 tests.
 - TASK-020 gatekeeper: manual revocation appends ledger in same tx (DEC-034); builder requires critical_transaction; mid-export feed-floor tests; emergency atomicity hook; +7 tests (23 containment total: lifecycle 15, revocation 8).
 - TASK-020: `src/praetor/containment/{lifecycle,revocation}.py` — emit on persist, revocation helpers, refactored activation/emergency/recovery/gate.
 - TASK-019 gatekeeper: probe-failure cooldown, startup schema via `reconcile_policy_state`, tx guards; +10 tests (25 judgment provider-health tests).

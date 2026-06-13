@@ -6,7 +6,7 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-021 | Reference Consumer Verifier | Next | Depends on TASK-003, 011, 020 |
+| TASK-022 | Latency SLA and Queue Aging | Next | Depends on TASK-013, 017, 019 |
 
 ## Gate prerequisites
 
@@ -56,3 +56,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-018 | Transactional Rate Limits and Containment Breaker | `.workflow/TASK-018/verification.md` — `pytest` 434 / policy 39; `src/praetor/policy/{rate_limit,circuit_breaker}.py`; sliding-window scopes + containment breaker alerts |
 | TASK-019 | Provider-Health Breaker with Half-Open Probes | `.workflow/TASK-019/verification.md` — `pytest` 462 / judgment 25; gatekeeper: cooldown, startup init, tx guards |
 | TASK-020 | Directive Lifecycle and Revocation | `.workflow/TASK-020/verification.md` — `pytest` 485 / containment 23 (lifecycle 15, revocation 8); manual revocation ledger (DEC-034); `src/praetor/containment/` |
+| TASK-021 | Reference Consumer Verifier | `.workflow/TASK-021/verification.md` — `pytest` 509 / consumer_sdk 24; gatekeeper: expiry skew (DEC-037), supersession hole, checksum, gap (DEC-038); `consumer_sdk/reference_verifier.py` |

@@ -1,0 +1,28 @@
+{
+  "run": "TASK-021",
+  "status": "complete",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-12",
+  "tasks": [
+    {
+      "id": "T-001",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "reference_verifier.py"
+    },
+    {
+      "id": "T-002",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "test_reference_verifier.py — 13 tests"
+    },
+    {
+      "id": "T-003",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "verification + memory bank"
+    }
+  ]
+}
