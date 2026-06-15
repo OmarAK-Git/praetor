@@ -1,0 +1,19 @@
+schema_version: "1"
+scenario_id: multi_host_target_ambiguity
+description: AUTO_CONTAIN citing host facts from two distinct hosts escalates ambiguous_containment_target.
+runner: policy_gate
+setup:
+  alert_identity: multi_host_target_ambiguity
+  bundle: synthetic_fixture
+  synthetic_fixture: tests/fixtures/synthetic/multi_host_two_cited_hosts.json
+  proposed_disposition: auto_contain
+  citation_refs:
+    - evidence_id: host-a-1
+      field_path: host_id
+    - evidence_id: host-b-1
+      field_path: host_id
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - ambiguous_containment_target
+  system_fault_escalation: false

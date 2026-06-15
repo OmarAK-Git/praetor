@@ -1,5 +1,33 @@
 # Progress Log
 
+## 2026-06-15 — TASK-031 / DEC-052 citation-anchored host targeting
+
+- Option A: `resolve_containment_target_from_citations` in `containment_policy.py`; gate uses validated citation IDs; `ambiguous_containment_target` fault flag wired (enum, outcome matrix, harness scenario, contracts §13).
+- Orchestrator deferred persist uses gate directive target (not bundle re-scan).
+- Phase 3 noisy gate GREEN: window filter (9999), honest noise bounds, citation-anchored host directive assertions.
+- Tests: `tests/policy/test_citation_anchored_host_targeting.py` — **5**; phase3 gate **14** (+1 strict xfail); eval harness **25** scenarios.
+
+## 2026-06-15 — TASK-031 gap #1 correction
+
+- Binding discrimination is **window filter** (`excluded_record_ids: [9999]`); in-window cross-host noise **1004** bounded (not forbidden), aligned with TASK-030 `otrf_unrelated_in_window_noise`.
+- Honest ceilings: `max_collected_facts: 5`, `max_noise_overcollection: 2`; gate GREEN on healthy tree.
+- Forward pressure: `test_correlator_should_drop_cross_host_in_window_noise` strict xfail (REVIEW-004); host literals unchanged in `check_phase2_safety_on_noisy_bundle`.
+
+## 2026-06-15 — TASK-031 gatekeeper hardening
+
+- Binding correlation bounds: `noisy_correlated_real_telemetry.yaml` excludes **1004**/**9999**, `max_collected_facts: 4`, `max_noise_overcollection: 1`; gate surfaces correlator in-window over-collection (REVIEW-003).
+- Host safety: literal `WORKSTATION1` / not `WORKSTATION2` assertions (non-tautological); multi-host resolver spec proposal in review (REVIEW-004).
+- Tests: **13** phase3 gate tests incl. negative over-collection cases; `pytest tests/evals/` **82** passed; Phase 3 CLI exits non-zero until correlator discriminates.
+- REQ-001 intake half: `evaluate_policy_gate` only (not TASK-028a `process_alert_intake`).
+
+## 2026-06-15 — TASK-031 complete
+
+- Phase 3 regression gate: `evals/run_phase3_gate.py` — required expected YAML, noisy correlation accuracy, identity compliance subprocess, account preflight prerequisite, Phase 2 safety on correlated bundle, optional Phase 2 harness.
+- Expected scenario: `evals/correlation_expected/noisy_correlated_real_telemetry.yaml` (dual in-window noise bounded).
+- Tests: `tests/evals/test_phase3_regression_gate.py` — **9**; CLI `python -m evals.run_phase3_gate` PASS.
+- Verification: phase3 **9/9**, correlation **19/19** (5 CLI scenarios), suite **694**, mypy **112** files, ruff OK.
+- Flight Recorder: `.workflow/TASK-031/`.
+
 ## 2026-06-15 — TASK-030 complete
 
 - Correlation accuracy gate: `evals/correlation_gate.py` — manifest listing + checksum, corroboration contract, noise record attribution, ambiguity/window scenarios.

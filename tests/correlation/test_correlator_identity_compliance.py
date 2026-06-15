@@ -27,7 +27,7 @@ from praetor.evidence.provenance import (
 )
 from praetor.policy.containment_policy import (
     extract_account_identity,
-    resolve_containment_target,
+    resolve_host_target,
 )
 from praetor.policy.gate import PolicyGateEvaluation, evaluate_policy_gate
 from praetor.policy.identity import (
@@ -171,7 +171,7 @@ def test_two_sysmon_facts_reject_corroboration_and_host_contain_via_policy_gate(
     assert meets_account_corroboration(bundle.facts) is False
     assert extract_account_identity(list(bundle.facts)) is None
 
-    target = resolve_containment_target(bundle)
+    target = resolve_host_target(bundle)
     assert target is not None
     assert target.target_type == "host"
     assert target.target_id == "WORKSTATION1"
@@ -209,7 +209,7 @@ def test_ambiguous_sysmon_only_resolves_host_via_policy_gate(
     assert meets_account_corroboration(bundle.facts) is False
     assert extract_account_identity(list(bundle.facts)) is None
 
-    target = resolve_containment_target(bundle)
+    target = resolve_host_target(bundle)
     assert target is not None
     assert target.target_type == "host"
     assert target.target_id == "WORKSTATION1"

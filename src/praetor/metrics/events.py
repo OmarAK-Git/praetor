@@ -43,6 +43,7 @@ class OutcomeMatrixFaultFlag(StrEnum):
     NEVER_CONTAIN_SNAPSHOT = "never_contain_snapshot"
     NEVER_CONTAIN_LIVE_CONFLICT = "never_contain_live_conflict"
     AMBIGUOUS_TARGET_IDENTITY = "ambiguous_target_identity"
+    AMBIGUOUS_CONTAINMENT_TARGET = "ambiguous_containment_target"
     ACCOUNT_CONTAINMENT_DISABLED = "account_containment_disabled"
     POLICY_AMBIGUITY = "policy_ambiguity"
     RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"

@@ -443,6 +443,7 @@ The eval harness asserts, for every failure class, the disposition, the fault fl
 | Target on snapshot never-contain list | escalate | `never_contain_snapshot` | false |
 | Target on live never-contain list at emission | escalate | `never_contain_live_conflict` | false |
 | Account target, insufficient identity corroboration | escalate | `ambiguous_target_identity` | false |
+| Containment target spans multiple cited hosts | escalate | `ambiguous_containment_target` | false |
 | Account containment production feature gate disabled | escalate | `account_containment_disabled` | false |
 | Target-scoped containment rule conflict, no precedence | escalate | `policy_ambiguity` | false |
 | Containment rate limit exceeded | escalate | `rate_limit_exceeded` | false |

@@ -47,6 +47,7 @@ from praetor.policy.containment_policy import (
 )
 from praetor.policy.identity import (
     ACCOUNT_CONTAINMENT_DISABLED,
+    AMBIGUOUS_CONTAINMENT_TARGET,
     AMBIGUOUS_TARGET_IDENTITY,
     evaluate_account_containment_eligibility,
 )
@@ -297,7 +298,18 @@ def evaluate_policy_gate(
     if proposed != Disposition.AUTO_CONTAIN:
         return _pass_through(judgment)
 
-    target = resolve_containment_target(evidence_bundle)
+    cited_ids = frozenset(ref.evidence_id for ref in citation_result.resolved)
+    target_resolution = resolve_containment_target(
+        evidence_bundle,
+        cited_ids,
+    )
+    if target_resolution.ambiguous:
+        return _escalate(
+            proposed,
+            AMBIGUOUS_CONTAINMENT_TARGET,
+            system_fault=False,
+        )
+    target = target_resolution.target
     if target is None:
         return _escalate(proposed, AMBIGUOUS_TARGET_IDENTITY, system_fault=False)
 

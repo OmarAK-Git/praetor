@@ -11,6 +11,7 @@ from praetor.contracts.identity import CanonicalAccountIdentity
 from praetor.evidence.provenance import meets_account_corroboration
 
 AMBIGUOUS_TARGET_IDENTITY = "ambiguous_target_identity"
+AMBIGUOUS_CONTAINMENT_TARGET = "ambiguous_containment_target"
 ACCOUNT_CONTAINMENT_DISABLED = "account_containment_disabled"
 
 

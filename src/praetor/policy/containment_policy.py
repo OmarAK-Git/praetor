@@ -44,7 +44,16 @@ class TargetPolicyEvaluation:
     fault_flag: str | None = None
 
 
+@dataclass(frozen=True)
+class ContainmentTargetResolution:
+    """Host/account containment target resolution outcome."""
+
+    target: ContainmentTarget | None = None
+    ambiguous: bool = False
+
+
 def resolve_host_target(bundle: EvidenceBundle) -> ContainmentTarget | None:
+    """Return the first host_id in bundle fact order. Not for PolicyGate targeting."""
     for fact in bundle.facts:
         host_id = fact.normalized_fields.get(HOST_ID_FIELD)
         if isinstance(host_id, str) and host_id.strip():
@@ -98,18 +107,52 @@ def resolve_account_target(bundle: EvidenceBundle) -> ContainmentTarget | None:
     )
 
 
-def resolve_containment_target(bundle: EvidenceBundle) -> ContainmentTarget | None:
-    """Resolve containment target; account signals block host fallback."""
+def resolve_host_target_from_citations(
+    bundle: EvidenceBundle,
+    cited_evidence_ids: frozenset[str],
+) -> ContainmentTargetResolution:
+    """Resolve a host target from cited facts only."""
+    cited_host_ids: set[str] = set()
+    for fact in bundle.facts:
+        if fact.evidence_id not in cited_evidence_ids:
+            continue
+        host_id = fact.normalized_fields.get(HOST_ID_FIELD)
+        if isinstance(host_id, str) and host_id.strip():
+            cited_host_ids.add(host_id.strip())
+    if len(cited_host_ids) >= 2:
+        return ContainmentTargetResolution(ambiguous=True)
+    if len(cited_host_ids) == 1:
+        host_id = next(iter(cited_host_ids))
+        return ContainmentTargetResolution(
+            target=ContainmentTarget(
+                target_type="host",
+                target_id=host_id,
+                scope=DEFAULT_HOST_SCOPE,
+            )
+        )
+    return ContainmentTargetResolution(target=None)
+
+
+def resolve_containment_target(
+    bundle: EvidenceBundle,
+    cited_evidence_ids: frozenset[str],
+) -> ContainmentTargetResolution:
+    """Resolve containment target from validated citations.
+
+    Account path blocks host fallback.
+    """
     identity = extract_account_identity(list(bundle.facts))
     if identity is not None:
         if is_sid_backed(identity) and meets_account_corroboration(bundle.facts):
-            return ContainmentTarget(
-                target_type="account",
-                target_id=identity.sid,
-                scope=DEFAULT_ACCOUNT_SCOPE,
+            return ContainmentTargetResolution(
+                target=ContainmentTarget(
+                    target_type="account",
+                    target_id=identity.sid,
+                    scope=DEFAULT_ACCOUNT_SCOPE,
+                )
             )
-        return None
-    return resolve_host_target(bundle)
+        return ContainmentTargetResolution(target=None)
+    return resolve_host_target_from_citations(bundle, cited_evidence_ids)
 
 
 def snapshot_never_contain_entries(snapshot: OrgConfigSnapshot) -> list[dict[str, str]]:

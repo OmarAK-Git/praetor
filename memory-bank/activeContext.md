@@ -2,12 +2,13 @@
 
 ## Current focus
 
-**TASK-030 complete** — correlation accuracy gate with manifest listing, corroboration contract, noise discrimination, ambiguity/window scenarios; **19** gate tests; suite **685**.
+**TASK-031 complete** — Phase 3 gate GREEN; DEC-052 citation-anchored host targeting + `ambiguous_containment_target`; window filter (9999) binding assertion.
 
-Next: **TASK-031** (Phase 3 Harness on Correlated Telemetry).
+Next: **TASK-032** (Sigma Rule Repository).
 
 ## Recently changed
 
+- TASK-031 / DEC-052: citation-anchored host targeting in `containment_policy.py` + `gate.py`; `ambiguous_containment_target` fault flag; phase 3 noisy gate GREEN; **14** phase3 tests + **5** citation tests.
 - TASK-030: `evals/correlation_gate.py` + `evals/correlation_expected/*.yaml` — manifest listing, corroboration, noise record attribution, window boundary; **19** tests; suite **685**.
 - TASK-028: `src/praetor/correlation/` — Sysmon EventID 1 + Security 4624 normalizers, ±300s window filter, process GUID graph, Task 14 excerpt bridge; 4 fixtures + manifest checksums; **9** correlation tests; suite **638**.
 - TASK-027 gatekeeper reopen: payload-driven structural checks, truncated fixture, mocked Gemini tests (+7), mypy `evals` package (102 files), `docs/eval_gates.md` + DEC-047; **14** deterministic adversarial tests; eval suite **47**; full suite **629**.
@@ -30,6 +31,8 @@ Next: **TASK-031** (Phase 3 Harness on Correlated Telemetry).
 8. Provider latency SLA: DEC-039 end-to-end retry loop timing; v1 provisional constant 30s.
 9. Rate limits: DEC-029 limit=1/scope/window; DEC-030 `per_asset_group` = host asset_id only.
 10. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.
-11. Eval harness: `python -m evals.harness` runs all 14 mandatory scenarios; exits non-zero on any safety invariant failure.
+11. Eval harness: `python -m evals.harness` runs all mandatory scenarios; exits non-zero on any safety invariant failure.
 12. Correlation: `correlate_telemetry()` in `praetor.correlation`; intake uses bundle override or telemetry params; default skeleton bundle for legacy paths.
 13. Intake: `process_alert_intake` runs `evaluate_policy_gate`; pass `metrics_collector=` for observability counters.
+14. Phase 3 gate: `python -m evals.run_phase3_gate` — correlation expected file, identity compliance, account prerequisite, citation-anchored safety on noisy bundle, Phase 2 harness.
+15. Host containment (DEC-052): target derived from **cited** facts only; ≥2 distinct cited hosts → `ambiguous_containment_target`.

@@ -21,7 +21,7 @@ from praetor.contracts.org_config_sections import (
     ContainmentRule,
     RateLimitPolicy,
 )
-from praetor.policy.containment_policy import resolve_containment_target
+from praetor.policy.containment_policy import resolve_host_target
 from praetor.policy.gate import RATE_LIMIT_EXCEEDED, evaluate_policy_gate
 from praetor.policy.rate_limit import (
     applicable_rate_limit_scopes,
@@ -156,7 +156,7 @@ def test_per_asset_group_scope_collapses_to_per_host_for_v1(
             success_reset_threshold=3,
         ),
     )
-    target = resolve_containment_target(host_bundle(host_id="pool-a"))
+    target = resolve_host_target(host_bundle(host_id="pool-a"))
     assert target is not None
     scopes = applicable_rate_limit_scopes(snapshot, target)
     scope_names = [s.scope_name for s in scopes]
@@ -208,7 +208,7 @@ def test_unregistered_host_only_checks_per_host_scope(
         [AssetEntry(asset_id="dc-01", subnet_membership="10.0.0.0/24")],
     )
     bundle = host_bundle(host_id="ws-unregistered")
-    target = resolve_containment_target(bundle)
+    target = resolve_host_target(bundle)
     assert target is not None
     scopes = applicable_rate_limit_scopes(snapshot, target)
     assert [s.scope_name for s in scopes] == ["per_host"]

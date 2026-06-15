@@ -774,14 +774,16 @@ def _run_policy_gate(
 
     bundle = _resolve_policy_bundle(setup)
     proposed = _disposition(str(setup.get("proposed_disposition", "auto_contain")))
-    invalid_refs = setup.get("invalid_citation_refs")
-    if isinstance(invalid_refs, list):
+    custom_refs = setup.get("citation_refs")
+    if custom_refs is None:
+        custom_refs = setup.get("invalid_citation_refs")
+    if isinstance(custom_refs, list):
         refs = [
             CitedEvidenceRef(
                 evidence_id=str(item["evidence_id"]),
                 field_path=str(item["field_path"]),
             )
-            for item in invalid_refs
+            for item in custom_refs
         ]
         judgment = _judgment_for_bundle(bundle, proposed=proposed, cited_refs=refs)
     else:

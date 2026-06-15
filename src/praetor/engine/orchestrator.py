@@ -52,7 +52,7 @@ from praetor.judgment.provider import (
 )
 from praetor.metrics.collector import MetricsCollector
 from praetor.metrics.events import BreakerMetricDomain, OutcomeMatrixFaultFlag
-from praetor.policy.containment_policy import resolve_containment_target
+from praetor.policy.containment_policy import ContainmentTarget
 from praetor.policy.gate import (
     LATENCY_SLA_EXCEEDED,
     DeferredDirectivePersistConflict,
@@ -466,10 +466,15 @@ def process_alert_intake(
             and gate_evaluation.containment_directive is not None
             and not gate_evaluation.directive_suppressed
         ):
-            target = resolve_containment_target(resolved_bundle)
-            if target is None:
-                msg = "auto_contain gate evaluation missing containment target"
+            directive = gate_evaluation.containment_directive
+            if directive is None:
+                msg = "auto_contain gate evaluation missing containment directive"
                 raise RuntimeError(msg)
+            target = ContainmentTarget(
+                target_type=directive.target_type.value,
+                target_id=directive.target_id,
+                scope=directive.scope,
+            )
             try:
                 persist_deferred_policy_gate_directive_in_transaction(
                     store.conn,
