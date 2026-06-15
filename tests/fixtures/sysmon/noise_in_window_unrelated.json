@@ -1,0 +1,21 @@
+{
+  "events": [
+    {
+      "record_id": "1004",
+      "@timestamp": "2026-06-08T12:02:00.000000Z",
+      "EventID": 1,
+      "Channel": "Microsoft-Windows-Sysmon/Operational",
+      "Computer": "WORKSTATION2",
+      "EventData": {
+        "ProcessGuid": "{44444444-4444-4444-4444-444444444444}",
+        "ProcessId": "8888",
+        "Image": "C:\\Windows\\System32\\notepad.exe",
+        "CommandLine": "notepad.exe unrelated-session",
+        "User": "OTHERCORP\\otheruser",
+        "ParentProcessGuid": "{00000000-0000-0000-0000-000000000099}",
+        "ParentProcessId": "8880",
+        "ParentImage": "C:\\Windows\\explorer.exe"
+      }
+    }
+  ]
+}

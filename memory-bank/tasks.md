@@ -6,12 +6,13 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-030 | Correlation Accuracy Gate | Next | Depends on Task 28 |
+| TASK-031 | Phase 3 Harness on Correlated Telemetry | Next | Depends on Tasks 26, 29, 30 |
 
 ## Done (recent)
 
 | ID | Task | Evidence |
 |---|---|---|
+| TASK-030 | Correlation Accuracy Gate | `.workflow/TASK-030/verification.md` — 19 gate tests; pytest 685; `python -m evals.correlation_gate` 4/4 PASS |
 | TASK-029 | Correlator Identity Compliance Tests | `.workflow/TASK-029/verification.md` — 12 tests in default suite; policy-gate e2e; pytest 666 |
 | TASK-028a | Production Orchestrator PolicyGate and Metrics Integration | `.workflow/TASK-028a/verification.md` — pytest 646; eval harness 24/24; tripwires pass |
 

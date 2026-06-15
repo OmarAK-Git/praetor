@@ -1,0 +1,36 @@
+# schema: see README.md in this directory
+schema_version: "1"
+scenario_id: otrf_process_chain_corroborated_logon
+description: >
+  OTRF-style process creation chain with Security 4624 corroboration.
+  Out-of-window noise fixture is loaded but must be excluded by the window filter.
+
+inputs:
+  anchor_time: "2026-06-08T12:00:00+00:00"
+  window_seconds: 300
+  sysmon_fixtures:
+    - tests/fixtures/sysmon/process_chain.json
+    - tests/fixtures/sysmon/noise_outside_window.json
+  security_fixtures:
+    - tests/fixtures/security/successful_logon_4624.json
+  noise_fixtures: []
+
+fixture_manifest: tests/fixtures/fixture_manifest.yaml
+
+expectations:
+  required_record_ids:
+    - "1001"
+    - "1002"
+    - "2001"
+  excluded_record_ids:
+    - "9999"
+  required_process_relationships:
+    - parent_process_guid: "{11111111-1111-1111-1111-111111111111}"
+      child_process_guid: "{22222222-2222-2222-2222-222222222222}"
+  min_collected_facts: 3
+  max_collected_facts: 3
+  max_noise_overcollection: 0
+  require_account_corroboration: true
+  required_provenance_paths:
+    - sysmon_event_log
+    - windows_security_log

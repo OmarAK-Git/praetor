@@ -1,0 +1,25 @@
+# schema: see README.md in this directory
+schema_version: "1"
+scenario_id: otrf_window_boundary
+description: >
+  Window filter is inclusive at anchor+window_seconds (record 1005) and excludes
+  events one second beyond (record 1006).
+
+inputs:
+  anchor_time: "2026-06-08T12:00:00+00:00"
+  window_seconds: 300
+  sysmon_fixtures:
+    - tests/fixtures/sysmon/window_boundary.json
+  security_fixtures: []
+  noise_fixtures: []
+
+fixture_manifest: tests/fixtures/fixture_manifest.yaml
+
+expectations:
+  required_record_ids:
+    - "1005"
+  excluded_record_ids:
+    - "1006"
+  required_process_relationships: []
+  min_collected_facts: 1
+  max_collected_facts: 1

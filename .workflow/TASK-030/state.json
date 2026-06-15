@@ -1,0 +1,28 @@
+{
+  "run": "TASK-030",
+  "status": "complete",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-15",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "12 gate tests + 2 expected YAML scenarios"
+    },
+    {
+      "id": "TASK-002",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "evals/correlation_gate.py implemented"
+    },
+    {
+      "id": "TASK-003",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Verification green; Memory Bank updated"
+    }
+  ]
+}

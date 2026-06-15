@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-06-15 — TASK-030 complete
+
+- Correlation accuracy gate: `evals/correlation_gate.py` — manifest listing + checksum, corroboration contract, noise record attribution, ambiguity/window scenarios.
+- Expected scenarios: four YAML files under `evals/correlation_expected/` (incl. unrelated in-window noise, window boundary).
+- Tests: `tests/evals/test_correlation_gate.py` — **19**; CLI `python -m evals.correlation_gate` — 4/4 PASS.
+- Verification: gate **19/19**, suite **685**, mypy **111** files, ruff OK.
+- Flight Recorder: `.workflow/TASK-030/`.
+
 ## 2026-06-15 — TASK-029 reopen (gatekeeper)
 
 - Removed `@pytest.mark.integration`; **12** compliance tests run in default suite.
@@ -392,4 +400,4 @@
 
 ## Next recommended steps
 
-1. TASK-030 — correlation accuracy gate on OTRF fixtures per `docs/plan.md`.
+1. TASK-031 — Phase 3 harness on correlated telemetry per `docs/plan.md`.

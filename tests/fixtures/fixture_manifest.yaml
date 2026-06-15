@@ -12,3 +12,9 @@ fixtures:
   - path: fixtures/security/successful_logon_4624.json
     sha256: 1526daa960d1d9e359df169801f09c33e5fa44362a4fe3e669a58dd086fa9fb7
     description: Windows Security successful logon event
+  - path: fixtures/sysmon/noise_in_window_unrelated.json
+    sha256: 43dafbde3448ad7b801567549430d0d9c9578901e3097b19dff2deacd66cc541
+    description: In-window Sysmon noise on unrelated host/session (record 1004)
+  - path: fixtures/sysmon/window_boundary.json
+    sha256: 1fe7082bc2fedcc7e03f854b35b7757a3b368a52136a2d2579588886dcb07b00
+    description: Sysmon events at window upper bound (+300s) and just outside (+301s)

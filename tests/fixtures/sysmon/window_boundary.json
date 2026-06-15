@@ -1,0 +1,38 @@
+{
+  "events": [
+    {
+      "record_id": "1005",
+      "@timestamp": "2026-06-08T12:05:00.000000Z",
+      "EventID": 1,
+      "Channel": "Microsoft-Windows-Sysmon/Operational",
+      "Computer": "WORKSTATION1",
+      "EventData": {
+        "ProcessGuid": "{55555555-5555-5555-5555-555555555555}",
+        "ProcessId": "9001",
+        "Image": "C:\\Windows\\System32\\cmd.exe",
+        "CommandLine": "cmd.exe /c boundary-inclusive",
+        "User": "CORP\\jdoe",
+        "ParentProcessGuid": "{00000000-0000-0000-0000-000000000001}",
+        "ParentProcessId": "1234",
+        "ParentImage": "C:\\Windows\\explorer.exe"
+      }
+    },
+    {
+      "record_id": "1006",
+      "@timestamp": "2026-06-08T12:05:01.000000Z",
+      "EventID": 1,
+      "Channel": "Microsoft-Windows-Sysmon/Operational",
+      "Computer": "WORKSTATION1",
+      "EventData": {
+        "ProcessGuid": "{66666666-6666-6666-6666-666666666666}",
+        "ProcessId": "9002",
+        "Image": "C:\\Windows\\System32\\cmd.exe",
+        "CommandLine": "cmd.exe /c boundary-excluded",
+        "User": "CORP\\jdoe",
+        "ParentProcessGuid": "{00000000-0000-0000-0000-000000000002}",
+        "ParentProcessId": "2345",
+        "ParentImage": "C:\\Windows\\explorer.exe"
+      }
+    }
+  ]
+}
