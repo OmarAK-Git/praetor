@@ -8,6 +8,12 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 |---|---|---|---|
 | TASK-029 | Correlator Identity Compliance Tests | Next | Depends on Tasks 16, 28 |
 
+## Done (recent)
+
+| ID | Task | Evidence |
+|---|---|---|
+| TASK-028a | Production Orchestrator PolicyGate and Metrics Integration | `.workflow/TASK-028a/verification.md` — pytest 646; eval harness 24/24; tripwires pass |
+
 ## Gate prerequisites
 
 - Startup recovery step 6 is implemented in TASK-017 (`reconcile_policy_state`).
@@ -64,3 +70,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-026 | Mandatory Phase 2 Eval Harness | `.workflow/TASK-026/verification.md` — `pytest` 615 / evals 33; `evals/harness.py` + 24 scenario YAML; full Outcome Matrix + completeness guard |
 | TASK-027 | Real-Provider Adversarial Excerpt Probe | `.workflow/TASK-027/verification.md` — `pytest` 629 / evals 47; `evals/real_provider_adversarial.py`; mocked Gemini path + payload structural checks; `docs/eval_gates.md` |
 | TASK-028 | Correlation Normalization and PromptExcerptSet | `.workflow/TASK-028/verification.md` — `pytest` 638 / correlation 9; `src/praetor/correlation/`; Sysmon+Security normalization, process graph, window filter, PromptExcerptSet |
+| TASK-028a | Production Orchestrator PolicyGate and Metrics Integration | `.workflow/TASK-028a/verification.md` — `pytest` 653; deferred directive persist (DEC-049); eval 25/25; tripwires pass |

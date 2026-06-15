@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+import sqlite3
 import sys
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
@@ -28,16 +29,21 @@ from praetor.config.activation import activate_org_config
 from praetor.config.emergency import add_emergency_never_contain
 from praetor.config.snapshot import compute_snapshot_hash_from_binding
 from praetor.config.state import fetch_active_snapshot, persist_org_config_snapshot
+from praetor.contracts.containment import ContainmentDirective
 from praetor.contracts.disposition import Disposition
 from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
 from praetor.contracts.judgment import CitedEvidenceRef, ModelJudgment
 from praetor.contracts.org_config import OrgConfigSnapshot
 from praetor.contracts.org_config_sections import ContainmentPolicy, ContainmentRule
-from praetor.engine.orchestrator import SucceedingStampBackend, process_alert_intake
+from praetor.engine.orchestrator import (
+    SucceedingStampBackend,
+    _CountingJudgmentProvider,
+    process_alert_intake,
+)
 from praetor.judgment.excerpt import MAX_PROMPT_EXCERPT_CHARS, build_prompt_excerpt_set
 from praetor.judgment.fake_provider import FakeProvider, FakeProviderMode
 from praetor.judgment.prompt import build_judgment_prompt_payload
-from praetor.judgment.provider import ProviderRetryPolicy
+from praetor.judgment.provider import JudgmentProvider, ProviderRetryPolicy
 from praetor.ledger.store import fetch_ledger_rows
 from praetor.metrics.events import OutcomeMatrixFaultFlag
 from praetor.policy.gate import evaluate_policy_gate
@@ -88,6 +94,59 @@ class _FailedStampBackend:
     def stamp(self, stamp_id: str, payload: dict[str, Any]) -> StampBackendResult:
         _ = stamp_id, payload
         return StampBackendResult(outcome=StampBackendOutcome.FAILED, payload={})
+
+
+class _UnknownStampBackend:
+    def stamp(self, stamp_id: str, payload: dict[str, Any]) -> StampBackendResult:
+        _ = stamp_id, payload
+        from praetor.tickets.stamp import StampTimeoutError
+
+        raise StampTimeoutError("harness ambiguous stamp")
+
+
+class _PendingStampBackend(_UnknownStampBackend):
+    """v1 intake in-flight stamp uses non-terminal outbox status (unknown)."""
+
+
+def _fetch_directive_for_decision_id(
+    conn: sqlite3.Connection,
+    decision_id: str,
+    *,
+    now: datetime | None = None,
+) -> ContainmentDirective | None:
+    from praetor.config.state import fetch_outstanding_unrevoked_directives
+
+    for directive in fetch_outstanding_unrevoked_directives(conn, now=now):
+        if directive.decision_id == decision_id:
+            return directive
+    return None
+
+
+def _assert_directive_expectations(
+    conn: sqlite3.Connection,
+    *,
+    decision_id: str,
+    expectations: Mapping[str, Any],
+    errors: list[str],
+    now: datetime | None = None,
+) -> None:
+    if not expectations.get("directive_emitted"):
+        return
+    directive = _fetch_directive_for_decision_id(conn, decision_id, now=now)
+    if directive is None:
+        errors.append("expected containment directive emission")
+        return
+    expected_type = expectations.get("containment_target_type")
+    expected_id = expectations.get("containment_target_id")
+    if expected_type and directive.target_type.value != expected_type:
+        errors.append(
+            f"containment target_type expected {expected_type}, "
+            f"got {directive.target_type.value}"
+        )
+    if expected_id and directive.target_id != expected_id:
+        errors.append(
+            f"containment target_id expected {expected_id}, got {directive.target_id}"
+        )
 
 
 def _load_schema() -> dict[str, Any]:
@@ -157,6 +216,65 @@ def _validate_expectations(
         expected_sfe = OUTCOME_MATRIX_SFE[OutcomeMatrixFaultFlag(flag)]
         # pairs only include escalate rows; SFE checked at runtime in _assert_outcome
         _ = expected_sfe
+
+    _RUNNER_EXPECTATION_KEYS: dict[str, frozenset[str]] = {
+        "engine_intake": frozenset(
+            {
+                "final_disposition",
+                "fault_flags",
+                "system_fault_escalation",
+                "judgment_provider_calls",
+                "no_policy_override",
+                "candidate_disposition_preserved",
+                "proposed_disposition",
+                "directive_emitted",
+                "containment_target_type",
+                "containment_target_id",
+            }
+        ),
+        "policy_gate": frozenset(
+            {
+                "final_disposition",
+                "fault_flags",
+                "system_fault_escalation",
+                "directive_emitted",
+                "containment_target_type",
+                "containment_target_id",
+                "idempotency_suppressed_on_repeat",
+                "ledger_record_type",
+            }
+        ),
+        "duplicate_retry": frozenset(
+            {
+                "second_intake_edict_none",
+                "ledger_edict_count_unchanged",
+            }
+        ),
+        "prompt_isolation": frozenset(
+            {
+                "raw_source_excluded",
+                "excerpt_max_chars",
+            }
+        ),
+        "revocation_feed_degraded_mode": frozenset(
+            {
+                "auto_contain",
+                "standard_review",
+            }
+        ),
+    }
+    _ALL_EXPECTATION_KEYS = frozenset().union(*_RUNNER_EXPECTATION_KEYS.values())
+    consumed = _RUNNER_EXPECTATION_KEYS.get(runner)
+    if consumed is None:
+        errors.append(f"unknown runner for expectation validation: {runner!r}")
+    else:
+        for key in expectations:
+            if key not in _ALL_EXPECTATION_KEYS:
+                errors.append(f"unknown expectation key: {key!r}")
+            elif key not in consumed:
+                errors.append(
+                    f"expectation key {key!r} is not consumed by runner {runner!r}"
+                )
 
     return errors
 
@@ -295,9 +413,21 @@ def _provider_mode(name: str) -> FakeProviderMode:
     return FakeProviderMode(name)
 
 
-def _stamp_backend(setup: Mapping[str, Any]) -> SucceedingStampBackend | _FailedStampBackend:
-    if setup.get("stamp_backend") == "failed":
+def _stamp_backend(
+    setup: Mapping[str, Any],
+) -> (
+    SucceedingStampBackend
+    | _FailedStampBackend
+    | _UnknownStampBackend
+    | _PendingStampBackend
+):
+    backend = setup.get("stamp_backend", "succeeding")
+    if backend == "failed":
         return _FailedStampBackend()
+    if backend == "unknown":
+        return _UnknownStampBackend()
+    if backend == "pending":
+        return _PendingStampBackend()
     return SucceedingStampBackend()
 
 
@@ -421,22 +551,38 @@ def _run_engine_intake(
     setup = scenario.setup
     expectations = scenario.expectations
     alert_identity = str(setup.get("alert_identity", scenario.scenario_id))
-    provider_mode_name = str(setup.get("provider_mode", "valid"))
-    proposed_name = str(setup.get("provider_proposed_disposition", "standard_review"))
-    provider = FakeProvider(
-        mode=_provider_mode(provider_mode_name),
-        proposed_disposition=_disposition(proposed_name),
-    )
-    retry = None
-    if provider_mode_name == "timeout":
-        retry = ProviderRetryPolicy(max_attempts=2, backoff_seconds=0.0)
-
     kwargs: dict[str, Any] = {
         "alert_identity": alert_identity,
         "correlate": bool(setup.get("correlate", True)),
         "enforce_config_budget": bool(setup.get("enforce_config_budget", True)),
-        "provider_retry_policy": retry,
     }
+
+    if "bundle" in setup or "host_id" in setup:
+        bundle = _resolve_policy_bundle(setup)
+        proposed_name = str(
+            setup.get(
+                "proposed_disposition",
+                setup.get("provider_proposed_disposition", "standard_review"),
+            )
+        )
+        proposed = _disposition(proposed_name)
+        provider: JudgmentProvider = _CountingJudgmentProvider(
+            judgment=_judgment_for_bundle(bundle, proposed=proposed)
+        )
+        kwargs["evidence_bundle"] = bundle
+    else:
+        provider_mode_name = str(setup.get("provider_mode", "valid"))
+        proposed_name = str(setup.get("provider_proposed_disposition", "standard_review"))
+        provider = FakeProvider(
+            mode=_provider_mode(provider_mode_name),
+            proposed_disposition=_disposition(proposed_name),
+        )
+
+    retry = None
+    if str(setup.get("provider_mode", "valid")) == "timeout":
+        retry = ProviderRetryPolicy(max_attempts=2, backoff_seconds=0.0)
+    kwargs["provider_retry_policy"] = retry
+
     stamp_backend = _stamp_backend(setup)
     if setup.get("config_over_budget"):
         huge = "x" * 500_000
@@ -460,9 +606,10 @@ def _run_engine_intake(
 
     if "judgment_provider_calls" in expectations:
         expected_calls = int(expectations["judgment_provider_calls"])
-        if provider.calls != expected_calls:
+        actual_calls = getattr(provider, "calls", 0)
+        if actual_calls != expected_calls:
             errors.append(
-                f"judgment_provider_calls expected {expected_calls}, got {provider.calls}"
+                f"judgment_provider_calls expected {expected_calls}, got {actual_calls}"
             )
 
     if expectations.get("no_policy_override"):
@@ -488,6 +635,13 @@ def _run_engine_intake(
     if result.edict is None:
         errors.append("expected decision edict")
         return
+
+    _assert_directive_expectations(
+        store.conn,
+        decision_id=result.edict.decision_id,
+        expectations=expectations,
+        errors=errors,
+    )
 
     _assert_outcome(
         final_disposition=result.edict.final_disposition,
@@ -659,18 +813,13 @@ def _run_policy_gate(
         if result.containment_directive is None:
             errors.append("expected containment directive emission")
         else:
-            expected_type = expectations.get("containment_target_type")
-            expected_id = expectations.get("containment_target_id")
-            directive = result.containment_directive
-            if expected_type and directive.target_type.value != expected_type:
-                errors.append(
-                    f"containment target_type expected {expected_type}, "
-                    f"got {directive.target_type.value}"
-                )
-            if expected_id and directive.target_id != expected_id:
-                errors.append(
-                    f"containment target_id expected {expected_id}, got {directive.target_id}"
-                )
+            _assert_directive_expectations(
+                store.conn,
+                decision_id=decision_id,
+                expectations=expectations,
+                errors=errors,
+                now=FIXED_NOW,
+            )
 
     if expectations.get("idempotency_suppressed_on_repeat"):
         if result.containment_directive is None:

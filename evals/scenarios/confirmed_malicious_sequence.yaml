@@ -1,7 +1,7 @@
 schema_version: "1"
 scenario_id: confirmed_malicious_sequence
 description: Confirmed malicious host sequence passes all gates and emits auto_contain.
-runner: policy_gate
+runner: engine_intake
 setup:
   alert_identity: confirmed_malicious_sequence
   bundle: host

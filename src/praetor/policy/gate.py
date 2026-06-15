@@ -37,6 +37,7 @@ from praetor.policy.containment_policy import (
     NEVER_CONTAIN_LIVE_CONFLICT,
     NEVER_CONTAIN_SNAPSHOT,
     POLICY_AMBIGUITY,
+    ContainmentTarget,
     PolicyAction,
     evaluate_target_containment_policy,
     extract_account_identity,
@@ -81,6 +82,15 @@ class _PolicyGateRollback(Exception):
     def __init__(self, evaluation: PolicyGateEvaluation) -> None:
         self.evaluation = evaluation
         super().__init__()
+
+
+class DeferredDirectivePersistConflict(Exception):
+    """Gate passed at eval time but deferred persist preconditions failed in-band."""
+
+    def __init__(self, fault_flag: str, *, system_fault_escalation: bool) -> None:
+        self.fault_flag = fault_flag
+        self.system_fault_escalation = system_fault_escalation
+        super().__init__(fault_flag)
 
 
 class _RateLimitRaceLoss(Exception):
@@ -154,6 +164,98 @@ def _find_outstanding_by_idempotency_key(
     return None
 
 
+def _persist_auto_contain_emit_in_transaction(
+    conn: sqlite3.Connection,
+    *,
+    directive: ContainmentDirective,
+    org_snapshot: OrgConfigSnapshot,
+    target: ContainmentTarget,
+    alert_identity: str,
+    key_already_active: bool,
+    now: datetime,
+) -> ContainmentDirective:
+    """Insert idempotency, rate counters, breaker success, and outstanding directive."""
+    require_critical_transaction(conn)
+    if not key_already_active:
+        insert_active_idempotency_key(
+            conn,
+            idempotency_key=directive.idempotency_key,
+            alert_identity=alert_identity,
+            target_type=target.target_type,
+            target_id=target.target_id,
+            scope=target.scope,
+        )
+    increment_rate_limits_for_target_in_transaction(
+        conn,
+        snapshot=org_snapshot,
+        target=target,
+        now=now,
+    )
+    record_containment_success_in_transaction(
+        conn,
+        policy=org_snapshot.containment_circuit_breaker_policy,
+        now=now,
+    )
+    return insert_outstanding_directive_in_transaction(conn, directive)
+
+
+def persist_deferred_policy_gate_directive_in_transaction(
+    conn: sqlite3.Connection,
+    *,
+    evaluation: PolicyGateEvaluation,
+    org_snapshot: OrgConfigSnapshot,
+    alert_identity: str,
+    target: ContainmentTarget,
+    now: datetime | None = None,
+) -> ContainmentDirective | None:
+    """Persist a deferred gate directive after terminal stamp (spec ordering)."""
+    directive = evaluation.containment_directive
+    if directive is None or evaluation.directive_suppressed:
+        return directive
+    moment = now or datetime.now(UTC)
+    require_critical_transaction(conn)
+    feed_policy = org_snapshot.revocation_feed_policy
+    propagation = feed_policy.max_revocation_feed_propagation_delay_seconds
+    if is_feed_actuation_blocked(
+        conn,
+        propagation_delay_seconds=propagation,
+        now=moment,
+    ):
+        raise DeferredDirectivePersistConflict(
+            REVOCATION_FEED_UNHEALTHY,
+            system_fault_escalation=True,
+        )
+    refreshed_live = read_live_never_contain_entries(conn)
+    if target_blocked_by_live(refreshed_live, target):
+        raise DeferredDirectivePersistConflict(
+            NEVER_CONTAIN_LIVE_CONFLICT,
+            system_fault_escalation=False,
+        )
+    tx_exceeded, _ = is_rate_limit_exceeded_for_target(
+        conn,
+        snapshot=org_snapshot,
+        target=target,
+        now=moment,
+    )
+    if tx_exceeded:
+        raise DeferredDirectivePersistConflict(
+            RATE_LIMIT_EXCEEDED,
+            system_fault_escalation=False,
+        )
+    key_already_active = (
+        fetch_active_idempotency_key(conn, directive.idempotency_key) is not None
+    )
+    return _persist_auto_contain_emit_in_transaction(
+        conn,
+        directive=directive,
+        org_snapshot=org_snapshot,
+        target=target,
+        alert_identity=alert_identity,
+        key_already_active=key_already_active,
+        now=moment,
+    )
+
+
 def evaluate_policy_gate(
     conn: sqlite3.Connection,
     *,
@@ -166,6 +268,7 @@ def evaluate_policy_gate(
     provider_health_breaker_open: bool = False,
     latency_sla_exceeded: bool = False,
     queue_aging_exceeded: bool = False,
+    persist_directive: bool = True,
     _test_before_emit_transaction: Callable[[], None] | None = None,
 ) -> PolicyGateEvaluation:
     """Deterministically convert model judgment into final disposition."""
@@ -316,27 +419,16 @@ def evaluate_policy_gate(
                 now=moment,
                 supersedes_directive_id=None,
             )
-            if not key_already_active:
-                insert_active_idempotency_key(
+            if persist_directive:
+                directive = _persist_auto_contain_emit_in_transaction(
                     conn,
-                    idempotency_key=directive.idempotency_key,
+                    directive=directive,
+                    org_snapshot=org_snapshot,
+                    target=target,
                     alert_identity=alert_identity,
-                    target_type=target.target_type,
-                    target_id=target.target_id,
-                    scope=target.scope,
+                    key_already_active=key_already_active,
+                    now=moment,
                 )
-            increment_rate_limits_for_target_in_transaction(
-                conn,
-                snapshot=org_snapshot,
-                target=target,
-                now=moment,
-            )
-            record_containment_success_in_transaction(
-                conn,
-                policy=org_snapshot.containment_circuit_breaker_policy,
-                now=moment,
-            )
-            directive = insert_outstanding_directive_in_transaction(conn, directive)
     except _RateLimitRaceLoss:
         trip = _record_rate_limit_failure(conn, org_snapshot, now=moment)
         _flush_breaker_trip_alerts(conn, trip.health_alert_batch_id)

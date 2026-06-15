@@ -1,7 +1,7 @@
 schema_version: "1"
 scenario_id: never_contain_target
 description: Snapshot never-contain target escalates with policy safety gate.
-runner: policy_gate
+runner: engine_intake
 setup:
   alert_identity: never_contain_target
   bundle: host

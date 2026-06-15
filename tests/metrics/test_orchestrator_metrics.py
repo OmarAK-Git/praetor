@@ -1,0 +1,111 @@
+"""MetricsCollector wiring on the production intake path (Task 28a)."""
+
+from __future__ import annotations
+
+from tests.policy.conftest import auto_contain_judgment, host_bundle
+
+from praetor.contracts.disposition import Disposition
+from praetor.engine.orchestrator import (
+    SucceedingStampBackend,
+    _CountingJudgmentProvider,
+    process_alert_intake,
+)
+from praetor.metrics.collector import MetricsCollector
+from praetor.metrics.events import BreakerMetricDomain
+from praetor.tickets.outbox import StampStatus
+
+
+def test_intake_records_policy_gate_metrics_on_auto_contain(activated) -> None:
+    bundle = host_bundle(host_id="ws-01")
+    judgment = auto_contain_judgment(bundle)
+    provider = _CountingJudgmentProvider(judgment=judgment)
+    metrics = MetricsCollector()
+
+    result = process_alert_intake(
+        activated,
+        judgment_provider=provider,
+        stamp_backend=SucceedingStampBackend(),
+        alert_identity="metrics-auto-contain",
+        evidence_bundle=bundle,
+        metrics_collector=metrics,
+    )
+
+    assert result.disposition == Disposition.AUTO_CONTAIN
+    snap = metrics.snapshot()
+    assert snap.policy_gate_evaluations_total == 1
+    assert snap.policy_gate_override_total == 0
+    assert snap.disposition_counts[Disposition.AUTO_CONTAIN.value] == 1
+    assert snap.containment_directive_total == 1
+    assert snap.breaker_currently_open[BreakerMetricDomain.CONTAINMENT.value] is False
+    assert snap.stamp_status_counts[StampStatus.SUCCEEDED.value] == 1
+
+
+def test_intake_records_policy_gate_override_on_never_contain(activated) -> None:
+    bundle = host_bundle(host_id="dc-01")
+    judgment = auto_contain_judgment(bundle)
+    provider = _CountingJudgmentProvider(judgment=judgment)
+    metrics = MetricsCollector()
+
+    result = process_alert_intake(
+        activated,
+        judgment_provider=provider,
+        stamp_backend=SucceedingStampBackend(),
+        alert_identity="metrics-never-contain",
+        evidence_bundle=bundle,
+        metrics_collector=metrics,
+    )
+
+    assert result.disposition == Disposition.ESCALATE
+    snap = metrics.snapshot()
+    assert snap.policy_gate_evaluations_total == 1
+    assert snap.policy_gate_override_total == 1
+    assert snap.disposition_counts[Disposition.ESCALATE.value] == 1
+    assert snap.containment_directive_total == 0
+
+
+def test_intake_records_bypass_gate_metrics_on_correlation_failure(activated) -> None:
+    metrics = MetricsCollector()
+    provider = _CountingJudgmentProvider(
+        judgment=auto_contain_judgment(host_bundle(host_id="ws-01"))
+    )
+
+    result = process_alert_intake(
+        activated,
+        judgment_provider=provider,
+        stamp_backend=SucceedingStampBackend(),
+        alert_identity="metrics-corr-fail",
+        correlate=False,
+        metrics_collector=metrics,
+    )
+
+    assert result.disposition == Disposition.ESCALATE
+    snap = metrics.snapshot()
+    assert snap.policy_gate_evaluations_total == 0
+    assert snap.disposition_counts[Disposition.ESCALATE.value] == 1
+    assert snap.llm_failure_by_fault_flag["correlation_failure"] == 1
+
+
+def test_unknown_stamp_does_not_increment_gate_or_disposition_metrics(
+    activated,
+) -> None:
+    from tests.engine.stamp_fakes import AlwaysTimeoutStampBackend
+
+    bundle = host_bundle(host_id="ws-01")
+    judgment = auto_contain_judgment(bundle)
+    provider = _CountingJudgmentProvider(judgment=judgment)
+    metrics = MetricsCollector()
+
+    result = process_alert_intake(
+        activated,
+        judgment_provider=provider,
+        stamp_backend=AlwaysTimeoutStampBackend(),
+        alert_identity="metrics-unknown-stamp",
+        evidence_bundle=bundle,
+        metrics_collector=metrics,
+    )
+
+    assert result.edict is None
+    snap = metrics.snapshot()
+    assert snap.policy_gate_evaluations_total == 0
+    assert snap.containment_directive_total == 0
+    assert snap.disposition_counts == {}

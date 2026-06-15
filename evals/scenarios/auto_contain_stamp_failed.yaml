@@ -1,0 +1,20 @@
+schema_version: "1"
+scenario_id: auto_contain_stamp_failed
+description: Stamp failure preserves auto_contain candidate, emits directive, appends ticket_stamp_failed.
+runner: engine_intake
+setup:
+  alert_identity: auto_contain_stamp_failed
+  bundle: host
+  host_id: ws-01
+  proposed_disposition: auto_contain
+  stamp_backend: failed
+expectations:
+  final_disposition: auto_contain
+  fault_flags:
+    - ticket_stamp_failed
+  system_fault_escalation: false
+  candidate_disposition_preserved: true
+  proposed_disposition: auto_contain
+  directive_emitted: true
+  containment_target_type: host
+  containment_target_id: ws-01

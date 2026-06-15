@@ -185,7 +185,7 @@ def test_engine_provider_request_uses_prompt_excerpt_set_only(tmp_path) -> None:
             excerpt["field_path"]
             for excerpt in payload["prompt_excerpt_set"]["facts"][0]["excerpts"]
         }
-        assert "process_name" in field_paths
+        assert "normalized_fields.process_name" in field_paths
         assert "raw_source" not in _serialized(payload)
         assert "facts" not in payload
     finally:

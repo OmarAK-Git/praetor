@@ -4,12 +4,18 @@ from __future__ import annotations
 
 from typing import Any
 
+from praetor.contracts.evidence import EvidenceBundle
 from praetor.hashing import EMPTY_BUNDLE, canonical_hash, derive_decision_id
 
 
 def evidence_bundle_hash(bundle: dict[str, Any]) -> str:
     """Canonical hash of a correlated evidence bundle."""
     return canonical_hash(bundle)
+
+
+def hash_evidence_bundle(bundle: EvidenceBundle) -> str:
+    """Canonical hash of a typed ``EvidenceBundle`` contract."""
+    return evidence_bundle_hash(bundle.model_dump())
 
 
 def resolved_evidence_bundle_hash(

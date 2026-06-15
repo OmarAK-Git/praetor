@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Any
 
 from praetor.tickets.stamp import (
@@ -44,3 +45,15 @@ class AlwaysTimeoutStampBackend:
         self.stamp_calls.append(stamp_id)
         _ = payload
         raise StampTimeoutError("simulated persistent timeout")
+
+
+class InjectNeverContainOnStampBackend:
+    """Terminal stamp that inserts a live never-contain entry before deferred persist."""
+
+    def __init__(self, *, on_stamp: Callable[[], None]) -> None:
+        self.on_stamp = on_stamp
+
+    def stamp(self, stamp_id: str, payload: dict[str, Any]) -> StampBackendResult:
+        _ = stamp_id, payload
+        self.on_stamp()
+        return StampBackendResult(outcome=StampBackendOutcome.SUCCEEDED, payload={})

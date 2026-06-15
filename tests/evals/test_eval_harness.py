@@ -11,6 +11,8 @@ import pytest
 from evals.harness import (
     SCENARIOS_DIR,
     SCHEMA_PATH,
+    _assert_directive_expectations,
+    _validate_expectations,
     format_results,
     list_mandatory_scenarios,
     load_scenario,
@@ -169,3 +171,64 @@ def test_harness_reports_scenario_failure(tmp_path: Path) -> None:
     result = run_scenario(broken, db_path=tmp_path / "broken.db")
     assert not result.passed
     assert result.errors
+
+
+def test_validate_expectations_rejects_unconsumed_engine_intake_keys() -> None:
+    errors = _validate_expectations(
+        runner="engine_intake",
+        expectations={
+            "final_disposition": "auto_contain",
+            "fault_flags": [],
+            "system_fault_escalation": False,
+            "idempotency_suppressed_on_repeat": True,
+        },
+    )
+    assert any("not consumed by runner" in error for error in errors)
+
+
+def test_directive_emitted_assertion_fails_for_never_contain_target(tmp_path: Path) -> None:
+    from tests.config.shared import EXAMPLE_CONFIG, SOC_LEAD_TOKEN
+    from tests.policy.conftest import auto_contain_judgment, host_bundle
+
+    from praetor.auth.principal import Principal
+    from praetor.auth.verifier import PrincipalMapVerifier
+    from praetor.config.activation import activate_org_config
+    from praetor.engine.orchestrator import (
+        SucceedingStampBackend,
+        _CountingJudgmentProvider,
+        process_alert_intake,
+    )
+    from praetor.state.store import open_state_store
+
+    store = open_state_store(tmp_path / "directive-teeth.db")
+    verifier = PrincipalMapVerifier(
+        {SOC_LEAD_TOKEN: Principal(identity="soc-lead-1", role="soc_lead")}
+    )
+    try:
+        activate_org_config(store, EXAMPLE_CONFIG, token=SOC_LEAD_TOKEN, verifier=verifier)
+        bundle = host_bundle(host_id="dc-01")
+        judgment = auto_contain_judgment(bundle)
+        provider = _CountingJudgmentProvider(judgment=judgment)
+        result = process_alert_intake(
+            store,
+            judgment_provider=provider,
+            stamp_backend=SucceedingStampBackend(),
+            alert_identity="never-contain-directive-teeth",
+            evidence_bundle=bundle,
+        )
+        assert result.edict is not None
+        errors: list[str] = []
+        _assert_directive_expectations(
+            store.conn,
+            decision_id=result.edict.decision_id,
+            expectations={
+                "directive_emitted": True,
+                "containment_target_type": "host",
+                "containment_target_id": "dc-01",
+            },
+            errors=errors,
+        )
+        assert errors == ["expected containment directive emission"]
+    finally:
+        store.close()
+

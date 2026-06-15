@@ -1,0 +1,16 @@
+{
+  "run": "TASK-028a",
+  "status": "complete",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-15",
+  "tasks": [
+    {
+      "id": "TASK-028a",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Wire PolicyGate + MetricsCollector into correlation-aware process_alert_intake"
+    }
+  ]
+}

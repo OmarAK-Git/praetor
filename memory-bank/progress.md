@@ -1,5 +1,28 @@
 # Progress Log
 
+## 2026-06-15 — TASK-028a gatekeeper cleanup
+
+- Repo hygiene: deleted stray `tmp-idem*.db` artifacts; `.gitignore` adds `tmp-*.db` (test DBs remain under pytest `tmp_path`).
+- Deferred persist conflict: `DeferredDirectivePersistConflict` in `gate.py`; orchestrator catches in edict-append transaction, suppresses directive, rebuilds escalate edict with gate fault flag (`never_contain_live_conflict` / `revocation_feed_unhealthy` / `rate_limit_exceeded`).
+- Test: `test_deferred_persist_never_contain_conflict_escalates_in_band` in `test_intake_stamp_actuation.py` (`InjectNeverContainOnStampBackend`).
+- Metrics: post-actuation recording uses persisted edict + `directive_persisted` flag.
+- Verification: suite **654**, eval **25/25**, mypy **110** files, ruff OK.
+
+## 2026-06-15 — TASK-028a gatekeeper follow-up
+
+- Stamp ordering: directive + edict in one transaction after terminal stamp only (`persist_directive=False` on intake gate eval); no orphaned directives on unknown/pending stamp.
+- Eval harness: engine_intake directive DB assertions; runner expectation-key guard; `auto_contain_stamp_failed` scenario.
+- Tests: `test_intake_stamp_actuation.py`, directive teeth + guard in `test_eval_harness.py`, unknown-stamp metrics assertion.
+- Verification: suite **653**, eval **25/25**, mypy **110** files, ruff OK.
+
+## 2026-06-15 — TASK-028a complete
+
+- Production intake: `evaluate_policy_gate` + optional `MetricsCollector` on `process_alert_intake`; correlation bundle resolution (telemetry / override / skeleton default).
+- Tripwires: `tests/engine/test_policygate_integration_tripwire.py` — **3** passing (xfail removed).
+- Metrics: `tests/metrics/test_orchestrator_metrics.py` — **3**; suite **646**, eval harness **24/24**, mypy **110** files, ruff OK.
+- Evals: `confirmed_malicious_sequence` + `never_contain_target` → `runner: engine_intake`.
+- Flight Recorder: `.workflow/TASK-028a/`.
+
 ## 2026-06-15 — TASK-028 complete
 
 - Correlation normalization: `src/praetor/correlation/` — Sysmon EventID 1, Security 4624, ±300s window, process GUID graph, Task 14 excerpt bridge.

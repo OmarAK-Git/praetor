@@ -8,7 +8,7 @@ from typing import Any
 from praetor.contracts.disposition import Disposition
 from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
 from praetor.contracts.judgment import CitedEvidenceRef, ModelJudgment
-from praetor.engine.ids import evidence_bundle_hash
+from praetor.engine.ids import hash_evidence_bundle
 
 SKELETON_ALERT_ID = "ALERT-SKELETON-001"
 SKELETON_EVIDENCE_ID = "ev-skeleton-1"
@@ -38,10 +38,10 @@ SKELETON_EVIDENCE_BUNDLE = EvidenceBundle(
 
 SKELETON_BUNDLE_BODY: dict[str, Any] = {
     "schema_version": "1.0",
-    "facts": list(SKELETON_EVIDENCE_CATALOG.values()),
+    "facts": [fact.model_dump(mode="json") for fact in SKELETON_EVIDENCE_BUNDLE.facts],
 }
 
-SKELETON_BUNDLE_HASH: str = evidence_bundle_hash(SKELETON_BUNDLE_BODY)
+SKELETON_BUNDLE_HASH: str = hash_evidence_bundle(SKELETON_EVIDENCE_BUNDLE)
 
 
 def skeleton_model_judgment(
