@@ -1,2 +1,14 @@
 version: "1"
-fixtures: []
+fixtures:
+  - path: fixtures/sysmon/process_chain.json
+    sha256: f82401fad0d4a89280937e7d51a3f04108faaae6fe4d0e8db8e60f0facf02fc7
+    description: Sysmon parent/child process creation chain
+  - path: fixtures/sysmon/ambiguous_user.json
+    sha256: adf8d0c0258465f551b336151a2d1c6d1abb2d2dd021c4849c30b7fb086bf4ba
+    description: Sysmon process creation with domain-less user
+  - path: fixtures/sysmon/noise_outside_window.json
+    sha256: 427b9b2db5ede52fd7375ab070208ab126fac3d48095ea2afa8ad233de7865bf
+    description: Sysmon event outside default correlation window
+  - path: fixtures/security/successful_logon_4624.json
+    sha256: 1526daa960d1d9e359df169801f09c33e5fa44362a4fe3e669a58dd086fa9fb7
+    description: Windows Security successful logon event

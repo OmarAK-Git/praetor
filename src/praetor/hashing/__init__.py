@@ -11,6 +11,7 @@ from praetor.hashing.canonical import (
 )
 from praetor.hashing.domains import (
     DOMAIN_DECISION_ID,
+    DOMAIN_EVIDENCE_ID,
     DOMAIN_IDEMPOTENCY_KEY,
     DOMAIN_LEDGER_LINK,
     DOMAIN_STAMP_ID,
@@ -29,6 +30,7 @@ __all__ = [
     "EMPTY_BUNDLE_SENTINEL",
     "CanonicalSerializationError",
     "DOMAIN_DECISION_ID",
+    "DOMAIN_EVIDENCE_ID",
     "DOMAIN_IDEMPOTENCY_KEY",
     "DOMAIN_LEDGER_LINK",
     "DOMAIN_STAMP_ID",

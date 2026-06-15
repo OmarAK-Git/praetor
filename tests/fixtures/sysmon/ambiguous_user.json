@@ -1,0 +1,21 @@
+{
+  "events": [
+    {
+      "record_id": "1003",
+      "@timestamp": "2026-06-08T12:00:10.000000Z",
+      "EventID": 1,
+      "Channel": "Microsoft-Windows-Sysmon/Operational",
+      "Computer": "WORKSTATION1",
+      "EventData": {
+        "ProcessGuid": "{33333333-3333-3333-3333-333333333333}",
+        "ProcessId": "6666",
+        "Image": "C:\\Windows\\System32\\notepad.exe",
+        "CommandLine": "notepad.exe",
+        "User": "jdoe",
+        "ParentProcessGuid": "{00000000-0000-0000-0000-000000000002}",
+        "ParentProcessId": "2345",
+        "ParentImage": "C:\\Windows\\explorer.exe"
+      }
+    }
+  ]
+}

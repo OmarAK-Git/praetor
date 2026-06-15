@@ -1,0 +1,21 @@
+{
+  "events": [
+    {
+      "record_id": "9999",
+      "@timestamp": "2026-06-08T14:00:00.000000Z",
+      "EventID": 1,
+      "Channel": "Microsoft-Windows-Sysmon/Operational",
+      "Computer": "WORKSTATION1",
+      "EventData": {
+        "ProcessGuid": "{99999999-9999-9999-9999-999999999999}",
+        "ProcessId": "7777",
+        "Image": "C:\\Windows\\System32\\calc.exe",
+        "CommandLine": "calc.exe",
+        "User": "CORP\\noise",
+        "ParentProcessGuid": "{00000000-0000-0000-0000-000000000099}",
+        "ParentProcessId": "9999",
+        "ParentImage": "C:\\Windows\\explorer.exe"
+      }
+    }
+  ]
+}

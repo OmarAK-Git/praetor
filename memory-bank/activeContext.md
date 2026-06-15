@@ -2,22 +2,20 @@
 
 ## Current focus
 
-**TASK-027 complete (gatekeeper reopen)** — mypy gates `evals/`; mocked Gemini path tests; structural preconditions read from `request.payload`; truncation fixture; `docs/eval_gates.md` + DEC-047.
+**TASK-028 complete** — Windows Sysmon/Security normalization into `EvidenceBundle` + bounded `PromptExcerptSet`; process relationship graph; time-window filtering; fixture manifest registered.
 
-Next: **TASK-028** (Correlation Normalization and PromptExcerptSet). Follow-on: wire PolicyGate into engine intake; wire `MetricsCollector` into intake/export paths.
+Next: **TASK-029** (Correlator Identity Compliance Tests). Follow-on: **TASK-28a** wire PolicyGate + metrics into correlation-aware orchestrator.
 
 ## Recently changed
 
+- TASK-028: `src/praetor/correlation/` — Sysmon EventID 1 + Security 4624 normalizers, ±300s window filter, process GUID graph, Task 14 excerpt bridge; 4 fixtures + manifest checksums; **9** correlation tests; suite **638**.
 - TASK-027 gatekeeper reopen: payload-driven structural checks, truncated fixture, mocked Gemini tests (+7), mypy `evals` package (102 files), `docs/eval_gates.md` + DEC-047; **14** deterministic adversarial tests; eval suite **47**; full suite **629**.
 - TASK-026 follow-up: `evals/outcome_matrix.py` — canonical SFE map from `OutcomeMatrixFaultFlag`; 24 scenarios (+10 matrix rows); completeness guard; fail-closed SFE; `ticket_stamp_failed` + `policy_gate_idempotency`; **33** eval tests; suite **615**.
-- TASK-026: `evals/harness.py` + `evals/scenarios/*.yaml` — 14 mandatory scenarios, JSON schema validation, engine/policy_gate/prompt/duplicate/revocation_feed runners; 19 eval tests; suite **601**.
-- TASK-025: `annotations/store.py` — SQLite `analyst_annotations` table, `submit_annotation` with Task 4 auth; 8 annotation tests; suite **578**.
-- TASK-024: `metrics/{collector,events}.py` — in-process metrics collector with independent breaker/probe domains, feed lag p99 + unhealthy transitions; 13 metrics tests; suite **556**.
 
 ## Current blockers
 
 - Operator docs still absent: `docs/operator_runbook.md`, `docs/architecture.md` (Task 35). `docs/eval_gates.md` added in TASK-027.
-- PolicyGate module complete but not wired into `engine/orchestrator.py` intake path (eval harness exercises gate directly).
+- PolicyGate module complete but not wired into `engine/orchestrator.py` intake path (Task 28a / DEC-048).
 - Metrics collector not wired into production call sites; no intake/UI surface for annotation submission.
 
 ## Important notes for agents
@@ -33,3 +31,4 @@ Next: **TASK-028** (Correlation Normalization and PromptExcerptSet). Follow-on: 
 9. Rate limits: DEC-029 limit=1/scope/window; DEC-030 `per_asset_group` = host asset_id only.
 10. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.
 11. Eval harness: `python -m evals.harness` runs all 14 mandatory scenarios; exits non-zero on any safety invariant failure.
+12. Correlation: `correlate_telemetry()` in `praetor.correlation` produces bundle + `PromptExcerptSet`; orchestrator wiring deferred to Task 28a.

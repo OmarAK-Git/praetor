@@ -13,6 +13,7 @@ from praetor.hashing.canonical import (
 )
 
 DOMAIN_DECISION_ID = "praetor:v1:decision_id"
+DOMAIN_EVIDENCE_ID = "praetor:v1:evidence_id"
 DOMAIN_IDEMPOTENCY_KEY = "praetor:v1:idempotency_key"
 DOMAIN_STAMP_ID = "praetor:v1:stamp_id"
 DOMAIN_LEDGER_LINK = "praetor:v1:ledger_link"

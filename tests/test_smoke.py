@@ -16,4 +16,5 @@ def test_fixture_manifest_loads() -> None:
     assert MANIFEST_PATH.is_file()
     data = yaml.safe_load(MANIFEST_PATH.read_text(encoding="utf-8"))
     assert data["version"] == "1"
-    assert data["fixtures"] == []
+    assert isinstance(data["fixtures"], list)
+    assert len(data["fixtures"]) >= 4

@@ -1,5 +1,12 @@
 # Progress Log
 
+## 2026-06-15 — TASK-028 complete
+
+- Correlation normalization: `src/praetor/correlation/` — Sysmon EventID 1, Security 4624, ±300s window, process GUID graph, Task 14 excerpt bridge.
+- Fixtures: `tests/fixtures/sysmon/*`, `tests/fixtures/security/successful_logon_4624.json`; manifest checksums (4 entries).
+- Tests: `tests/correlation/test_sysmon_normalization.py` — **9**; suite **638**, `mypy src evals consumer_sdk` OK (**110** files), ruff OK.
+- Flight Recorder: `.workflow/TASK-028/`.
+
 ## 2026-06-13 — TASK-027 gatekeeper reopen
 
 - Structural preconditions read from `request.payload["prompt_excerpt_set"]`; truncated adversarial fixture; structural `raw_source` key walk.
@@ -349,4 +356,4 @@
 
 ## Next recommended steps
 
-1. TASK-028 — correlation normalization and PromptExcerptSet per `docs/plan.md`.
+1. TASK-029 — correlator identity compliance on real fixture shapes per `docs/plan.md`.

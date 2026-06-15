@@ -52,6 +52,7 @@ def test_only_expected_top_level_packages() -> None:
         "config",
         "containment",
         "contracts",
+        "correlation",
         "engine",
         "evidence",
         "hashing",
