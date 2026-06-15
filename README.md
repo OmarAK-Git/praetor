@@ -1,9 +1,9 @@
 # Praetor
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-343%20passed-brightgreen.svg)](#getting-started)
-[![Phase](https://img.shields.io/badge/phase-1%20complete-brightgreen.svg)](#where-we-are)
-[![Plan](https://img.shields.io/badge/tasks-12%2F35%20complete-lightgrey.svg)](docs/plan.md)
+[![Tests](https://img.shields.io/badge/tests-629%20passed-brightgreen.svg)](#getting-started)
+[![Phase](https://img.shields.io/badge/phase-2%20components%20complete-yellow.svg)](#where-we-are)
+[![Plan](https://img.shields.io/badge/tasks-27%2F35%20complete-lightgrey.svg)](docs/plan.md)
 
 > **Elevator pitch:** Detection tells you something fired. Praetor decides what happens next — with LLM judgment you can actually trust, because every action passes deterministic policy gates and lands in a tamper-evident audit trail.
 
@@ -29,7 +29,7 @@ Most triage today is either **every alert to a human** (slow, fatiguing) or **ha
 |---|---|
 | **Three dispositions, no hiding** | `standard_review`, `escalate`, `auto_contain` — no `auto_close`. Uncertainty always falls to human review. |
 | **Machine-checkable citations** | Model rationale must cite evidence IDs or field paths that resolve in the bundle; bad citations downgrade to escalate. |
-| **Deterministic containment gates** | `auto_contain` only after citations, never-contain checks, rate limits, circuit breakers, feed health, and idempotency all pass. |
+| **Deterministic containment gates** | `auto_contain` only after citations, never-contain checks, rate limits, circuit breakers, feed health, and idempotency all pass. *Current build: PolicyGate is exercised in evals/tests; integration into the live intake path lands in Phase 3 — see `docs/decisions.md` DEC-048.* |
 | **Org config as statute** | Human-authored, versioned config is rendered in full into judgment context — safety sections are never silently omitted. |
 | **Honest audit semantics** | Hash-chained ledger detects tampering; cases are human-reconstructable. We do not overclaim immutability or LLM replay. |
 | **Portable by design** | Versioned Pydantic contracts, exported JSON Schema, canonical hashing — built to hand decisions to another SOC's stack. |
@@ -39,6 +39,8 @@ Most triage today is either **every alert to a human** (slow, fatiguing) or **ha
 ## Architecture
 
 Praetor sits **after** detection. It correlates local telemetry, asks an LLM for structured judgment against org config, runs a deterministic **PolicyGate**, then durably records the outcome.
+
+*Implementation status:* PolicyGate and metrics are validated in isolation (`policy_gate` eval runner and unit tests); production-path integration into `process_alert_intake` is scheduled as Task 28a / Phase 3 (`docs/decisions.md` DEC-048).
 
 ```mermaid
 flowchart TB
@@ -78,7 +80,7 @@ flowchart TB
 
 These are the product's load-bearing decisions. Full rationale lives in [`docs/prd.md`](docs/prd.md); behavioral detail in [`docs/spec.md`](docs/spec.md).
 
-1. **Recommendation ≠ authorization** — `ModelJudgment` is a proposal; `PolicyGate` decides the final disposition. Auditors can tell "model assessed low risk" from "model wanted contain but policy blocked it."
+1. **Recommendation ≠ authorization** — `ModelJudgment` is a proposal; `PolicyGate` decides the final disposition. Auditors can tell "model assessed low risk" from "model wanted contain but policy blocked it." *Current build: the walking-skeleton orchestrator hard-downgrades `auto_contain` until Task 28a wiring (DEC-048).*
 
 2. **Fail safe, fail loud** — `standard_review` and `escalate` both route to humans. The only automated action is `auto_contain`, and it is gated, bounded, and reviewable.
 
@@ -94,30 +96,31 @@ These are the product's load-bearing decisions. Full rationale lives in [`docs/p
 
 ## Where we are
 
+**Phase 2 is a conditional pass (PASS-WITH-CONDITIONS):** Tasks 13–27 components are complete and validated — 629 tests, mypy strict (104 files), ruff clean, 24 mandatory eval scenarios. PolicyGate, breakers, metrics, the consumer verifier, and the eval harness are implemented and tested in isolation. **PolicyGate and metrics are not yet on the production decision path** (`process_alert_intake` still uses the walking-skeleton policy stub); production-flow integration is scheduled as **Task 28a / Phase 3** per `docs/decisions.md` DEC-048.
+
 **Phase 1 is complete:** the durable walking skeleton is built and verified.
-That means Praetor now has the safety-critical foundation: stable contracts,
+That means Praetor has the safety-critical foundation: stable contracts,
 canonical hashes, SQLite lifecycle state, startup guards, org config activation,
 never-contain handling, the hash-chained audit ledger, revocation-feed export,
 ticket/health outboxes, and a minimal end-to-end decision path.
 
 In non-technical terms: the foundation is poured, the safety rails are installed,
-and the system can already show how a decision is recorded and recovered after
-failure. It is not yet connected to a real LLM provider or a real SOC data stream.
-That comes next.
+and the intelligent policy layer is built and tested — but not yet connected to the
+live intake orchestrator. Real correlated telemetry intake comes in Phase 3.
 
 ### Phase Structure
 
 | Phase | Tasks | Plain-English milestone | Status |
 |---|---:|---|---|
 | Phase 1 — Durable walking skeleton | 1-12 | Make decisions durable, auditable, recoverable, and safe-by-default | **Complete** |
-| Phase 2 — Judgment and policy discipline | 13-27 | Add provider abstraction, prompt building, PolicyGate, breakers, metrics, evals | Next |
-| Phase 3 — Correlation | 28-31 | Build real telemetry correlation and identity compliance gates | Planned |
+| Phase 2 — Judgment and policy discipline | 13-27 | Add provider abstraction, prompt building, PolicyGate, breakers, metrics, evals | **Components complete** (conditional pass; production integration → Task 28a) |
+| Phase 3 — Correlation | 28-31 (incl. 28a) | Wire PolicyGate/metrics into intake; build real telemetry correlation and identity gates | Next |
 | Phase 4 — Detection portability | 32-33 | Package Sigma/SPL/Splunk demo flow | Planned |
 | Phase 5 — Operator readiness | 34-35 | Org-config sweep, production benchmark, runbooks | Planned |
 
 ## What's built so far
 
-**Phase 1 (durable core)** — Tasks 1-12 complete · **~34% of the 35-task plan**
+**Phase 1 (durable core)** — Tasks 1-12 complete · **Phase 2 (judgment & policy)** — Tasks 13-27 components complete · **~77% of the 35-task plan**
 
 | Area | Status | Location |
 |---|---|---|
@@ -134,12 +137,18 @@ That comes next.
 | Revocation feed exporter + startup feed recovery | Done | `src/praetor/revocation/` |
 | Walking skeleton decision flow and crash recovery | Done | `src/praetor/engine/` |
 | Smoke benchmark for serialized path | Done | `benchmarks/smoke_serialized_path.py` |
+| Provider abstraction, prompt construction, citation validation | Done | `src/praetor/judgment/`, `src/praetor/evidence/` |
+| PolicyGate, rate limits, circuit breakers, directive lifecycle | Done (isolated) | `src/praetor/policy/` |
+| Provider-health breaker + half-open probes | Done (isolated) | `src/praetor/judgment/provider_health_breaker.py` |
+| Metrics collector + Outcome Matrix enums | Done (isolated) | `src/praetor/metrics/` |
+| Reference consumer verifier | Done | `consumer_sdk/reference_verifier.py` |
+| Mandatory Phase 2 eval harness (24 scenarios) | Done | `evals/harness.py`, `evals/scenarios/` |
+| Analyst annotation storage | Done | `src/praetor/annotations/` |
+| Real-provider adversarial probe (probabilistic) | Done | `evals/real_provider_adversarial.py` |
 
-**Not yet:** real LLM provider calls, real prompt construction, PolicyGate,
-rate limits, circuit breakers, directive emission, reference consumer verifier,
-real correlation, identity compliance, and the Splunk demo harness. The current
-walking skeleton uses hardcoded evidence and judgment fixtures so the durability
-and safety behavior can be proven before the intelligent parts are added.
+**Production integration pending (Task 28a / Phase 3):** PolicyGate and `MetricsCollector` wired into `process_alert_intake` (`docs/decisions.md` DEC-048). Tripwire tests in `tests/engine/test_policygate_integration_tripwire.py` guard this deferral.
+
+**Not yet:** real correlated telemetry intake, identity compliance on live fixtures, detection portability (Sigma/SPL/Splunk demo), org-config sweep, production throughput benchmark, and operator runbooks.
 
 ---
 

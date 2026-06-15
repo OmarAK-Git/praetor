@@ -78,9 +78,10 @@ def test_docs_changes_limited_to_contracts_md() -> None:
     if result.returncode != 0:
         pytest.skip("git not available or not a git repo")
     changed = [line.strip() for line in result.stdout.splitlines() if line.strip()]
-    allowed = {"docs/contracts.md", "docs/plan.md"}
+    # decisions.md is the sanctioned refinement log (spec.md stays frozen / excluded).
+    allowed = {"docs/contracts.md", "docs/plan.md", "docs/decisions.md"}
     unexpected = [path for path in changed if path not in allowed]
-    msg = f"only scoped Phase 1 docs may change under docs/: {unexpected}"
+    msg = f"only scoped refinement docs may change under docs/: {unexpected}"
     assert unexpected == [], msg
 
 

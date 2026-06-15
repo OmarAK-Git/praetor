@@ -7,10 +7,10 @@ Durable core first: contracts, canonical hashing, startup guards, lifecycle/outb
 ## Sprint Groupings
 
 - Sprint 1: Tasks 1-12. Contracts, canonical serialization, auth, startup guards, SQLite lifecycle/outboxes, config, ledger, revocation feed, walking skeleton, provisional alert-rate targets, smoke benchmark, and Phase 1 gate recovery.
-- Sprint 2: Tasks 13-26. Judgment, prompt construction, PolicyGate, breakers, half-open probes, directive lifecycle, consumer verifier, metrics, annotations, Phase 2 eval harness, real-provider adversarial probe.
-- Sprint 3: Tasks 27-30. Correlation normalization, identity compliance, accuracy gate, Phase 3 harness.
-- Sprint 4: Tasks 31-32. Detection portability and Splunk demo.
-- Sprint 5: Tasks 33-34. Codification, production throughput benchmark, operator runbooks.
+- Sprint 2: Tasks 13-27. Judgment, prompt construction, PolicyGate, breakers, half-open probes, directive lifecycle, consumer verifier, metrics, annotations, Phase 2 eval harness, real-provider adversarial probe.
+- Sprint 3: Tasks 28-31, plus 28a. Correlation normalization (28), production orchestrator PolicyGate and metrics integration (28a, depends on 28), identity compliance (29), accuracy gate (30), Phase 3 harness (31).
+- Sprint 4: Tasks 32-33. Detection portability and Splunk demo.
+- Sprint 5: Tasks 34-35. Codification, production throughput benchmark, operator runbooks.
 
 ## Task 1 - Repository Structure and Test Harness
 Complexity: S | Depends on: none
@@ -516,6 +516,25 @@ Files: `src/praetor/correlation/sysmon.py`, `src/praetor/correlation/security_lo
 
 Done when: fixture telemetry produces valid `EvidenceBundle` and `PromptExcerptSet`.
 
+## Task 28a - Production Orchestrator PolicyGate and Metrics Integration
+Complexity: L | Depends on: Tasks 17-24, 26, 28 | Blocks: Task 31 / Phase 3 gate
+
+**Phase 3 entry prerequisite:** must land before host/account `auto_contain` is trusted on real telemetry.
+
+Depends on Task 28 by design: the integration targets the correlation-aware orchestrator, so it must not be wired into the walking-skeleton intake that Task 28 replaces — see DEC-048.
+
+Test first:
+
+- `process_alert_intake` emits `auto_contain` for a fully-gated judgment where all deterministic checks pass (the `engine_intake` analog of `confirmed_malicious_sequence`).
+- `process_alert_intake` escalates with `never_contain_live_conflict` / `never_contain_snapshot` when the target is excluded; with `rate_limit_exceeded`, `containment_breaker_open`, and `revocation_feed_unhealthy` under those conditions.
+- The single serializable emit transaction (per DEC-028) covers gate live-checks + edict + `NeverContainSnapshotRecord` + directive + idempotency + rate-limit update.
+- `MetricsCollector` records disposition, policy-gate override, breaker state, and feed lag at the real call sites.
+- The strict-xfail tripwire tests in `tests/engine/test_policygate_integration_tripwire.py` are converted to passing tests (markers removed).
+
+Files: `src/praetor/engine/orchestrator.py`, `src/praetor/engine/recovery.py`, `evals/scenarios/*.yaml`, `tests/engine/*`, `tests/metrics/*`.
+
+Done when: the production decision path enforces the full Outcome Matrix via `evaluate_policy_gate` in one serializable emit transaction, metrics are emitted from real call sites, and end-to-end `engine_intake` evals drive both a gated `auto_contain` and a never-contain block.
+
 ## Task 29 - Correlator Identity Compliance Tests
 Complexity: M | Depends on: Tasks 16, 28
 
@@ -614,12 +633,12 @@ Pass criteria: contracts exported, hash formulas fixed, WAL enforced, singleton 
 ### Phase 2 - Judgment and Policy Discipline
 Required tasks: 13-27.
 
-Pass criteria: mandatory eval scenarios pass with FakeProvider; full Outcome Matrix enforced including `revocation_feed_unhealthy` and `account_containment_disabled`; PolicyGate blocks unsafe `auto_contain`; emergency entries evaluated live; feed health blocks new auto-containment when stale; half-open probes use synthetic canary payload; rate limits and breakers enforced independently; `standard_review` not promoted on stamp failure; metrics include feed lag; reference consumer verifier matches protocol; account corroboration synthetic tests pass; real-provider adversarial probe is probabilistic and documented.
+Pass criteria: mandatory eval scenarios pass with FakeProvider; full Outcome Matrix enforced including `revocation_feed_unhealthy` and `account_containment_disabled`; PolicyGate blocks unsafe `auto_contain`; emergency entries evaluated live; feed health blocks new auto-containment when stale; half-open probes use synthetic canary payload; rate limits and breakers enforced independently; `standard_review` not promoted on stamp failure; metrics include feed lag; reference consumer verifier matches protocol; account corroboration synthetic tests pass; real-provider adversarial probe is probabilistic and documented. PolicyGate and metrics are validated in isolation (`policy_gate` eval runner and unit tests); production-path integration is deferred to Task 28a / Phase 3 per DEC-048 — Phase 2 is a **conditional pass** on this basis.
 
 ### Phase 3 - Correlation
 Required tasks: 28-31.
 
-Pass criteria: real telemetry normalization populates correct provenance paths; identity compliance tests confirm real shapes match synthetic tests; correlation accuracy gate passes; human-authored expected output for noisy correlated telemetry is committed; account containment production feature gate may only be enabled after these identity gates pass.
+Pass criteria: real telemetry normalization populates correct provenance paths; identity compliance tests confirm real shapes match synthetic tests; correlation accuracy gate passes; human-authored expected output for noisy correlated telemetry is committed; account containment production feature gate may only be enabled after these identity gates pass; PolicyGate and `MetricsCollector` are wired into `process_alert_intake` in one serializable emit transaction (DEC-028, Task 28a); end-to-end `engine_intake` evals drive a gated `auto_contain` and a never-contain block; the integration tripwire tests pass without xfail.
 
 ### Phase 4 - Detection Portability
 Required tasks: 32-33.
