@@ -13,7 +13,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, TypedDict, cast
 from unittest.mock import patch
 
 import yaml
@@ -91,7 +91,7 @@ class _FailedStampBackend:
 
 
 def _load_schema() -> dict[str, Any]:
-    return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    return cast(dict[str, Any], json.loads(SCHEMA_PATH.read_text(encoding="utf-8")))
 
 
 def _validate_against_schema(data: Mapping[str, Any], schema: Mapping[str, Any]) -> list[str]:
@@ -581,7 +581,13 @@ def _apply_policy_setup(store: StateStore, setup: Mapping[str, Any], verifier: T
     return snapshot_override
 
 
-def _policy_gate_kwargs(setup: Mapping[str, Any]) -> dict[str, bool]:
+class PolicyGateKwargs(TypedDict, total=False):
+    provider_health_breaker_open: bool
+    latency_sla_exceeded: bool
+    queue_aging_exceeded: bool
+
+
+def _policy_gate_kwargs(setup: Mapping[str, Any]) -> PolicyGateKwargs:
     raw = setup.get("policy_gate_kwargs", {})
     if not isinstance(raw, Mapping):
         return {}
@@ -590,11 +596,11 @@ def _policy_gate_kwargs(setup: Mapping[str, Any]) -> dict[str, bool]:
         "latency_sla_exceeded",
         "queue_aging_exceeded",
     )
-    return {
-        key: bool(raw[key])
-        for key in allowed
-        if key in raw
-    }
+    kwargs: PolicyGateKwargs = {}
+    for key in allowed:
+        if key in raw:
+            kwargs[key] = bool(raw[key])  # type: ignore[literal-required]
+    return kwargs
 
 
 def _run_policy_gate(

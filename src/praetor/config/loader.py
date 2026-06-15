@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import yaml  # type: ignore[import-untyped]
+import yaml
 
 from praetor.config.errors import ConfigLoadError
 
@@ -21,7 +21,7 @@ class LoadedOrgConfig:
     source_path: Path
 
 
-class UniqueKeyLoader(yaml.SafeLoader):  # type: ignore[misc]
+class UniqueKeyLoader(yaml.SafeLoader):
     """Reject duplicate mapping keys and non-string keys."""
 
 

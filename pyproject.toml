@@ -17,17 +17,23 @@ dev = [
     "pytest>=8.0",
     "mypy>=1.11",
     "ruff>=0.8",
+    "types-PyYAML>=6.0",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src", "."]
+markers = [
+    "integration: requires external services or credentials",
+    "probabilistic: non-deterministic; results logged only, not a CI gate",
+]
+addopts = '-m "not integration and not probabilistic"'
 
 [tool.mypy]
 python_version = "3.11"
 strict = true
 plugins = ["pydantic.mypy"]
-packages = ["praetor", "consumer_sdk"]
+packages = ["praetor", "consumer_sdk", "evals"]
 
 [[tool.mypy.overrides]]
 module = "tests.*"
@@ -46,6 +52,7 @@ select = ["E", "F", "I", "UP", "B"]
 "src/praetor/engine/**/*.py" = ["E501"]
 "tests/engine/**/*.py" = ["E501"]
 "evals/**/*.py" = ["E501"]
+"tests/evals/**/*.py" = ["E501"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/praetor"]

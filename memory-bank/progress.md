@@ -1,5 +1,22 @@
 # Progress Log
 
+## 2026-06-13 — TASK-027 gatekeeper reopen
+
+- Structural preconditions read from `request.payload["prompt_excerpt_set"]`; truncated adversarial fixture; structural `raw_source` key walk.
+- Mocked Gemini tests: happy path, HTTPError, URLError, malformed response paths, prompt content.
+- Mypy: `evals` added to packages; `types-PyYAML` dev dep; harness TypedDict fix; **102** files clean.
+- Docs: `docs/decisions.md` DEC-047, `docs/eval_gates.md`.
+- Tests: **14** deterministic adversarial + **1** deselected integration; eval suite **47**; full suite **629**.
+- Note: `tests/evals/__init__.py` omitted (shadows top-level `evals` under pytest).
+
+## 2026-06-13 — TASK-027 complete
+
+- Real-provider adversarial excerpt probe: `evals/real_provider_adversarial.py` — instruction-like injection in normalized `command_line`, Task 14 structural pre-checks, optional `GeminiJudgmentProvider` (REST), log-only probabilistic integration test.
+- Tests: `tests/evals/test_real_provider_adversarial.py` — **14** deterministic + **1** deselected integration; `pyproject.toml` markers + default exclusion + mypy `evals`.
+- Verification: suite **629**, `mypy src evals consumer_sdk` OK (**102** files), ruff OK.
+- Docs: `docs/eval_gates.md`, `docs/decisions.md` DEC-047.
+- Flight Recorder: `.workflow/TASK-027/`.
+
 ## 2026-06-13 — TASK-026 matrix hardening follow-up
 
 - `evals/outcome_matrix.py` — canonical SFE polarity keyed by `OutcomeMatrixFaultFlag`; matrix pair collectors.
@@ -327,9 +344,9 @@
 | Ledger hash chain | Task 10 done — `src/praetor/ledger/` |
 | Revocation feed export | Task 11 done — `src/praetor/revocation/` |
 | Walking skeleton / recovery | Task 12 done — `src/praetor/engine/` (**Phase 1 complete**) |
-| CI / eval harness | Task 26 done — `evals/harness.py`, 14 mandatory scenarios |
+| CI / eval harness | Task 26–27 done — mandatory harness + probabilistic real-provider probe |
 | Operator runbooks | Not in repo yet (Task 35) |
 
 ## Next recommended steps
 
-1. TASK-027 — real-provider adversarial excerpt probe per `docs/plan.md`.
+1. TASK-028 — correlation normalization and PromptExcerptSet per `docs/plan.md`.
