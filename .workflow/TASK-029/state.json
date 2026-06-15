@@ -1,0 +1,23 @@
+{
+  "run": "TASK-029",
+  "status": "complete",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-15",
+  "reopen": true,
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Reopen: policy-gate assertions, remove integration marker, G4/G5 cases"
+    },
+    {
+      "id": "TASK-002",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Verification and Memory Bank updates"
+    }
+  ]
+}

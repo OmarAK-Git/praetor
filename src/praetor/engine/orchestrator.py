@@ -19,8 +19,6 @@ from praetor.contracts.disposition import Disposition
 from praetor.contracts.edict import DecisionEdict
 from praetor.contracts.evidence import EvidenceBundle
 from praetor.contracts.judgment import ModelJudgment
-from praetor.correlation import correlate_telemetry
-from praetor.correlation.excerpts import build_correlation_prompt_excerpts
 from praetor.engine.citations import validate_skeleton_citations
 from praetor.engine.edict import (
     SkeletonDisposition,
@@ -103,6 +101,8 @@ def _resolve_intake_evidence_bundle(
     if evidence_bundle is not None:
         return evidence_bundle, False
     if sysmon_events is not None or security_events is not None:
+        from praetor.correlation import correlate_telemetry
+
         moment = anchor_time or datetime.now(UTC)
         correlated = correlate_telemetry(
             sysmon_events=list(sysmon_events or ()),
@@ -288,6 +288,8 @@ def process_alert_intake(
         )
 
     assert resolved_bundle is not None
+    from praetor.correlation.excerpts import build_correlation_prompt_excerpts
+
     bundle_hash = hash_evidence_bundle(resolved_bundle)
     excerpt_set = build_correlation_prompt_excerpts(resolved_bundle)
 

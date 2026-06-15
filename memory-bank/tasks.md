@@ -6,12 +6,13 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| TASK-029 | Correlator Identity Compliance Tests | Next | Depends on Tasks 16, 28 |
+| TASK-030 | Correlation Accuracy Gate | Next | Depends on Task 28 |
 
 ## Done (recent)
 
 | ID | Task | Evidence |
 |---|---|---|
+| TASK-029 | Correlator Identity Compliance Tests | `.workflow/TASK-029/verification.md` — 12 tests in default suite; policy-gate e2e; pytest 666 |
 | TASK-028a | Production Orchestrator PolicyGate and Metrics Integration | `.workflow/TASK-028a/verification.md` — pytest 646; eval harness 24/24; tripwires pass |
 
 ## Gate prerequisites
@@ -71,3 +72,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-027 | Real-Provider Adversarial Excerpt Probe | `.workflow/TASK-027/verification.md` — `pytest` 629 / evals 47; `evals/real_provider_adversarial.py`; mocked Gemini path + payload structural checks; `docs/eval_gates.md` |
 | TASK-028 | Correlation Normalization and PromptExcerptSet | `.workflow/TASK-028/verification.md` — `pytest` 638 / correlation 9; `src/praetor/correlation/`; Sysmon+Security normalization, process graph, window filter, PromptExcerptSet |
 | TASK-028a | Production Orchestrator PolicyGate and Metrics Integration | `.workflow/TASK-028a/verification.md` — `pytest` 653; deferred directive persist (DEC-049); eval 25/25; tripwires pass |
+| TASK-029 | Correlator Identity Compliance Tests | `.workflow/TASK-029/verification.md` — 12 tests; policy-gate on real fixtures; pytest 666 |

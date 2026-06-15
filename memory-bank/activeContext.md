@@ -2,13 +2,13 @@
 
 ## Current focus
 
-**TASK-028a complete** — PolicyGate + `MetricsCollector` wired into correlation-aware `process_alert_intake`; tripwire tests pass; `confirmed_malicious_sequence` / `never_contain_target` run via `engine_intake`.
+**TASK-029 complete (reopen)** — identity compliance tests gate production via `evaluate_policy_gate`; **12** tests in default suite; host fallback + account feature gate on real fixtures.
 
-Next: **TASK-029** (Correlator Identity Compliance Tests).
+Next: **TASK-030** (Correlation Accuracy Gate).
 
 ## Recently changed
 
-- TASK-028a gatekeeper: deferred directive persist until terminal stamp (DEC-049); eval directive assertions restored; metrics only after ledger append; **653** tests; eval **25/25**.
+- TASK-029 reopen: removed integration marker; policy-gate paths for negative cases (host fallback) and account gate; ambiguity+corroboration pinned; **666** tests.
 - TASK-028: `src/praetor/correlation/` — Sysmon EventID 1 + Security 4624 normalizers, ±300s window filter, process GUID graph, Task 14 excerpt bridge; 4 fixtures + manifest checksums; **9** correlation tests; suite **638**.
 - TASK-027 gatekeeper reopen: payload-driven structural checks, truncated fixture, mocked Gemini tests (+7), mypy `evals` package (102 files), `docs/eval_gates.md` + DEC-047; **14** deterministic adversarial tests; eval suite **47**; full suite **629**.
 - TASK-026 follow-up: `evals/outcome_matrix.py` — canonical SFE map from `OutcomeMatrixFaultFlag`; 24 scenarios (+10 matrix rows); completeness guard; fail-closed SFE; `ticket_stamp_failed` + `policy_gate_idempotency`; **33** eval tests; suite **615**.

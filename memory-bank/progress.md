@@ -1,5 +1,18 @@
 # Progress Log
 
+## 2026-06-15 — TASK-029 reopen (gatekeeper)
+
+- Removed `@pytest.mark.integration`; **12** compliance tests run in default suite.
+- Negative cases through `evaluate_policy_gate`: two-sysmon / ambiguous-only → host `AUTO_CONTAIN` (not erroneous `ambiguous_target_identity` short-circuit).
+- Added corroborated+`ambiguity_flag` case (spec.md:309 conjunction); account gate e2e on real correlated bundle.
+- Verification: compliance **12/12**, suite **666**, mypy **110** files, ruff OK.
+
+## 2026-06-15 — TASK-029 complete
+
+- Identity compliance: `tests/correlation/test_correlator_identity_compliance.py` — initial 9 tests; orchestrator lazy-import cycle fix.
+- Verification: integration **9/9**, suite **654** (10 deselected), mypy **110** files, ruff OK.
+- Flight Recorder: `.workflow/TASK-029/`.
+
 ## 2026-06-15 — TASK-028a gatekeeper cleanup
 
 - Repo hygiene: deleted stray `tmp-idem*.db` artifacts; `.gitignore` adds `tmp-*.db` (test DBs remain under pytest `tmp_path`).
@@ -379,4 +392,4 @@
 
 ## Next recommended steps
 
-1. TASK-029 — correlator identity compliance on real fixture shapes per `docs/plan.md`.
+1. TASK-030 — correlation accuracy gate on OTRF fixtures per `docs/plan.md`.
