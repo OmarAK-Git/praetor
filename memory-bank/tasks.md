@@ -6,13 +6,13 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| — | — | — | TASK-032 complete; next per `docs/plan.md` is TASK-033 (Sprint 4) |
+| — | — | — | TASK-033 complete; next per `docs/plan.md` is TASK-034 (Sprint 5) |
 
 ## Done (recent)
 
 | ID | Task | Evidence |
 |---|---|---|
-| TASK-032 | Sigma Rule Repository | `.workflow/TASK-032/verification.md` — 18 detection tests; 5 sigma rules; pytest 723 |
+| TASK-033 | SPL Compilation and Splunk Demo Harness | `.workflow/TASK-033/verification.md` — 13 splunk tests; compile `--check`; pytest 736 |
 | TASK-031 | Phase 3 Harness on Correlated Telemetry | `.workflow/TASK-031/verification.md` — DEC-052 citation-anchored targeting; phase3 gate GREEN; pytest 705 |
 | TASK-030 | Correlation Accuracy Gate | `.workflow/TASK-030/verification.md` — 19 gate tests; pytest 685; `python -m evals.correlation_gate` 4/4 PASS |
 | TASK-029 | Correlator Identity Compliance Tests | `.workflow/TASK-029/verification.md` — 12 tests in default suite; policy-gate e2e; pytest 666 |
@@ -77,3 +77,4 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-028a | Production Orchestrator PolicyGate and Metrics Integration | `.workflow/TASK-028a/verification.md` — `pytest` 653; deferred directive persist (DEC-053); eval 25/25; tripwires pass |
 | TASK-029 | Correlator Identity Compliance Tests | `.workflow/TASK-029/verification.md` — 12 tests; policy-gate on real fixtures; pytest 666 |
 | TASK-032 | Sigma Rule Repository | `.workflow/TASK-032/verification.md` — 18 detection tests; 5 sigma rules; pytest 723 |
+| TASK-033 | SPL Compilation and Splunk Demo Harness | `.workflow/TASK-033/verification.md` — 13 splunk tests; compile `--check`; pytest 736 |

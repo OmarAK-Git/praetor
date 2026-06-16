@@ -2,22 +2,22 @@
 
 ## Current focus
 
-**TASK-032 complete** — Sigma rule repository under `detections/`; pytest **723**.
+**TASK-033 complete** — SPL compile + Splunk demo harness; pytest **736**.
 
-Next: **TASK-033** (SPL Compilation and Splunk Demo Harness) — Sprint 4 / Phase 4.
+Next: **TASK-034** (Empirical Org-Config Sweep Prototype) — Sprint 5 / Phase 5.
 
 ## Recently changed
 
+- TASK-033: `tools/compile_sigma.py`, `detections/spl/*.spl`, `splunk/savedsearches.conf`, ingest script with manifest checksum validation; 13 splunk tests.
 - TASK-032: five Sigma rules + `attack_mapping.yaml`; hardened pySigma validation (18 tests); discrimination + tag↔mapping parity.
 - Phase 3 gate verification: independent re-run of all mechanical checks; DEC-053 ratified (deferred directive persist); README reconciled to Phase 3 state.
 - TASK-031 / DEC-052: citation-anchored host targeting; phase 3 noisy gate GREEN; REVIEW-004 strict xfail tracked.
 - TASK-030: `evals/correlation_gate.py` — 5 CLI scenarios; 19 tests.
-- TASK-028a: PolicyGate + metrics on intake; tripwires converted to passing.
 
 ## Current blockers
 
 - Operator docs still absent: `docs/operator_runbook.md`, `docs/architecture.md` (Task 35). `docs/eval_gates.md` added in TASK-027.
-- SPL/Splunk demo harness absent until Task 33.
+- Live Splunk HEC demo is operator-driven (README); not a CI gate.
 
 ## Important notes for agents
 
@@ -36,3 +36,4 @@ Next: **TASK-033** (SPL Compilation and Splunk Demo Harness) — Sprint 4 / Phas
 13. Intake: `process_alert_intake` runs `evaluate_policy_gate(..., persist_directive=False)`; directive + edict co-commit after terminal stamp (DEC-053).
 14. Phase 3 gate: `python -m evals.run_phase3_gate` — correlation expected file, identity compliance, account prerequisite, citation-anchored safety on noisy bundle, Phase 2 harness.
 15. Host containment (DEC-052): target derived from **cited** facts only; ≥2 distinct quoted hosts → `ambiguous_containment_target`.
+16. SPL compile: `python tools/compile_sigma.py --check`; Splunk demo steps in `splunk/README.md`.
