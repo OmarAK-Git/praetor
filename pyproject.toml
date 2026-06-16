@@ -18,6 +18,7 @@ dev = [
     "mypy>=1.11",
     "ruff>=0.8",
     "types-PyYAML>=6.0",
+    "pysigma>=1.3",
 ]
 
 [tool.pytest.ini_options]
@@ -53,6 +54,7 @@ select = ["E", "F", "I", "UP", "B"]
 "tests/engine/**/*.py" = ["E501"]
 "evals/**/*.py" = ["E501"]
 "tests/evals/**/*.py" = ["E501"]
+"tests/detections/**/*.py" = ["E501"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/praetor"]

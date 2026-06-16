@@ -1,0 +1,24 @@
+title: Successful Security Logon (4624)
+id: a1b2c3d4-e5f6-4789-a012-3456789abc05
+status: test
+description: Detects Windows Security event 4624 in committed fixture telemetry
+references:
+  - https://attack.mitre.org/techniques/T1078/
+author: Praetor
+date: 2026/06/16
+tags:
+  - attack.initial-access
+  - attack.persistence
+  - attack.privilege-escalation
+  - attack.t1078
+logsource:
+  product: windows
+  service: security
+detection:
+  selection:
+    EventID: 4624
+    Channel: Security
+  condition: selection
+level: low
+falsepositives:
+  - Routine interactive logons

@@ -2,12 +2,13 @@
 
 ## Current focus
 
-**Phase 3 gate CLOSED (PASS-WITH-CONDITIONS)** — `.workflow/phase-3-gate-punchlist.md` (705 passed, 1 deselected, 1 xfailed; harness 26/26; phase3 gate 6/6; correlation 5/5; tripwires 3/3).
+**TASK-032 complete** — Sigma rule repository under `detections/`; pytest **723**.
 
-Next: **TASK-032** (Sigma Rule Packaging) — Sprint 4 / Phase 4.
+Next: **TASK-033** (SPL Compilation and Splunk Demo Harness) — Sprint 4 / Phase 4.
 
 ## Recently changed
 
+- TASK-032: five Sigma rules + `attack_mapping.yaml`; hardened pySigma validation (18 tests); discrimination + tag↔mapping parity.
 - Phase 3 gate verification: independent re-run of all mechanical checks; DEC-053 ratified (deferred directive persist); README reconciled to Phase 3 state.
 - TASK-031 / DEC-052: citation-anchored host targeting; phase 3 noisy gate GREEN; REVIEW-004 strict xfail tracked.
 - TASK-030: `evals/correlation_gate.py` — 5 CLI scenarios; 19 tests.
@@ -16,7 +17,7 @@ Next: **TASK-032** (Sigma Rule Packaging) — Sprint 4 / Phase 4.
 ## Current blockers
 
 - Operator docs still absent: `docs/operator_runbook.md`, `docs/architecture.md` (Task 35). `docs/eval_gates.md` added in TASK-027.
-- Sprint 4 scaffolding absent: no `detections/` tree until Task 32.
+- SPL/Splunk demo harness absent until Task 33.
 
 ## Important notes for agents
 

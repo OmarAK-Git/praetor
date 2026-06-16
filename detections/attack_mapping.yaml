@@ -1,0 +1,39 @@
+version: "1"
+rules:
+  - id: a1b2c3d4-e5f6-4789-a012-3456789abc01
+    file: sigma/windows/sysmon_powershell_encoded_command.yml
+    title: Suspicious PowerShell Encoded Command
+    techniques:
+      - T1059.001
+    tactics:
+      - execution
+  - id: a1b2c3d4-e5f6-4789-a012-3456789abc02
+    file: sigma/windows/sysmon_cmd_execution.yml
+    title: Windows Command Shell Execution
+    techniques:
+      - T1059.003
+    tactics:
+      - execution
+  - id: a1b2c3d4-e5f6-4789-a012-3456789abc03
+    file: sigma/windows/sysmon_notepad_execution.yml
+    title: Notepad Process Creation
+    techniques:
+      - T1204.002
+    tactics:
+      - execution
+  - id: a1b2c3d4-e5f6-4789-a012-3456789abc04
+    file: sigma/windows/sysmon_calc_execution.yml
+    title: Calculator Process Creation
+    techniques:
+      - T1204.002
+    tactics:
+      - execution
+  - id: a1b2c3d4-e5f6-4789-a012-3456789abc05
+    file: sigma/windows/security_successful_logon_4624.yml
+    title: Successful Security Logon (4624)
+    techniques:
+      - T1078
+    tactics:
+      - initial-access
+      - persistence
+      - privilege-escalation

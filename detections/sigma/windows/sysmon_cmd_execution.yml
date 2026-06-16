@@ -1,0 +1,23 @@
+title: Windows Command Shell Execution
+id: a1b2c3d4-e5f6-4789-a012-3456789abc02
+status: test
+description: Detects cmd.exe process creation in committed Sysmon fixtures
+references:
+  - https://attack.mitre.org/techniques/T1059/003/
+author: Praetor
+date: 2026/06/16
+tags:
+  - attack.execution
+  - attack.t1059.003
+logsource:
+  category: process_creation
+  product: windows
+  service: sysmon
+detection:
+  selection:
+    EventID: 1
+    Image|endswith: '\cmd.exe'
+  condition: selection
+level: low
+falsepositives:
+  - Routine command shell usage

@@ -1,0 +1,24 @@
+title: Suspicious PowerShell Encoded Command
+id: a1b2c3d4-e5f6-4789-a012-3456789abc01
+status: test
+description: Detects PowerShell with encoded command line in committed Sysmon fixtures
+references:
+  - https://attack.mitre.org/techniques/T1059/001/
+author: Praetor
+date: 2026/06/16
+tags:
+  - attack.execution
+  - attack.t1059.001
+logsource:
+  category: process_creation
+  product: windows
+  service: sysmon
+detection:
+  selection:
+    EventID: 1
+    Image|endswith: '\powershell.exe'
+    CommandLine|contains: '-enc'
+  condition: selection
+level: high
+falsepositives:
+  - Legitimate encoded PowerShell administration scripts

@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-06-16 — TASK-032 complete
+
+- Sigma rule repository: `detections/sigma/windows/` — **5** rules (cmd, powershell -enc, notepad, calc, Security 4624); `detections/attack_mapping.yaml`.
+- Tests: `tests/detections/test_sigma_rules.py` — **18**; pySigma parse/compile/validation; discrimination, tag↔mapping parity, manifest gate.
+- Tooling: `pysigma>=1.3` dev dependency.
+- Verification: detection **18/18**, suite **723**, mypy **112** files, ruff OK.
+- Flight Recorder: `.workflow/TASK-032/`.
+
 ## 2026-06-15 — Phase 3 gate CLOSED (PASS-WITH-CONDITIONS)
 
 - `.workflow/phase-3-gate-punchlist.md` — independent verification: pytest **705** passed, 1 deselected, 1 xfailed (REVIEW-004); mypy **112** files; ruff clean; harness **26/26**; `run_phase3_gate` **6/6**; `correlation_gate` **5/5**; tripwires **3/3** passing.
