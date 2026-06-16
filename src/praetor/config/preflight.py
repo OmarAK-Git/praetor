@@ -6,6 +6,10 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from praetor.codification.placeholders import (
+    collect_sweep_placeholder_violations,
+    is_proposed_org_config_artifact,
+)
 from praetor.config.constants import (
     DEFAULT_CLOCK_SKEW_SECONDS,
     DEFAULT_FEED_PROPAGATION_SECONDS,
@@ -105,6 +109,7 @@ def apply_field_defaults(document: dict[str, Any]) -> dict[str, Any]:
 
 def run_preflight(document: dict[str, Any], *, verbatim_text: str) -> OrgConfigSnapshot:
     _reject_proposed_sweep_artifact(document)
+    _reject_unreplaced_sweep_placeholders(document)
     reject_unknown_top_level_keys(document)
 
     for section in REQUIRED_TOP_LEVEL_SECTIONS:
@@ -249,11 +254,20 @@ def _validate_containment_policy_conflicts(policy: Any) -> None:
 
 
 def _reject_proposed_sweep_artifact(document: dict[str, Any]) -> None:
-    meta = document.get("version_metadata")
-    if isinstance(meta, dict) and meta.get("artifact_kind") == "proposed_org_config":
+    if is_proposed_org_config_artifact(document):
         raise PreflightError(
             "proposed_artifact_not_activatable",
             "proposed org-config sweep artifacts cannot be activated",
+        )
+
+
+def _reject_unreplaced_sweep_placeholders(document: dict[str, Any]) -> None:
+    violations = collect_sweep_placeholder_violations(document)
+    if violations:
+        joined = ", ".join(violations)
+        raise PreflightError(
+            "unreplaced_sweep_placeholder",
+            f"org config still contains sweep placeholder values: {joined}",
         )
 
 

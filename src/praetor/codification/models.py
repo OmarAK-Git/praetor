@@ -1,4 +1,4 @@
-"""Shared types for org-config codification."""
+"""Shared types and sentinel constants for org-config codification."""
 
 from __future__ import annotations
 
@@ -8,6 +8,15 @@ from typing import Any
 
 PROPOSED_ARTIFACT_KIND = "proposed_org_config"
 UNOBSERVED_SUBNET_PLACEHOLDER = "UNOBSERVED-REQUIRES-HUMAN-REVIEW"
+REPLACE_BEFORE_ACTIVATION_NEVER_CONTAIN_TARGET = "REPLACE-BEFORE-ACTIVATION"
+ZERO_EVIDENCE_ACTIVATION_STATUS = "unusable_zero_evidence"
+
+SWEEP_PLACEHOLDER_SENTINELS: frozenset[str] = frozenset(
+    {
+        UNOBSERVED_SUBNET_PLACEHOLDER,
+        REPLACE_BEFORE_ACTIVATION_NEVER_CONTAIN_TARGET,
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -15,6 +24,7 @@ class PrincipalObservation:
     principal_id: str
     observation_count: int
     sources: frozenset[str]
+    ambiguous_observation_count: int
 
 
 @dataclass(frozen=True)
@@ -30,6 +40,7 @@ class AdminPatternObservation:
     observation_count: int
     host_id: str | None
     user: str | None
+    pattern_key: str
 
 
 @dataclass(frozen=True)
@@ -41,6 +52,10 @@ class SweepEventCounts:
     security_events_normalized: int
     security_events_skipped: int
 
+    @property
+    def normalized_total(self) -> int:
+        return self.sysmon_events_normalized + self.security_events_normalized
+
 
 @dataclass(frozen=True)
 class SweepSummary:
@@ -50,6 +65,10 @@ class SweepSummary:
     event_counts: SweepEventCounts
     earliest_timestamp: datetime | None
     latest_timestamp: datetime | None
+
+    @property
+    def has_normalized_evidence(self) -> bool:
+        return self.event_counts.normalized_total > 0
 
 
 @dataclass(frozen=True)

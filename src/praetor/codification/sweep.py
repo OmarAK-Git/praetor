@@ -11,7 +11,9 @@ import yaml
 
 from praetor.codification.models import (
     PROPOSED_ARTIFACT_KIND,
+    REPLACE_BEFORE_ACTIVATION_NEVER_CONTAIN_TARGET,
     UNOBSERVED_SUBNET_PLACEHOLDER,
+    ZERO_EVIDENCE_ACTIVATION_STATUS,
     AdminPatternObservation,
     AssetObservation,
     PrincipalObservation,
@@ -19,19 +21,22 @@ from praetor.codification.models import (
     SweepResult,
     SweepSummary,
 )
-from praetor.codification.report import build_sweep_report
+from praetor.codification.placeholders import is_proposed_org_config_artifact
 from praetor.contracts.evidence import EvidenceFact
 from praetor.correlation.security_log import (
     normalize_security_event,
     supports_security_event,
 )
 from praetor.correlation.sysmon import normalize_sysmon_event, supports_sysmon_event
-from praetor.evidence.provenance import SYSMON_EVENT_LOG
+from praetor.evidence.provenance import SYSMON_EVENT_LOG, WINDOWS_SECURITY_LOG
 
 _DEFAULT_POLICY_TEMPLATE: dict[str, Any] = {
     "containment_exclusions": {
         "never_contain": [
-            {"target_type": "host", "target_id": "REPLACE-BEFORE-ACTIVATION"},
+            {
+                "target_type": "host",
+                "target_id": REPLACE_BEFORE_ACTIVATION_NEVER_CONTAIN_TARGET,
+            },
         ],
     },
     "business_context": {
@@ -77,14 +82,6 @@ _DEFAULT_POLICY_TEMPLATE: dict[str, Any] = {
 }
 
 
-def is_proposed_org_config_artifact(document: Mapping[str, Any]) -> bool:
-    """Return True when document is a sweep-generated proposed artifact."""
-    meta = document.get("version_metadata")
-    if not isinstance(meta, Mapping):
-        return False
-    return meta.get("artifact_kind") == PROPOSED_ARTIFACT_KIND
-
-
 def run_org_config_sweep(
     *,
     sysmon_events: Sequence[Mapping[str, Any]],
@@ -93,6 +90,8 @@ def run_org_config_sweep(
     config_version: str = "sweep-proposed-0.1.0",
 ) -> SweepResult:
     """Summarize telemetry and build a review-only proposed org-config artifact."""
+    from praetor.codification.report import build_sweep_report
+
     facts, event_counts = _normalize_events(sysmon_events, security_events)
     summary = _build_summary(facts, event_counts=event_counts)
     proposed_config = build_proposed_org_config(
@@ -115,12 +114,19 @@ def build_proposed_org_config(
     config_version: str,
 ) -> dict[str, Any]:
     """Build a proposed org-config mapping marked non-activatable."""
+    if not summary.has_normalized_evidence:
+        return _build_zero_evidence_artifact(
+            org_id=org_id,
+            config_version=config_version,
+        )
+
     config: dict[str, Any] = {
         "version_metadata": {
             "org_id": org_id,
             "config_version": config_version,
             "artifact_kind": PROPOSED_ARTIFACT_KIND,
             "activation_status": "proposed_for_review_only",
+            "artifact_usable": True,
         },
         "known_principals": {
             "service_accounts": [],
@@ -128,6 +134,7 @@ def build_proposed_org_config(
                 {
                     "principal_id": item.principal_id,
                     "observation_count": item.observation_count,
+                    "ambiguous_observation_count": item.ambiguous_observation_count,
                     "sources": sorted(item.sources),
                 }
                 for item in summary.principals
@@ -150,9 +157,40 @@ def build_proposed_org_config(
                     "name": item.name,
                     "description": item.description,
                     "observation_count": item.observation_count,
+                    "host_id": item.host_id,
+                    "user": item.user,
+                    "pattern_key": item.pattern_key,
                 }
                 for item in summary.admin_patterns
             ],
+        },
+    }
+    config.update(_DEFAULT_POLICY_TEMPLATE)
+    return config
+
+
+def _build_zero_evidence_artifact(
+    *,
+    org_id: str,
+    config_version: str,
+) -> dict[str, Any]:
+    config: dict[str, Any] = {
+        "version_metadata": {
+            "org_id": org_id,
+            "config_version": config_version,
+            "artifact_kind": PROPOSED_ARTIFACT_KIND,
+            "activation_status": ZERO_EVIDENCE_ACTIVATION_STATUS,
+            "artifact_usable": False,
+        },
+        "known_principals": {
+            "service_accounts": [],
+            "observed_principals": [],
+        },
+        "assets_and_asset_groups": {
+            "entries": [],
+        },
+        "normal_admin_patterns": {
+            "patterns": [],
         },
     }
     config.update(_DEFAULT_POLICY_TEMPLATE)
@@ -202,6 +240,33 @@ def _normalize_events(
     return facts, counts
 
 
+def _canonical_sysmon_principal_id(user: str) -> str:
+    """Sysmon principal keys are literal DOMAIN\\user or bare user — never merged."""
+    return user.lower()
+
+
+def _canonical_security_principal_id(*, domain: str, account_name: str) -> str:
+    """Security principal keys are literal domain\\account — FQDN stays distinct."""
+    if domain:
+        return f"{domain}\\{account_name}".lower()
+    return account_name.lower()
+
+
+def _record_principal_observation(
+    *,
+    principal_counter: Counter[str],
+    principal_sources: dict[str, set[str]],
+    principal_ambiguous: Counter[str],
+    principal_id: str,
+    source: str,
+    ambiguous: bool,
+) -> None:
+    principal_counter[principal_id] += 1
+    principal_sources.setdefault(principal_id, set()).add(source)
+    if ambiguous:
+        principal_ambiguous[principal_id] += 1
+
+
 def _build_summary(
     facts: Sequence[EvidenceFact],
     *,
@@ -209,8 +274,9 @@ def _build_summary(
 ) -> SweepSummary:
     principal_counter: Counter[str] = Counter()
     principal_sources: dict[str, set[str]] = {}
+    principal_ambiguous: Counter[str] = Counter()
     asset_counter: Counter[str] = Counter()
-    admin_counter: Counter[tuple[str, str, str | None, str | None]] = Counter()
+    admin_counter: Counter[tuple[str, str, str]] = Counter()
 
     timestamps: list[datetime] = []
 
@@ -223,32 +289,45 @@ def _build_summary(
         if fact.provenance_path == SYSMON_EVENT_LOG:
             user = str(fact.normalized_fields.get("user") or "")
             if user:
-                key = user.lower()
-                principal_counter[key] += 1
-                principal_sources.setdefault(key, set()).add("sysmon_user")
+                _record_principal_observation(
+                    principal_counter=principal_counter,
+                    principal_sources=principal_sources,
+                    principal_ambiguous=principal_ambiguous,
+                    principal_id=_canonical_sysmon_principal_id(user),
+                    source="sysmon_user",
+                    ambiguous=fact.ambiguity_flag,
+                )
 
             parent_name = str(fact.normalized_fields.get("parent_process_name") or "")
             process_name = str(fact.normalized_fields.get("process_name") or "")
             if parent_name and process_name:
                 pattern_key = f"{parent_name} -> {process_name}"
-                admin_key = (pattern_key, pattern_key, host_id or None, user or None)
+                admin_key = (pattern_key, host_id, user.lower() if user else "")
                 admin_counter[admin_key] += 1
             continue
 
-        account_name = str(fact.normalized_fields.get("account_name") or "")
-        domain = str(fact.normalized_fields.get("domain") or "")
-        if account_name:
-            principal_id = (
-                f"{domain}\\{account_name}" if domain else account_name
-            ).lower()
-            principal_counter[principal_id] += 1
-            principal_sources.setdefault(principal_id, set()).add("security_account")
+        if fact.provenance_path == WINDOWS_SECURITY_LOG:
+            account_name = str(fact.normalized_fields.get("account_name") or "")
+            domain = str(fact.normalized_fields.get("domain") or "")
+            if account_name:
+                _record_principal_observation(
+                    principal_counter=principal_counter,
+                    principal_sources=principal_sources,
+                    principal_ambiguous=principal_ambiguous,
+                    principal_id=_canonical_security_principal_id(
+                        domain=domain,
+                        account_name=account_name,
+                    ),
+                    source="security_account",
+                    ambiguous=fact.ambiguity_flag,
+                )
 
     principals = tuple(
         PrincipalObservation(
             principal_id=principal_id,
             observation_count=count,
             sources=frozenset(principal_sources.get(principal_id, set())),
+            ambiguous_observation_count=principal_ambiguous.get(principal_id, 0),
         )
         for principal_id, count in sorted(principal_counter.items())
     )
@@ -258,20 +337,30 @@ def _build_summary(
     )
     admin_patterns = tuple(
         AdminPatternObservation(
-            name=_admin_pattern_name(pattern_key),
+            name=_admin_pattern_name(
+                pattern_key,
+                host_id=host_id or None,
+                user=user or None,
+            ),
             description=_admin_pattern_description(
                 pattern_key,
-                host_id=host_id,
-                user=user,
+                host_id=host_id or None,
+                user=user or None,
                 count=count,
             ),
             observation_count=count,
-            host_id=host_id,
-            user=user,
+            host_id=host_id or None,
+            user=user or None,
+            pattern_key=pattern_key,
         )
-        for (_, pattern_key, host_id, user), count in sorted(
+        for (pattern_key, host_id, user), count in sorted(
             admin_counter.items(),
-            key=lambda item: (-item[1], item[0][1], item[0][2] or "", item[0][3] or ""),
+            key=lambda item: (
+                -item[1],
+                item[0][0],
+                item[0][1],
+                item[0][2],
+            ),
         )
     )
 
@@ -288,15 +377,26 @@ def _build_summary(
     )
 
 
-def _admin_pattern_name(pattern_key: str) -> str:
-    slug = (
+def _admin_pattern_name(
+    pattern_key: str,
+    *,
+    host_id: str | None,
+    user: str | None,
+) -> str:
+    pattern_slug = (
         pattern_key.lower()
         .replace(" -> ", "_to_")
         .replace(".exe", "")
         .replace("\\", "_")
         .replace(" ", "_")
     )
-    return f"sweep_observed_{slug}"
+    parts = ["sweep_observed"]
+    if host_id:
+        parts.append(host_id.lower().replace("-", "_"))
+    if user:
+        parts.append(user.lower().replace("\\", "_").replace(" ", "_"))
+    parts.append(pattern_slug)
+    return "_".join(parts)
 
 
 def _admin_pattern_description(
@@ -317,6 +417,7 @@ def _admin_pattern_description(
 
 __all__ = [
     "PROPOSED_ARTIFACT_KIND",
+    "REPLACE_BEFORE_ACTIVATION_NEVER_CONTAIN_TARGET",
     "AdminPatternObservation",
     "AssetObservation",
     "PrincipalObservation",
@@ -324,6 +425,7 @@ __all__ = [
     "SweepResult",
     "SweepSummary",
     "UNOBSERVED_SUBNET_PLACEHOLDER",
+    "ZERO_EVIDENCE_ACTIVATION_STATUS",
     "build_proposed_org_config",
     "is_proposed_org_config_artifact",
     "render_proposed_org_config_yaml",
