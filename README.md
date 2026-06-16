@@ -111,8 +111,8 @@ In non-technical terms: the foundation is poured, safety rails are installed, co
 | Phase 1 — Durable walking skeleton | 1-12 | Make decisions durable, auditable, recoverable, and safe-by-default | **Complete** |
 | Phase 2 — Judgment and policy discipline | 13-27 | Add provider abstraction, prompt building, PolicyGate, breakers, metrics, evals | **Complete** (conditional pass closed at 28a) |
 | Phase 3 — Correlation | 28-31 (incl. 28a) | Wire PolicyGate/metrics into intake; build real telemetry correlation and identity gates | **Complete** (conditional pass — see gate punch-list) |
-| Phase 4 — Detection portability | 32-33 | Package Sigma/SPL/Splunk demo flow | **Next** |
-| Phase 5 — Operator readiness | 34-35 | Org-config sweep, production benchmark, runbooks | Planned |
+| Phase 4 — Detection portability | 32-33 | Package Sigma/SPL/Splunk demo flow | **Complete** |
+| Phase 5 — Operator readiness | 34-35 | Org-config sweep, production benchmark, runbooks | **Complete** |
 
 ## What's built so far
 
@@ -145,7 +145,9 @@ In non-technical terms: the foundation is poured, safety rails are installed, co
 | Analyst annotation storage | Done | `src/praetor/annotations/` |
 | Real-provider adversarial probe (probabilistic) | Done | `evals/real_provider_adversarial.py` |
 
-**Not yet:** detection portability (Sigma/SPL/Splunk demo — Task 32), org-config sweep, production throughput benchmark, and operator runbooks.
+**Phase 4 and Phase 5 are complete:** detection portability (Sigma/SPL/Splunk) and operator readiness (org-config sweep, production benchmark, runbooks).
+
+**All 35 tasks in the implementation plan are complete.**
 
 ---
 
@@ -167,9 +169,9 @@ src/praetor/
 └── alerts/        # SystemHealthAlert outbox
 
 schemas/           # Generated JSON Schema (not authoritative — models are)
-docs/              # PRD, spec, plan, contracts (source of truth)
+docs/              # PRD, spec, plan, contracts, operator runbook, architecture
 configs/           # Example org config
-benchmarks/        # Smoke benchmark for the serialized path
+benchmarks/        # Smoke + production serialized-path benchmarks
 tests/             # Contract, hashing, auth, state, outbox test suites
 evals/             # Mandatory scenario harness + phase gates
 ```

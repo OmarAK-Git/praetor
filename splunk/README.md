@@ -86,3 +86,17 @@ Discrimination spot-checks: encoded PowerShell must not match `1001`; 4624 must 
 ## CI scope
 
 Default pytest excludes live Splunk integration (`@pytest.mark.integration`). Compile + manifest validation run in CI.
+
+### Optional live Splunk demo (Phase 5)
+
+Enable HEC on Splunk Free (`Settings → Data inputs → HTTP Event Collector`). For self-signed TLS on localhost, use your Splunk admin cert trust settings or `-SkipCertificateCheck` in custom scripts.
+
+Set environment variables before running the env-gated integration marker:
+
+```powershell
+$env:PRAETOR_SPLUNK_HEC_HOST = "https://localhost:8088"
+$env:PRAETOR_SPLUNK_HEC_TOKEN = "<hec-token>"
+pytest -m integration tests/splunk/test_savedsearch_generation.py::test_splunk_demo_integration_with_hec_env
+```
+
+Ingest uses `sourcetype=_json` with flattened `EventData` fields (`tools/splunk_ingest_demo.ps1`); `props.conf` applies to file/monitor ingest with `source::WinEventLog:...` — see step 3 above.

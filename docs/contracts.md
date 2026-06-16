@@ -497,7 +497,18 @@ Each is exported deterministically (Task 2) and includes `schema_version`. A cha
 
 ---
 
-## 15. Change discipline
+## 15. Throughput measurement
+
+Sprint 1 provisional alert-rate targets (`provisional_alert_rate_targets` on `OrgConfigSnapshot`, shape in `schemas/org_config_snapshot.json`) are compared against:
+
+- **Smoke benchmark** (`benchmarks/smoke_serialized_path.py`) — revocation write + feed outbox path.
+- **Production benchmark** (`benchmarks/serialized_path.py`) — DEC-053 post-stamp path: PolicyGate with `persist_directive=False`, then one engine transaction for deferred directive persist + ledger append (no per-alert revocation).
+
+Measured ceilings and deployment interpretation are documented in `docs/operator_runbook.md` (not duplicated here).
+
+---
+
+## 16. Change discipline
 
 - A change to any construction in §2–§9 bumps the relevant domain version (`praetor:v1:*` → `praetor:v2:*`) and is a breaking change; mixed-version ledgers are out of scope for v1 (unrecognized `record_type` and version drift are integrity violations, not compatibility cases). A change to the `EMPTY_BUNDLE` preimage (§7) is a breaking change requiring the same discipline.
 - A change to the canonical algorithm (§1) that alters bytes for unchanged input is breaking and requires regenerating and re-versioning affected schemas.

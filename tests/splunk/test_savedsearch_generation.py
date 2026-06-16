@@ -372,10 +372,19 @@ def test_props_conf_parses_as_splunk_stanzas() -> None:
 
 
 @pytest.mark.integration
-def test_splunk_demo_integration_skips_without_hec() -> None:
+def test_splunk_demo_manual_procedure_only() -> None:
+    """Splunk demo reproducibility is manual per splunk/README.md — not CI-gated."""
+    import os
+
+    if not os.environ.get("PRAETOR_SPLUNK_HEC_HOST") or not os.environ.get(
+        "PRAETOR_SPLUNK_HEC_TOKEN"
+    ):
+        pytest.skip(
+            "Optional: set PRAETOR_SPLUNK_HEC_HOST and PRAETOR_SPLUNK_HEC_TOKEN "
+            "before running the manual splunk/README.md demo"
+        )
     if not (Path("/opt/splunk").exists() or Path("C:/Program Files/Splunk").exists()):
         pytest.skip("Splunk installation not present on this host")
-    pytest.skip("HEC token not configured for automated Splunk integration")
 
 
 def test_allowed_modifiers_documented() -> None:

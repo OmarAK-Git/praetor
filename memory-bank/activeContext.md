@@ -2,23 +2,18 @@
 
 ## Current focus
 
-**TASK-034 complete** — empirical org-config sweep prototype; pytest **749**.
-
-Next: **TASK-035** (Production Throughput Benchmark and Operator Runbooks) — Sprint 5 / Phase 5.
+**TASK-035 complete** — production throughput benchmark + operator runbooks; pytest **772**. All **35** plan tasks complete.
 
 ## Recently changed
 
-- TASK-034: `src/praetor/codification/` — telemetry sweep, proposed artifact (`artifact_kind: proposed_org_config`), coverage/risk report; preflight blocks activation; **5** codification tests.
-- TASK-033: `tools/compile_sigma.py`, `detections/spl/*.spl`, `splunk/savedsearches.conf`, ingest script with manifest checksum validation; **21** splunk tests (correlation YAML rejection, props stanza, savedsearch dedup).
-- TASK-032: five Sigma rules + `attack_mapping.yaml`; hardened pySigma validation (18 tests); discrimination + tag↔mapping parity.
-- Phase 3 gate verification: independent re-run of all mechanical checks; DEC-053 ratified (deferred directive persist); README reconciled to Phase 3 state.
-- TASK-031 / DEC-052: citation-anchored host targeting; phase 3 noisy gate GREEN; REVIEW-004 strict xfail tracked.
-- TASK-030: `evals/correlation_gate.py` — 5 CLI scenarios; 19 tests.
+- TASK-035: `benchmarks/serialized_path.py`, `docs/operator_runbook.md`, `docs/architecture.md`, `tests/docs/test_docs.py`; contracts §15 throughput; eval_gates phase gates; scope guard Phase 5 docs.
+- TASK-034: `src/praetor/codification/` — telemetry sweep, proposed artifact, coverage/risk report; preflight blocks activation; **5** codification tests.
+- TASK-033: SPL compile + Splunk demo harness; **21** splunk tests.
+- Phase 3 gate closed PASS-WITH-CONDITIONS; DEC-053 ratified.
 
 ## Current blockers
 
-- Operator docs still absent: `docs/operator_runbook.md`, `docs/architecture.md` (Task 35). `docs/eval_gates.md` added in TASK-027.
-- Live Splunk HEC demo is operator-driven (README); not a CI gate.
+- None for plan tasks. Live Splunk HEC demo remains operator-driven (env-gated test).
 
 ## Important notes for agents
 
@@ -39,3 +34,5 @@ Next: **TASK-035** (Production Throughput Benchmark and Operator Runbooks) — S
 15. Host containment (DEC-052): target derived from **cited** facts only; ≥2 distinct quoted hosts → `ambiguous_containment_target`.
 16. SPL compile: `python tools/compile_sigma.py --check`; Splunk demo steps in `splunk/README.md`.
 17. Org-config sweep: `run_org_config_sweep()` in `praetor.codification`; proposed artifacts carry `artifact_kind: proposed_org_config` and are rejected by preflight.
+18. Production benchmark: `benchmarks/serialized_path.py`; throughput ceiling in `docs/operator_runbook.md`.
+19. Operator docs: `docs/operator_runbook.md`, `docs/architecture.md`, phase gates in `docs/eval_gates.md`.

@@ -1,5 +1,15 @@
 # Progress Log
 
+## 2026-06-16 — TASK-035 complete
+
+- Production benchmark: `benchmarks/serialized_path.py` — PolicyGate emit + ledger append + revocation feed outbox vs `provisional_alert_rate_targets`.
+- Operator docs: `docs/operator_runbook.md`, `docs/architecture.md`; `docs/contracts.md` §15; `docs/eval_gates.md` phase gates.
+- Tests: `tests/benchmarks/test_serialized_path.py` — **3**; `tests/docs/test_docs.py` — **9**; scope guard allows Phase 5 docs.
+- Splunk: env-gated `test_splunk_demo_integration_with_hec_env`; README/splunk README HEC notes.
+- Verification: suite **772**, mypy **117** files, ruff OK.
+- Flight Recorder: `.workflow/TASK-035/`.
+- **All 35 plan tasks complete.**
+
 ## 2026-06-16 — TASK-034 complete
 
 - Empirical org-config sweep: `src/praetor/codification/` — `run_org_config_sweep`, proposed artifact builder, coverage/risk report.
@@ -457,7 +467,7 @@
 | Revocation feed export | Task 11 done — `src/praetor/revocation/` |
 | Walking skeleton / recovery | Task 12 done — `src/praetor/engine/` (**Phase 1 complete**) |
 | CI / eval harness | Task 26–27 done — mandatory harness + probabilistic real-provider probe |
-| Operator runbooks | Not in repo yet (Task 35) |
+| Operator runbooks | Task 35 done — `docs/operator_runbook.md`, `docs/architecture.md` |
 
 ## Next recommended steps
 

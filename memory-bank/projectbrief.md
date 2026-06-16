@@ -29,7 +29,7 @@ From `docs/spec.md` (planned v1):
 - Append-only JSONL revocation feed projection
 - Sigma / pysigma, OTRF/Mordor fixtures, Splunk Free (detection spine / demo)
 
-Referenced but not yet in repo: `docs/operator_runbook.md`, `docs/architecture.md`, `docs/eval_gates.md` (Task 35).
+Operator docs: `docs/operator_runbook.md`, `docs/architecture.md`, `docs/eval_gates.md` (Task 35 complete).
 
 ## Main commands
 
@@ -42,7 +42,7 @@ After Task 1–3:
 - Run: TODO (application entrypoint not yet defined)
 - Build: `pip install -e .` (hatchling wheel)
 
-Benchmarks planned: `benchmarks/smoke_serialized_path.py` (Task 11), `benchmarks/serialized_path.py` (Task 35).
+Benchmarks: `benchmarks/smoke_serialized_path.py` (Task 11), `benchmarks/serialized_path.py` (Task 35).
 
 ## Important constraints
 

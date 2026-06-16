@@ -80,8 +80,15 @@ def test_docs_changes_limited_to_contracts_md() -> None:
     if result.returncode != 0:
         pytest.skip("git not available or not a git repo")
     changed = [line.strip() for line in result.stdout.splitlines() if line.strip()]
-    # decisions.md is the sanctioned refinement log (spec.md stays frozen / excluded).
-    allowed = {"docs/contracts.md", "docs/plan.md", "docs/decisions.md"}
+    # Phase 5 operator docs plus sanctioned refinement targets.
+    allowed = {
+        "docs/contracts.md",
+        "docs/plan.md",
+        "docs/decisions.md",
+        "docs/operator_runbook.md",
+        "docs/architecture.md",
+        "docs/eval_gates.md",
+    }
     unexpected = [path for path in changed if path not in allowed]
     msg = f"only scoped refinement docs may change under docs/: {unexpected}"
     assert unexpected == [], msg

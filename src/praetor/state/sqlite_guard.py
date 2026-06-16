@@ -16,7 +16,8 @@ REQUIRED_SYNCHRONOUS_MIN = 1  # NORMAL
 GUARDED_ISOLATION_LEVEL: None = None
 DEFAULT_EXIT_CODE = 2
 
-# TODO(Task 35): extend with full PRAGMA list from docs/operator_runbook.md
+# TODO(Task 35): extend with full PRAGMA list from docs/operator_runbook.md (WAL,
+# synchronous=NORMAL, isolation_level=None, BEGIN IMMEDIATE — see operator runbook).
 
 _in_critical: dict[int, bool] = {}
 
