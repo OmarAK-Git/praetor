@@ -648,7 +648,7 @@ Pass criteria: Sigma validates; ATT&CK mapping present; SPL generation determini
 ### Phase 5 - Codification and Operator Readiness
 Required tasks: 34-35.
 
-Pass criteria: empirical sweep generates reviewable proposed org-config artifact; production throughput ceiling measured; operator runbook covers responsibility boundaries, revocation feed projection, feed capacity/truncation guidance, emergency race, consumer checks, account feature gate, and startup recovery.
+Pass criteria: empirical sweep generates reviewable proposed org-config artifact; production throughput ceiling measured; operator runbook covers responsibility boundaries, revocation feed projection, feed capacity/truncation guidance, emergency race, consumer checks, account feature gate, and startup recovery; and the Splunk Free demo path (Phase 4 carry-forward F-4) is executed end-to-end at least once against a live local instance — the five saved searches return their expected fixture `record_id`s — with `tests/splunk/test_savedsearch_generation.py::test_splunk_demo_integration_skips_without_hec` converted from an unconditional skip to an env-gated executable check (HEC host/token via env vars), and the README reconciled for HEC enablement, self-signed-cert handling, and the `props.conf`/`sourcetype=_json` behavior, so the demo is reproducible-by-execution rather than documentation-only.
 
 ## Deferred Work
 

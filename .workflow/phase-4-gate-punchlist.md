@@ -66,10 +66,12 @@ Two independent matchers exist — `tests/detections/test_sigma_rules.py::_event
 
 ---
 
-### F-4 (Accepted): live Splunk path never executed by an automated test
-**Status:** **CONFIRMED** → **ACCEPT-AS-DEFERRED.**
+### F-4 (Deferred to Phase 5): live Splunk path never executed by an automated test
+**Status:** **CONFIRMED** → **DEFERRED to the Phase 5 gate (formal checklist item).**
 
 `::test_splunk_demo_integration_skips_without_hec` skips unconditionally; `Send-SplunkEvents` and the PowerShell→Python flatten bridge in `tools/splunk_ingest_demo.ps1` run only under live HEC. Per `docs/spec.md:351` Splunk Free is a demo layer and the demo is operator-driven (`splunk/README.md`). Portability rests on the offline `tools/spl_match.py` matcher; its Splunk approximations (case-folding, leading-`*` endswith/contains, `\\`→`\` unescape) were audited as faithful for the v1 rule set. The flatten transform has one canonical implementation (`tools/fixture_events.py`) that the PowerShell path delegates to, so producer/consumer cannot drift.
+
+**Disposition (2026-06-16, user decision):** not a Phase 4 blocker (offline matcher is the gate proof), but the live demo will no longer be perpetually deferred — it is now a **Phase 5 pass criterion** (`docs/plan.md` Phase 5): run the demo end-to-end once against a live Splunk Free instance, convert the no-op integration test to an env-gated executable check, and reconcile the README for HEC enablement + self-signed-cert handling + the `props.conf`/`sourcetype=_json` behavior. Likely first-contact failures to expect: HTTPS self-signed-cert trust error on the first HEC POST (no cert bypass in the PS 5.1 script), under-specified HEC token/index setup, and the `-30d` dispatch window aging out the 2026-06-08 fixtures (T9).
 
 ---
 
@@ -117,6 +119,7 @@ None are Phase 4 blockers; the detection sprint did not touch policy/correlation
 | T8 | Optional `evals/run_phase4_gate.py` (two modules + `--check`) for single-command parity (F-1) | Note |
 | T9 | Replace `dispatch.earliest_time = -30d` with a fixture-stable window, or document the demo time-range step (F-5) | Note |
 | T10 | Decide whether `tools/` enters the mypy gate (or document the exclusion) (F-5) | Note |
+| T11 | **Phase 5 gate criterion (F-4):** execute the Splunk Free demo live end-to-end; convert `test_splunk_demo_integration_skips_without_hec` to an env-gated executable check; reconcile README for HEC/cert/`props.conf` (now in `docs/plan.md` Phase 5 pass criteria) | Minor |
 | T1–T6 | Phase 3 carry-forwards above (T5 scope-guard widening is the most time-sensitive — needed for Task 35) | Minor/Note |
 
 ---

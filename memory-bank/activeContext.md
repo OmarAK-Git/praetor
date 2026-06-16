@@ -2,12 +2,13 @@
 
 ## Current focus
 
-**TASK-033 complete** — SPL compile + Splunk demo harness; pytest **744**.
+**TASK-034 complete** — empirical org-config sweep prototype; pytest **749**.
 
-Next: **TASK-034** (Empirical Org-Config Sweep Prototype) — Sprint 5 / Phase 5.
+Next: **TASK-035** (Production Throughput Benchmark and Operator Runbooks) — Sprint 5 / Phase 5.
 
 ## Recently changed
 
+- TASK-034: `src/praetor/codification/` — telemetry sweep, proposed artifact (`artifact_kind: proposed_org_config`), coverage/risk report; preflight blocks activation; **5** codification tests.
 - TASK-033: `tools/compile_sigma.py`, `detections/spl/*.spl`, `splunk/savedsearches.conf`, ingest script with manifest checksum validation; **21** splunk tests (correlation YAML rejection, props stanza, savedsearch dedup).
 - TASK-032: five Sigma rules + `attack_mapping.yaml`; hardened pySigma validation (18 tests); discrimination + tag↔mapping parity.
 - Phase 3 gate verification: independent re-run of all mechanical checks; DEC-053 ratified (deferred directive persist); README reconciled to Phase 3 state.
@@ -37,3 +38,4 @@ Next: **TASK-034** (Empirical Org-Config Sweep Prototype) — Sprint 5 / Phase 5
 14. Phase 3 gate: `python -m evals.run_phase3_gate` — correlation expected file, identity compliance, account prerequisite, citation-anchored safety on noisy bundle, Phase 2 harness.
 15. Host containment (DEC-052): target derived from **cited** facts only; ≥2 distinct quoted hosts → `ambiguous_containment_target`.
 16. SPL compile: `python tools/compile_sigma.py --check`; Splunk demo steps in `splunk/README.md`.
+17. Org-config sweep: `run_org_config_sweep()` in `praetor.codification`; proposed artifacts carry `artifact_kind: proposed_org_config` and are rejected by preflight.

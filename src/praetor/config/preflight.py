@@ -104,6 +104,7 @@ def apply_field_defaults(document: dict[str, Any]) -> dict[str, Any]:
 
 
 def run_preflight(document: dict[str, Any], *, verbatim_text: str) -> OrgConfigSnapshot:
+    _reject_proposed_sweep_artifact(document)
     reject_unknown_top_level_keys(document)
 
     for section in REQUIRED_TOP_LEVEL_SECTIONS:
@@ -244,6 +245,15 @@ def _validate_containment_policy_conflicts(policy: Any) -> None:
         raise PreflightError(
             "containment_policy_conflict",
             "containment policy conflicts without precedence",
+        )
+
+
+def _reject_proposed_sweep_artifact(document: dict[str, Any]) -> None:
+    meta = document.get("version_metadata")
+    if isinstance(meta, dict) and meta.get("artifact_kind") == "proposed_org_config":
+        raise PreflightError(
+            "proposed_artifact_not_activatable",
+            "proposed org-config sweep artifacts cannot be activated",
         )
 
 

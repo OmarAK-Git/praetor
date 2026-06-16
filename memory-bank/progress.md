@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-06-16 — TASK-034 complete
+
+- Empirical org-config sweep: `src/praetor/codification/` — `run_org_config_sweep`, proposed artifact builder, coverage/risk report.
+- Preflight: `proposed_artifact_not_activatable` for `artifact_kind: proposed_org_config`.
+- Tests: `tests/codification/test_sweep.py` — **5**; scope guard allows `codification` package.
+- Verification: codification **5/5**, suite **749**, mypy **116** files, ruff OK.
+- Flight Recorder: `.workflow/TASK-034/`.
+
 ## 2026-06-16 — TASK-033 complete
 
 - SPL compilation: `tools/compile_sigma.py` — pySigma Splunk backend + Windows pipeline; `--check` / `--write`.
