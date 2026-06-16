@@ -2,13 +2,13 @@
 
 ## Current focus
 
-**TASK-033 complete** — SPL compile + Splunk demo harness; pytest **736**.
+**TASK-033 complete** — SPL compile + Splunk demo harness; pytest **744**.
 
 Next: **TASK-034** (Empirical Org-Config Sweep Prototype) — Sprint 5 / Phase 5.
 
 ## Recently changed
 
-- TASK-033: `tools/compile_sigma.py`, `detections/spl/*.spl`, `splunk/savedsearches.conf`, ingest script with manifest checksum validation; 13 splunk tests.
+- TASK-033: `tools/compile_sigma.py`, `detections/spl/*.spl`, `splunk/savedsearches.conf`, ingest script with manifest checksum validation; **21** splunk tests (correlation YAML rejection, props stanza, savedsearch dedup).
 - TASK-032: five Sigma rules + `attack_mapping.yaml`; hardened pySigma validation (18 tests); discrimination + tag↔mapping parity.
 - Phase 3 gate verification: independent re-run of all mechanical checks; DEC-053 ratified (deferred directive persist); README reconciled to Phase 3 state.
 - TASK-031 / DEC-052: citation-anchored host targeting; phase 3 noisy gate GREEN; REVIEW-004 strict xfail tracked.

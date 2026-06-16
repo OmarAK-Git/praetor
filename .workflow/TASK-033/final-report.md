@@ -27,7 +27,7 @@ Implemented SPL compilation from Task 32 Sigma rules, committed plain SPL artifa
 
 ### Tests / tooling
 
-- `tests/splunk/test_savedsearch_generation.py` — **13** tests (+1 integration deselected)
+- `tests/splunk/test_savedsearch_generation.py` — **21** tests (+1 integration deselected)
 - `pyproject.toml` — `pysigma-backend-splunk>=1.1,<3`
 
 ### Workflow / Memory Bank
@@ -38,18 +38,22 @@ Implemented SPL compilation from Task 32 Sigma rules, committed plain SPL artifa
 ## Verification performed
 
 ```
-python -m pytest -q tests/splunk/test_savedsearch_generation.py — 13 passed, 1 deselected
+python -m pytest -q tests/splunk/test_savedsearch_generation.py — 21 passed, 1 deselected
 python tools/compile_sigma.py --check — exit 0
-python -m pytest -q — 736 passed, 2 deselected, 1 xfailed
+python -m pytest -q — 744 passed, 2 deselected, 1 xfailed
 python -m mypy src evals consumer_sdk — 112 files clean
 python -m ruff check src tests evals consumer_sdk tools — clean
 ```
 
+## Resolved gaps (abaa724 hardening)
+
+- Correlation-rule rejection: dedicated YAML fixture tests (`test_correlation_rule_rejected_by_validate_rule_supported`, `test_correlation_rule_rejected_by_load_sigma_collection`).
+- `props.conf` inert concern: `test_props_conf_parses_as_splunk_stanzas` asserts indexed JSON extraction and WinEventLog source stanza.
+- Savedsearch duplicate `source=` terms: `test_savedsearch_query_matches_per_rule_spl_after_source_dedup` + `collapse_duplicate_source_terms`.
+
 ## Known gaps
 
 - Live Splunk HEC integration not exercised in CI (integration marker; operator steps in README).
-- Correlation-rule rejection covered in compiler loader; no dedicated correlation YAML fixture test (preflight uses isinstance check).
-- Batch savedsearches duplicate `source=` from pySigma collection convert (cosmetic).
 
 ## Follow-up tasks
 

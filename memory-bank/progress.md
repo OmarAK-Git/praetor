@@ -5,8 +5,9 @@
 - SPL compilation: `tools/compile_sigma.py` — pySigma Splunk backend + Windows pipeline; `--check` / `--write`.
 - Artifacts: `detections/spl/*.spl` (5), `splunk/savedsearches.conf`, `splunk/props.conf`, `splunk/README.md`.
 - Ingest: `tools/splunk_ingest_demo.ps1` — manifest path + sha256 validation; optional HEC ingest with flattened EventData + WinEventLog `source`.
-- Tests: `tests/splunk/test_savedsearch_generation.py` — **13** (+1 integration deselected); `pysigma-backend-splunk>=1.1,<3`.
-- Verification: splunk **13/13**, compile `--check` OK, suite **736**, mypy **112** files, ruff OK.
+- Tests: `tests/splunk/test_savedsearch_generation.py` — **21** (+1 integration deselected); `pysigma-backend-splunk>=1.1,<3`.
+- Hardening (abaa724): correlation YAML rejection tests, `props.conf` stanza parse test, savedsearch source dedup test.
+- Verification: splunk **21/21**, compile `--check` OK, suite **744**, mypy **112** files, ruff OK.
 - Flight Recorder: `.workflow/TASK-033/`.
 
 ## 2026-06-16 — TASK-032 complete
