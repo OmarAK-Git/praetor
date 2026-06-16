@@ -1,5 +1,12 @@
 # Progress Log
 
+## 2026-06-15 — Phase 3 gate CLOSED (PASS-WITH-CONDITIONS)
+
+- `.workflow/phase-3-gate-punchlist.md` — independent verification: pytest **705** passed, 1 deselected, 1 xfailed (REVIEW-004); mypy **112** files; ruff clean; harness **26/26**; `run_phase3_gate` **6/6**; `correlation_gate` **5/5**; tripwires **3/3** passing.
+- DEC-053 ratified in `docs/decisions.md` (deferred directive persist refines DEC-028); `docs/plan.md:641` updated.
+- README reconciled to Phase 3 complete state (705 tests, 32/35 tasks).
+- TRACK into Sprint 4: static fault-flag guard (F-B), production-store table test (F-C), REVIEW-004 xfail, scope guard widen (F-H).
+
 ## 2026-06-15 — TASK-031 / DEC-052 citation-anchored host targeting
 
 - Option A: `resolve_containment_target_from_citations` in `containment_policy.py`; gate uses validated citation IDs; `ambiguous_containment_target` fault flag wired (enum, outcome matrix, harness scenario, contracts §13).

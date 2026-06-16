@@ -2,22 +2,21 @@
 
 ## Current focus
 
-**TASK-031 complete** — Phase 3 gate GREEN; DEC-052 citation-anchored host targeting + `ambiguous_containment_target`; window filter (9999) binding assertion.
+**Phase 3 gate CLOSED (PASS-WITH-CONDITIONS)** — `.workflow/phase-3-gate-punchlist.md` (705 passed, 1 deselected, 1 xfailed; harness 26/26; phase3 gate 6/6; correlation 5/5; tripwires 3/3).
 
-Next: **TASK-032** (Sigma Rule Repository).
+Next: **TASK-032** (Sigma Rule Packaging) — Sprint 4 / Phase 4.
 
 ## Recently changed
 
-- TASK-031 / DEC-052: citation-anchored host targeting in `containment_policy.py` + `gate.py`; `ambiguous_containment_target` fault flag; phase 3 noisy gate GREEN; **14** phase3 tests + **5** citation tests.
-- TASK-030: `evals/correlation_gate.py` + `evals/correlation_expected/*.yaml` — manifest listing, corroboration, noise record attribution, window boundary; **19** tests; suite **685**.
-- TASK-028: `src/praetor/correlation/` — Sysmon EventID 1 + Security 4624 normalizers, ±300s window filter, process GUID graph, Task 14 excerpt bridge; 4 fixtures + manifest checksums; **9** correlation tests; suite **638**.
-- TASK-027 gatekeeper reopen: payload-driven structural checks, truncated fixture, mocked Gemini tests (+7), mypy `evals` package (102 files), `docs/eval_gates.md` + DEC-047; **14** deterministic adversarial tests; eval suite **47**; full suite **629**.
-- TASK-026 follow-up: `evals/outcome_matrix.py` — canonical SFE map from `OutcomeMatrixFaultFlag`; 24 scenarios (+10 matrix rows); completeness guard; fail-closed SFE; `ticket_stamp_failed` + `policy_gate_idempotency`; **33** eval tests; suite **615**.
+- Phase 3 gate verification: independent re-run of all mechanical checks; DEC-053 ratified (deferred directive persist); README reconciled to Phase 3 state.
+- TASK-031 / DEC-052: citation-anchored host targeting; phase 3 noisy gate GREEN; REVIEW-004 strict xfail tracked.
+- TASK-030: `evals/correlation_gate.py` — 5 CLI scenarios; 19 tests.
+- TASK-028a: PolicyGate + metrics on intake; tripwires converted to passing.
 
 ## Current blockers
 
 - Operator docs still absent: `docs/operator_runbook.md`, `docs/architecture.md` (Task 35). `docs/eval_gates.md` added in TASK-027.
-- PolicyGate wired into intake with deferred directive durability until terminal stamp (DEC-049). Metrics optional on intake; recorded only after completed actuation.
+- Sprint 4 scaffolding absent: no `detections/` tree until Task 32.
 
 ## Important notes for agents
 
@@ -32,7 +31,7 @@ Next: **TASK-032** (Sigma Rule Repository).
 9. Rate limits: DEC-029 limit=1/scope/window; DEC-030 `per_asset_group` = host asset_id only.
 10. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.
 11. Eval harness: `python -m evals.harness` runs all mandatory scenarios; exits non-zero on any safety invariant failure.
-12. Correlation: `correlate_telemetry()` in `praetor.correlation`; intake uses bundle override or telemetry params; default skeleton bundle for legacy paths.
-13. Intake: `process_alert_intake` runs `evaluate_policy_gate`; pass `metrics_collector=` for observability counters.
+12. Correlation: `correlate_telemetry()` in `praetor.correlation`; intake uses bundle override or telemetry params.
+13. Intake: `process_alert_intake` runs `evaluate_policy_gate(..., persist_directive=False)`; directive + edict co-commit after terminal stamp (DEC-053).
 14. Phase 3 gate: `python -m evals.run_phase3_gate` — correlation expected file, identity compliance, account prerequisite, citation-anchored safety on noisy bundle, Phase 2 harness.
-15. Host containment (DEC-052): target derived from **cited** facts only; ≥2 distinct cited hosts → `ambiguous_containment_target`.
+15. Host containment (DEC-052): target derived from **cited** facts only; ≥2 distinct quoted hosts → `ambiguous_containment_target`.

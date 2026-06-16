@@ -6,12 +6,13 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Status | Notes |
 |---|---|---|---|
-| — | — | — | TASK-031 complete; next per `docs/plan.md` is TASK-032 |
+| — | — | — | Phase 3 gate closed; next per `docs/plan.md` is TASK-032 (Sprint 4) |
 
 ## Done (recent)
 
 | ID | Task | Evidence |
 |---|---|---|
+| PHASE-3-GATE | Phase 3 gate closure punch-list | `.workflow/phase-3-gate-punchlist.md` — pytest 705; mypy 112; harness 26/26; run_phase3_gate 6/6; correlation_gate 5/5; tripwires 3/3 |
 | TASK-031 | Phase 3 Harness on Correlated Telemetry | `.workflow/TASK-031/verification.md` — DEC-052 citation-anchored targeting; phase3 gate GREEN; pytest 705 |
 | TASK-030 | Correlation Accuracy Gate | `.workflow/TASK-030/verification.md` — 19 gate tests; pytest 685; `python -m evals.correlation_gate` 4/4 PASS |
 | TASK-029 | Correlator Identity Compliance Tests | `.workflow/TASK-029/verification.md` — 12 tests in default suite; policy-gate e2e; pytest 666 |
@@ -20,7 +21,7 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 ## Gate prerequisites
 
 - Startup recovery step 6 is implemented in TASK-017 (`reconcile_policy_state`).
-- Engine orchestrator still uses skeleton inline policy; wire PolicyGate into intake as follow-on.
+- Engine orchestrator runs `evaluate_policy_gate` on intake (Task 28a complete).
 - Provider-health breaker (`praetor.judgment.provider_health_breaker`) is implemented; wire production failure recording into intake as follow-on.
 - `ProviderUnavailableError` maps via `provider_failure_trips_breaker()` but is not caught in intake until an Outcome Matrix row exists.
 - TASK-015 citation surface (TASK-017 reuse): citable field paths are normalized
@@ -73,5 +74,5 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-026 | Mandatory Phase 2 Eval Harness | `.workflow/TASK-026/verification.md` — `pytest` 615 / evals 33; `evals/harness.py` + 24 scenario YAML; full Outcome Matrix + completeness guard |
 | TASK-027 | Real-Provider Adversarial Excerpt Probe | `.workflow/TASK-027/verification.md` — `pytest` 629 / evals 47; `evals/real_provider_adversarial.py`; mocked Gemini path + payload structural checks; `docs/eval_gates.md` |
 | TASK-028 | Correlation Normalization and PromptExcerptSet | `.workflow/TASK-028/verification.md` — `pytest` 638 / correlation 9; `src/praetor/correlation/`; Sysmon+Security normalization, process graph, window filter, PromptExcerptSet |
-| TASK-028a | Production Orchestrator PolicyGate and Metrics Integration | `.workflow/TASK-028a/verification.md` — `pytest` 653; deferred directive persist (DEC-049); eval 25/25; tripwires pass |
+| TASK-028a | Production Orchestrator PolicyGate and Metrics Integration | `.workflow/TASK-028a/verification.md` — `pytest` 653; deferred directive persist (DEC-053); eval 25/25; tripwires pass |
 | TASK-029 | Correlator Identity Compliance Tests | `.workflow/TASK-029/verification.md` — 12 tests; policy-gate on real fixtures; pytest 666 |

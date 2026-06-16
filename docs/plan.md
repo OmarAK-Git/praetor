@@ -527,13 +527,13 @@ Test first:
 
 - `process_alert_intake` emits `auto_contain` for a fully-gated judgment where all deterministic checks pass (the `engine_intake` analog of `confirmed_malicious_sequence`).
 - `process_alert_intake` escalates with `never_contain_live_conflict` / `never_contain_snapshot` when the target is excluded; with `rate_limit_exceeded`, `containment_breaker_open`, and `revocation_feed_unhealthy` under those conditions.
-- The single serializable emit transaction (per DEC-028) covers gate live-checks + edict + `NeverContainSnapshotRecord` + directive + idempotency + rate-limit update.
+- After terminal stamp, directive + idempotency/rate writes + edict + `NeverContainSnapshotRecord` co-commit in one post-stamp `critical_transaction` (DEC-028 + DEC-053); gate evaluates with `persist_directive=False`.
 - `MetricsCollector` records disposition, policy-gate override, breaker state, and feed lag at the real call sites.
 - The strict-xfail tripwire tests in `tests/engine/test_policygate_integration_tripwire.py` are converted to passing tests (markers removed).
 
 Files: `src/praetor/engine/orchestrator.py`, `src/praetor/engine/recovery.py`, `evals/scenarios/*.yaml`, `tests/engine/*`, `tests/metrics/*`.
 
-Done when: the production decision path enforces the full Outcome Matrix via `evaluate_policy_gate` in one serializable emit transaction, metrics are emitted from real call sites, and end-to-end `engine_intake` evals drive both a gated `auto_contain` and a never-contain block.
+Done when: the production decision path enforces the full Outcome Matrix via `evaluate_policy_gate` with deferred directive persist until terminal stamp (DEC-028 + DEC-053), metrics are emitted from real call sites, and end-to-end `engine_intake` evals drive both a gated `auto_contain` and a never-contain block.
 
 ## Task 29 - Correlator Identity Compliance Tests
 Complexity: M | Depends on: Tasks 16, 28
@@ -638,7 +638,7 @@ Pass criteria: mandatory eval scenarios pass with FakeProvider; full Outcome Mat
 ### Phase 3 - Correlation
 Required tasks: 28-31.
 
-Pass criteria: real telemetry normalization populates correct provenance paths; identity compliance tests confirm real shapes match synthetic tests; correlation accuracy gate passes; human-authored expected output for noisy correlated telemetry is committed; account containment production feature gate may only be enabled after these identity gates pass; PolicyGate and `MetricsCollector` are wired into `process_alert_intake` in one serializable emit transaction (DEC-028, Task 28a); end-to-end `engine_intake` evals drive a gated `auto_contain` and a never-contain block; the integration tripwire tests pass without xfail.
+Pass criteria: real telemetry normalization populates correct provenance paths; identity compliance tests confirm real shapes match synthetic tests; correlation accuracy gate passes; human-authored expected output for noisy correlated telemetry is committed; account containment production feature gate may only be enabled after these identity gates pass; PolicyGate and `MetricsCollector` are wired into `process_alert_intake` with deferred directive persist until terminal stamp (DEC-028 + DEC-053, Task 28a); end-to-end `engine_intake` evals drive a gated `auto_contain` and a never-contain block; the integration tripwire tests pass without xfail.
 
 ### Phase 4 - Detection Portability
 Required tasks: 32-33.
