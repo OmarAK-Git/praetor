@@ -430,7 +430,7 @@ These are Pydantic v2 `@model_validator` rules at the schema level (not the stor
 
 ## 13. Outcome Matrix (behavioral contract)
 
-The eval harness asserts, for every failure class, the disposition, the fault flag, and the `system_fault_escalation` value. `true` = infrastructure / model-quality / feed / latency-queue fault requiring operational triage. `false` = deliberate policy or safety-gate enforcement (the engine working as designed). This table is the contract; the spec's copy and this copy must match exactly.
+The eval harness asserts, for every failure class, the disposition, the fault flag, and the `system_fault_escalation` value. `true` = infrastructure / model-quality / feed / latency-queue fault requiring operational triage. `false` = deliberate policy or safety-gate enforcement (the engine working as designed). This table is the authoritative contract. The frozen `docs/spec.md` §Outcome Matrix mirror is deferred until spec unfreeze (DEC-052); until then, this section carries one row not yet mirrored in the spec — `ambiguous_containment_target` — to be reconciled when the spec unfreezes.
 
 | Failure class | Disposition | Fault flag | system_fault_escalation |
 |---|---|---|---|

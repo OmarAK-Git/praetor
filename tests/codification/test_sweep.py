@@ -20,6 +20,7 @@ from praetor.codification import (
     run_org_config_sweep,
     telemetry_coverage_event_ids,
 )
+from praetor.codification.placeholders import document_has_unreplaced_sweep_placeholders
 from praetor.config.errors import PreflightError
 from praetor.config.preflight import run_preflight
 from praetor.correlation import load_fixture_events
@@ -124,6 +125,32 @@ def test_marker_stripped_placeholder_artifact_rejected_by_preflight() -> None:
     with pytest.raises(PreflightError) as exc_info:
         run_preflight(stripped, verbatim_text=yaml_text)
     assert exc_info.value.code == "unreplaced_sweep_placeholder"
+
+
+def test_zero_evidence_marker_stripped_still_rejected_by_preflight() -> None:
+    """DEC-054 backstop: empty asset entries fail Pydantic min_length on activation."""
+    result = run_org_config_sweep(
+        sysmon_events=[],
+        security_events=[],
+        org_id="empty-org",
+    )
+    stripped = copy.deepcopy(result.proposed_config)
+    metadata = stripped["version_metadata"]
+    metadata.pop("artifact_kind", None)
+    metadata.pop("activation_status", None)
+    metadata.pop("artifact_usable", None)
+    stripped["containment_exclusions"]["never_contain"][0]["target_id"] = (
+        "backup-gateway"
+    )
+
+    assert not is_proposed_org_config_artifact(stripped)
+    assert not document_has_unreplaced_sweep_placeholders(stripped)
+    assert stripped["assets_and_asset_groups"]["entries"] == []
+
+    yaml_text = render_proposed_org_config_yaml(stripped)
+    with pytest.raises(PreflightError) as exc_info:
+        run_preflight(stripped, verbatim_text=yaml_text)
+    assert exc_info.value.code == "invalid_snapshot"
 
 
 def test_placeholders_replaced_artifact_passes_preflight() -> None:

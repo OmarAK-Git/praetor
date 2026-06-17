@@ -57,3 +57,15 @@ class InjectNeverContainOnStampBackend:
         _ = stamp_id, payload
         self.on_stamp()
         return StampBackendResult(outcome=StampBackendOutcome.SUCCEEDED, payload={})
+
+
+class FailedInjectNeverContainOnStampBackend:
+    """Failed terminal stamp that mutates never-contain state before deferred persist."""
+
+    def __init__(self, *, on_stamp: Callable[[], None]) -> None:
+        self.on_stamp = on_stamp
+
+    def stamp(self, stamp_id: str, payload: dict[str, Any]) -> StampBackendResult:
+        _ = stamp_id, payload
+        self.on_stamp()
+        return StampBackendResult(outcome=StampBackendOutcome.FAILED, payload={})

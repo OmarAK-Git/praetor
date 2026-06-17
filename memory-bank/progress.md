@@ -6,7 +6,7 @@
 - Operator docs: `docs/operator_runbook.md`, `docs/architecture.md`; `docs/contracts.md` §15; `docs/eval_gates.md` phase gates.
 - Tests: `tests/benchmarks/test_serialized_path.py` — **3**; `tests/docs/test_docs.py` — **9**; scope guard allows Phase 5 docs.
 - Splunk: env-gated `test_splunk_demo_integration_with_hec_env`; README/splunk README HEC notes.
-- Verification: suite **772**, mypy **117** files, ruff OK.
+- Verification: suite **778**, mypy **118** files, ruff OK.
 - Flight Recorder: `.workflow/TASK-035/`.
 - **All 35 plan tasks complete.**
 

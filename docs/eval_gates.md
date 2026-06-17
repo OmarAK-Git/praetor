@@ -103,7 +103,12 @@ Pass: Sigma validation, deterministic SPL, Splunk demo artifacts with checksum-v
 python -m pytest -q tests/codification/
 python -m pytest -q tests/benchmarks/test_serialized_path.py
 python -m pytest -q tests/docs/
-python -c "from pathlib import Path; from benchmarks.serialized_path import run_serialized_path_benchmark; print(run_serialized_path_benchmark(Path('state/bench.db'), operations=5))"
+python -m evals.run_phase5_benchmark
 ```
+
+The benchmark step is self-contained: it creates a temporary DB, activates
+``configs/example_org.yaml``, runs 30 DEC-053 production-path iterations, and
+prints sustained rate vs the active provisional targets. No pre-existing
+``state/bench.db`` is required.
 
 Pass: org-config sweep produces review-only proposed artifacts; production throughput ceiling measured and documented in `docs/operator_runbook.md`; operator runbook and architecture cover responsibility boundaries; Splunk demo is manual-only per `splunk/README.md` (no automated saved-search CI gate).

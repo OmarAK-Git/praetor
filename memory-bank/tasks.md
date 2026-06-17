@@ -12,8 +12,8 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 
 | ID | Task | Evidence |
 |---|---|---|
-| TASK-035 | Production Throughput Benchmark and Operator Runbooks | `.workflow/TASK-035/verification.md` — 3 benchmark + 9 doc tests; pytest 772; operator runbook + architecture |
-| TASK-034 | Empirical Org-Config Sweep Prototype | `.workflow/TASK-034/verification.md` — 5 codification tests; pytest 749; preflight blocks proposed artifacts |
+| TASK-035 | Production Throughput Benchmark and Operator Runbooks | `.workflow/TASK-035/verification.md` — 7 benchmark + 10 doc tests; pytest 778; operator runbook + architecture |
+| TASK-034 | Empirical Org-Config Sweep Prototype | `.workflow/TASK-034/verification.md` — 17 codification tests; pytest 778; preflight blocks proposed artifacts |
 | TASK-033 | SPL Compilation and Splunk Demo Harness | `.workflow/TASK-033/verification.md` — 21 splunk tests; compile `--check`; pytest 744 |
 | TASK-031 | Phase 3 Harness on Correlated Telemetry | `.workflow/TASK-031/verification.md` — DEC-052 citation-anchored targeting; phase3 gate GREEN; pytest 705 |
 | TASK-030 | Correlation Accuracy Gate | `.workflow/TASK-030/verification.md` — 19 gate tests; pytest 685; `python -m evals.correlation_gate` 4/4 PASS |
@@ -80,6 +80,6 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-029 | Correlator Identity Compliance Tests | `.workflow/TASK-029/verification.md` — 12 tests; policy-gate on real fixtures; pytest 666 |
 | TASK-032 | Sigma Rule Repository | `.workflow/TASK-032/verification.md` — 18 detection tests; 5 sigma rules; pytest 723 |
 | TASK-033 | SPL Compilation and Splunk Demo Harness | `.workflow/TASK-033/verification.md` — 21 splunk tests; compile `--check`; pytest 744 |
-| TASK-034 | Empirical Org-Config Sweep Prototype | `.workflow/TASK-034/verification.md` — 5 codification tests; pytest 749 |
-| TASK-035 | Production Throughput Benchmark and Operator Runbooks | `.workflow/TASK-035/verification.md` — 3 benchmark + 9 doc tests; pytest 772 |
+| TASK-034 | Empirical Org-Config Sweep Prototype | `.workflow/TASK-034/verification.md` — 17 codification tests; pytest 778 |
+| TASK-035 | Production Throughput Benchmark and Operator Runbooks | `.workflow/TASK-035/verification.md` — 7 benchmark + 10 doc tests; pytest 778 |
 | PHASE-4-GATE | Detection portability gate (Tasks 32–33) | `.workflow/phase-4-gate-punchlist.md` — PASS-WITH-CONDITIONS; pytest 744 (39 detection+splunk); mypy 112 clean; ruff clean; `compile_sigma.py --check` exit 0; offline SPL match audit |

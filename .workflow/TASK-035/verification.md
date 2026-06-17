@@ -8,8 +8,8 @@
 | VERIFY-004 | REQ-004 | Schema refs + disposition | `pytest -q tests/docs/test_docs.py` | pass | **10 passed** | pass |
 | VERIFY-005 | REQ-005 | Runbook topics | `test_operator_runbook_required_topics` | pass | pass | pass |
 | VERIFY-006 | REQ-006 | Doc test suite | `pytest -q tests/docs/` | pass | **10 passed** | pass |
-| VERIFY-007 | — | Full suite | `pytest -q` | pass | **777 passed**, 2 deselected, 1 xfailed | pass |
-| VERIFY-008 | — | Mypy | `mypy src evals consumer_sdk` | clean | **117 files** | pass |
+| VERIFY-007 | — | Full suite | `pytest -q` | pass | **778 passed**, 2 deselected, 1 xfailed | pass |
+| VERIFY-008 | — | Mypy | `mypy src evals consumer_sdk` | clean | **118 files** | pass |
 | VERIFY-009 | — | Ruff | `ruff check src tests evals consumer_sdk benchmarks` | clean | clean | pass |
 
 ## Recorded sample run (2026-06-16, gatekeeper)

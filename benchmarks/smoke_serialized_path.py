@@ -6,6 +6,7 @@ against ``provisional_alert_rate_targets`` from the active org config.
 
 from __future__ import annotations
 
+import sqlite3
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -28,7 +29,7 @@ class SmokeBenchmarkResult:
     meets_burst_target: bool
 
 
-def provisional_targets_from_conn(conn) -> tuple[int, int]:
+def provisional_targets_from_conn(conn: sqlite3.Connection) -> tuple[int, int]:
     """Load Sprint 1 provisional targets from the active org config snapshot."""
     snapshot = fetch_active_snapshot(conn)
     if snapshot is None:

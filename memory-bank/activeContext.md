@@ -2,12 +2,12 @@
 
 ## Current focus
 
-**TASK-035 complete** — production throughput benchmark + operator runbooks; pytest **772**. All **35** plan tasks complete.
+**TASK-035 complete** — production throughput benchmark + operator runbooks; pytest **778**. All **35** plan tasks complete.
 
 ## Recently changed
 
 - TASK-035: `benchmarks/serialized_path.py`, `docs/operator_runbook.md`, `docs/architecture.md`, `tests/docs/test_docs.py`; contracts §15 throughput; eval_gates phase gates; scope guard Phase 5 docs.
-- TASK-034: `src/praetor/codification/` — telemetry sweep, proposed artifact, coverage/risk report; preflight blocks activation; **5** codification tests.
+- TASK-034: `src/praetor/codification/` — telemetry sweep, proposed artifact, coverage/risk report; preflight blocks activation; **17** codification tests.
 - TASK-033: SPL compile + Splunk demo harness; **21** splunk tests.
 - Phase 3 gate closed PASS-WITH-CONDITIONS; DEC-053 ratified.
 

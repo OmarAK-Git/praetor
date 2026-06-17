@@ -485,10 +485,18 @@ def process_alert_intake(
                 )
                 directive_persisted = True
             except DeferredDirectivePersistConflict as conflict:
-                disposition = escalate_disposition(
+                conflict_disposition = escalate_disposition(
                     proposed=gate_evaluation.proposed_disposition,
                     fault_flag=conflict.fault_flag,
                     system_fault=conflict.system_fault_escalation,
+                )
+                disposition = _stamp_contract_to_skeleton(
+                    apply_terminal_stamp_to_disposition(
+                        stamp_result.status,
+                        pre_stamp_disposition=_skeleton_to_stamp_contract(
+                            conflict_disposition
+                        ),
+                    )
                 )
                 never_contain = list(read_live_never_contain_entries(store.conn))
                 edict = build_decision_edict(
