@@ -1,0 +1,45 @@
+name: walkthrough
+
+# Re-executes the committed walkthrough notebook against the current engine so the
+# pre-rendered outputs in notebooks/praetor_walkthrough.ipynb can never silently go
+# stale. Fails if any cell errors or if the engine stops producing the documented
+# decisions (auto_contain + directive, standard_review, escalate / never-contain refusal).
+
+on:
+  push:
+    branches: ["**"]
+    paths:
+      - "notebooks/**"
+      - "src/praetor/**"
+      - "configs/example_org.yaml"
+      - "pyproject.toml"
+      - ".github/workflows/walkthrough.yml"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  walkthrough:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Praetor + notebook tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+          python -m pip install nbconvert nbclient ipykernel
+
+      - name: Execute the walkthrough notebook
+        run: |
+          jupyter nbconvert --to notebook --execute \
+            --ExecutePreprocessor.timeout=300 \
+            --output-dir "$RUNNER_TEMP" \
+            --output executed_walkthrough.ipynb \
+            notebooks/praetor_walkthrough.ipynb
+
+      - name: Assert the engine still makes the documented decisions
+        run: python notebooks/check_walkthrough.py "$RUNNER_TEMP/executed_walkthrough.ipynb"
