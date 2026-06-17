@@ -8,10 +8,10 @@
 > **Elevator pitch:** Detection tells you something fired. Praetor decides what happens next — with LLM judgment you can actually trust, because every action passes deterministic policy gates and lands in a tamper-evident audit trail.
 
 **▶ See it decide:** [`notebooks/praetor_walkthrough.ipynb`](notebooks/praetor_walkthrough.ipynb) drives the real engine through three alerts:
-— a malicious chain → `auto_contain` + containment directive,
-— a benign logon → `standard_review`,
-— an `auto_contain` proposed on a never-contain domain controller that the gate **refuses**. 
-Pre-rendered on GitHub; no setup required.
+
+- a malicious chain → `auto_contain` + containment directive,  
+- a benign logon → `standard_review`,  
+- an `auto_contain` proposed on a never-contain domain controller that the gate **refuses**.  
 
 ---
 
