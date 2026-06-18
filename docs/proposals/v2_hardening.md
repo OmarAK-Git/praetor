@@ -21,7 +21,8 @@ Threat-modeling v1 surfaced one architectural truth and three improvement levers
   model + correct evidence retrieval. (Grounding below.)
 - **Lever 1 — evidence robustness:** host `auto_contain` rests on as little as one cited fact.
 - **Lever 2 — authorization posture:** `auto_contain` is default-**allow** (denylist), so an
-  un-enumerated critical asset is containable by default.
+  un-enumerated critical asset is containable by default — **confirmed drift**, compounded by a
+  silent `scope` validation bug that nullifies an operator's intended safe default (see Item 2).
 - **Lever 3 — the feedback loop:** analyst corrections are *captured* but never *applied*, and
   the model has no mechanism to improve in-context over time.
 
@@ -79,26 +80,63 @@ the completeness contract.
 
 ---
 
-## Item 2 — Default-deny / allowlist authorization for `auto_contain`  **[HOLD]**
+## Item 2 — Containment-rule `scope` validation + authorization posture  **[v2 — documented, not implemented]**
 
-**Problem.** `auto_contain` is default-**allow**: any target not on never-contain and not under
-an explicit `deny` rule is containable. The fear this creates ("I must enumerate every critical
-asset on never-contain or it's exposed") is a symptom of an open default. v1 also has **no
-default-deny primitive** — rules match by specific `target_id`/`asset_id`; `scope: global` is
-ignored — so "deny all except group X" cannot be expressed in one rule.
+This began as the "default-deny vs denylist" posture question (was on HOLD pending an owner
+counter-argument). Cross-review with the original spec author **resolved it: v1's default-allow is
+drift, not a decision** — it contradicts the containment thesis (uncertainty should fall to
+`standard_review`; containment should be *earned*, not granted-by-omission). Two coupled problems
+are documented here for later implementation.
 
-**Proposal (parked).** Invert the posture: `auto_contain` allowed **only** for an explicitly
-enumerated allow-list of asset classes (cheap-to-reverse, low-criticality). Critical infra is
-then never eligible *by default*, not by remembering to list it.
+### Root cause (confirmed v1 bug)
 
-**HOLD rationale.** The repo owner will bring a counter-argument for why v1 was designed
-denylist-first before this is decided. Capture only; do not implement. Likely tension to resolve:
-denylist favors *availability of automation* (more gets auto-handled, fewer false-negatives on
-containment) at the cost of *blast radius*; allowlist favors *blast-radius safety* at the cost of
-*coverage*. The right answer may be deployment-configurable posture rather than a hard default.
+`ContainmentRule` (`src/praetor/contracts/org_config_sections.py:36`) is `extra="allow"` and
+declares only `name` and `action`. **`scope` is not a declared field** — it rides in as an untyped
+extra. Nothing validates it: preflight checks *rate-limit* scopes but never *rule* scopes. The gate
+reads it via `getattr(rule, "scope", None)` and skips any rule whose scope isn't a dict
+(`containment_policy.py:232`). So `scope: global` (a string) is **silently dropped**, the rule
+matches nothing, and `evaluate_target_containment_policy` falls through to `ALLOW` (`:251`).
 
-**Dependency.** If accepted, needs a rule-engine primitive for a catch-all default action
-(`default_action: deny`), which v1 cannot express.
+**The inversion:** an operator who writes `default_escalate` / `scope: global` believes they set a
+cautious default. The parser drops the rule and the fallthrough is `ALLOW` — so their *most cautious*
+config produces the *least safe* behavior (containment-permitted-by-default), **silently**. Same
+class as a works-today / fails-silently bug on the safety-critical path.
+
+### 2a. Validation hardening — chosen near-term direction (option B)
+
+Make malformed/unknown rule config **fail loudly at activation** instead of being silently skipped,
+*without yet flipping the posture*:
+- declare `scope` as a **typed field** on `ContainmentRule`;
+- flip `ContainmentRule` / `ContainmentPolicy` to **`extra="forbid"`** (strict validation is the
+  norm in every other contract model);
+- **preflight rejects** a malformed/unknown `scope` (type mismatch → `PreflightError`, not a skip).
+
+Effect: a mistyped or unrecognized rule is caught at activation, not silently nullified. Default-allow
+remains for now (so this stays a contained change), but the *silent inversion* is gone.
+
+### 2b. Posture flip + catch-all primitive — deeper v2 change (deferred)
+
+2a alone leaves a gap: there is **no catch-all primitive** — rules only match a specific
+`target_id`/`asset_id`/subnet, so even after 2a an operator *still* cannot express "escalate by
+default." The real posture fix is coupled to a new primitive:
+- add a `default_action` (catch-all, lowest precedence) so "escalate/deny by default, allow only
+  these asset groups" is expressible in one place;
+- flip the policy-layer default to **deny** (a no-rule target does not reach `auto_contain`).
+
+**Blast radius (plan for it):** flipping default-deny stops the example config's hosts from
+auto-containing, which breaks the walkthrough notebook Case 1 (→ the `walkthrough` CI checker that
+asserts `AUTO_CONTAIN` / `CONTAINMENT DIRECTIVE EMITTED`), the eval `confirmed_malicious_sequence`
+scenario, and policy tests that lean on default-allow. The fix must therefore also rewrite
+`configs/example_org.yaml` to express the affirmative allow it always implied (e.g. `auto_contain`
+permitted only for `eng-workstation-pool`) and update the notebook + scenarios. The example config
+stops being a no-op and starts *demonstrating* the intended posture.
+
+**Regression test (required when 2b lands):** a target with no matching rule must **not** reach
+`auto_contain`.
+
+**Open posture question still worth a deliberate answer:** denylist favors automation coverage,
+allowlist favors blast-radius safety — the right v2 answer may be a **deployment-configurable
+default** (`default_action` in org config) rather than a hard-coded posture.
 
 ---
 
@@ -160,8 +198,10 @@ authority"): feedback poisoning + loss of auditability. The sanctioned loop:
 
 - [ ] Item 1: accept corroboration floor for hosts? Promote corroboration to a first-class spec
       concept? Confirm the `insufficient_corroboration` flag + Outcome Matrix wiring.
-- [ ] Item 2: resolve denylist-vs-allowlist (owner's counter-argument pending); decide if posture
-      should be deployment-configurable; scope the `default_action` rule-engine primitive.
+- [ ] Item 2: posture resolved as drift (default-allow → default-deny target). **2a (near-term,
+      chosen):** typed `scope` + `extra="forbid"` + preflight rejects malformed scope.
+      **2b (deferred):** `default_action` catch-all primitive + flip default-deny + rewrite example
+      config / notebook / scenarios + the no-rule-target regression test.
 - [ ] Item 3: approve progressive-authorization model; specify promotion thresholds + the
       per-asset-class reporting view.
 - [ ] Item 4: prioritize similar-case exemplar retrieval; define the retrieval/ranking contract
