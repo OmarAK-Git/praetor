@@ -1,0 +1,10 @@
+{
+  "task_id": "V2-009",
+  "title": "Emergency Never-Contain Gate Alignment",
+  "tier": "T3",
+  "status": "complete",
+  "depends_on": ["V2-003"],
+  "branch": "task/V2-009",
+  "worktree": ".worktrees/V2-009",
+  "started_at": "2026-06-29"
+}

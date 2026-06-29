@@ -168,6 +168,16 @@ def add_emergency_never_contain(
     )
 
 
+def live_never_contain_blocks_containment_authorization(
+    *,
+    target_type: str,
+    target_id: str,
+    live_entries: list[dict[str, Any]],
+) -> bool:
+    """True when live emergency or permanent never-contain entries block authorization."""
+    return target_in_never_contain_list(target_type, target_id, live_entries)
+
+
 def emergency_cannot_authorize_containment(
     *,
     proposed_disposition: str,
@@ -177,4 +187,8 @@ def emergency_cannot_authorize_containment(
 ) -> bool:
     if proposed_disposition != "auto_contain":
         return False
-    return target_in_never_contain_list(target_type, target_id, live_entries)
+    return live_never_contain_blocks_containment_authorization(
+        target_type=target_type,
+        target_id=target_id,
+        live_entries=live_entries,
+    )

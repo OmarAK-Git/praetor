@@ -31,6 +31,7 @@ from praetor.config.emergency import add_emergency_never_contain
 from praetor.config.state import fetch_active_snapshot
 from praetor.contracts.disposition import Disposition
 from praetor.engine.orchestrator import (
+    SucceedingStampBackend,
     _CountingJudgmentProvider,
     process_alert_intake,
 )
@@ -114,6 +115,42 @@ def test_failed_stamp_auto_contain_emits_directive_and_preserves_candidate(
         result.edict,
         final_disposition=Disposition.AUTO_CONTAIN,
         fault_flags=[TICKET_STAMP_FAILED],
+        system_fault_escalation=False,
+        proposed_disposition=Disposition.AUTO_CONTAIN,
+    )
+
+
+def test_intake_emergency_never_contain_blocks_at_authorization(
+    activated,
+    verifier,
+) -> None:
+    """Pre-seeded emergency never-contain blocks containment at PolicyGate on intake."""
+    add_emergency_never_contain(
+        activated,
+        token=SOC_LEAD_TOKEN,
+        verifier=verifier,
+        target_specification={"target_type": "host", "target_id": "ws-01"},
+        lifetime_seconds=3600,
+        audit_reason="pre-intake hold",
+    )
+    bundle = host_bundle(host_id="ws-01")
+    judgment = auto_contain_judgment(bundle)
+    provider = _CountingJudgmentProvider(judgment=judgment)
+
+    result = process_alert_intake(
+        activated,
+        judgment_provider=provider,
+        stamp_backend=SucceedingStampBackend(),
+        alert_identity="ALERT-EMERGENCY-AUTH-BLOCK",
+        evidence_bundle=bundle,
+    )
+
+    assert result.edict is not None
+    assert _outstanding_directive_count(activated.conn) == 0
+    assert_outcome_matrix_edict(
+        result.edict,
+        final_disposition=Disposition.ESCALATE,
+        fault_flags=[NEVER_CONTAIN_LIVE_CONFLICT],
         system_fault_escalation=False,
         proposed_disposition=Disposition.AUTO_CONTAIN,
     )

@@ -18,8 +18,9 @@ Index of `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints
 | V2-006 | Escalate Rule Blocks Containment | V2-1 | **complete** | V2-001, V2-005 | M |
 | V2-007 | ProviderUnavailable Intake Handling | V2-1 | **complete** | V2-004 | M |
 | V2-008 | Compound Fault Flag Preservation | V2-1 | **complete** | — | M |
+| V2-009 | Emergency Never-Contain Gate Alignment | V2-1 | **complete** | V2-003 | M |
 
-**Next up:** V2-009 (Gate 1); V2 Gate 1 in progress (V2-009 – V2-010).
+**Next up:** V2-010 (Gate 1); V2 Gate 1 in progress (V2-010 only).
 
 Full task definitions, tests-first criteria, file paths, and done-when gates: **`docs/proposals/v2_implementation_plan.md`**.
 
@@ -114,6 +115,7 @@ Full task definitions, tests-first criteria, file paths, and done-when gates: **
 | V2-006 | Escalate Rule Blocks Containment | `.workflow/V2-006/verification.md` — escalate/deny block; distinct fault flags; pytest 799 |
 | V2-007 | ProviderUnavailable Intake Handling | `.workflow/V2-007/verification.md` — breaker + metrics on intake; scoped pytest 161 |
 | V2-008 | Compound Fault Flag Preservation | `.workflow/V2-008/verification.md` — DEC-053 compound fault flags pinned; pytest 27 (task-scoped) |
+| V2-009 | Emergency Never-Contain Gate Alignment | `.workflow/V2-009/verification.md` — gate authorization + intake harness; scoped pytest 154 |
 
 ## Done (V1 — recent)
 

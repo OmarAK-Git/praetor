@@ -6,7 +6,7 @@
 
 **Sprint V2-0 (Decision and Contract Ratification):** V2-001 through V2-004 complete (DEC-058 – DEC-061). **Gate 0 closed.**
 
-**Sprint V2-1 (Safety-Critical V1 Gap Closure):** V2-005 through V2-008 complete. **V2-009** next — emergency never-contain gate alignment (V2 Gate 1).
+**Sprint V2-1 (Safety-Critical V1 Gap Closure):** V2-005 through V2-009 complete. **V2-010** next — recovery policy pinning (V2 Gate 1).
 
 ## Build order (V2)
 
@@ -18,12 +18,11 @@
 
 ## Recently changed
 
-- Memory Bank: V2 task index, sprint groupings, phase gates, and carry-forward items initialized from `docs/proposals/v2_implementation_plan.md`.
-- V1 close: TASK-035 benchmark + operator runbooks; all 35 plan tasks done.
+- V2-009: PolicyGate live never-contain authorization wired through `emergency.py`; engine-intake harness emergency setup; `emergency_never_contain_intake.yaml` scenario.
 
 ## Current blockers
 
-- **V2 Gate 1** — V2-009 emergency never-contain gate alignment is next.
+- **V2 Gate 1** — V2-010 recovery policy pinning is next.
 - REVIEW-004 correlator cross-host xfail → V2-014.
 - Live Splunk HEC demo env-gated → V2-029.
 
