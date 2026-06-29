@@ -329,7 +329,9 @@ def evaluate_policy_gate(
         return _escalate(proposed, AMBIGUOUS_TARGET_IDENTITY, system_fault=False)
 
     if target.target_type == "host" and not meets_host_cited_corroboration(
-        citation_result.resolved
+        citation_result.resolved,
+        target_host_id=target.target_id,
+        facts_by_id={fact.evidence_id: fact for fact in evidence_bundle.facts},
     ):
         return _escalate(proposed, INSUFFICIENT_CORROBORATION, system_fault=False)
 
