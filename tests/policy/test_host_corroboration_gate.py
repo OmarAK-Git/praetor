@@ -135,6 +135,44 @@ def test_two_sysmon_citations_same_path_escalates(activated, org_snapshot) -> No
     assert result.fault_flags == [INSUFFICIENT_CORROBORATION]
 
 
+def test_unrelated_security_cite_does_not_corroborate_host_target(
+    activated, org_snapshot
+) -> None:
+    ts = datetime(2026, 6, 8, 12, 0, 0, tzinfo=UTC)
+    bundle = EvidenceBundle(
+        facts=[
+            EvidenceFact(
+                evidence_id="host-sysmon",
+                normalized_fields={"host_id": "ws-01", "process_name": "cmd.exe"},
+                source_event_reference="syn:sysmon:1",
+                raw_source="{}",
+                provenance_path=SYSMON_EVENT_LOG,
+                ambiguity_flag=False,
+                timestamp=ts,
+            ),
+            EvidenceFact(
+                evidence_id="host-security",
+                normalized_fields={"event_id": 4624},
+                source_event_reference="syn:security:1",
+                raw_source="{}",
+                provenance_path="windows_security_log",
+                ambiguity_flag=False,
+                timestamp=ts,
+            ),
+        ]
+    )
+    judgment = auto_contain_judgment(
+        bundle,
+        refs=[
+            CitedEvidenceRef(evidence_id="host-sysmon", field_path="host_id"),
+            CitedEvidenceRef(evidence_id="host-security", field_path="event_id"),
+        ],
+    )
+    result = _gate(activated, org_snapshot, bundle=bundle, judgment=judgment)
+    assert result.final_disposition == Disposition.ESCALATE
+    assert result.fault_flags == [INSUFFICIENT_CORROBORATION]
+
+
 def test_account_path_unaffected_by_host_corroboration_flag(
     activated, org_snapshot
 ) -> None:
