@@ -29,11 +29,17 @@ DEFAULT_ACCOUNT_SCOPE = "account-session"
 NEVER_CONTAIN_SNAPSHOT = "never_contain_snapshot"
 NEVER_CONTAIN_LIVE_CONFLICT = "never_contain_live_conflict"
 POLICY_AMBIGUITY = "policy_ambiguity"
+CONTAINMENT_POLICY_DENIED = "containment_policy_denied"
+CONTAINMENT_POLICY_ESCALATION_REQUIRED = "containment_policy_escalation_required"
+
+_PERMITTING_ACTIONS = frozenset({"allow", "auto_contain"})
+_BLOCKING_ACTIONS = frozenset({"deny", "escalate"})
 
 
 class PolicyAction(StrEnum):
     ALLOW = "allow"
     DENY = "deny"
+    ESCALATE = "escalate"
     AMBIGUOUS = "ambiguous"
 
 
@@ -254,12 +260,21 @@ def evaluate_target_containment_policy(
         if _rule_scope_matches_target(snapshot, rule.scope, target):
             matched_actions.append(rule.action)
     distinct = {action.lower() for action in matched_actions}
-    if "auto_contain" in distinct and ("escalate" in distinct or "deny" in distinct):
-        if not precedence:
-            return TargetPolicyEvaluation(
-                action=PolicyAction.AMBIGUOUS,
-                fault_flag=POLICY_AMBIGUITY,
-            )
+    permitting = distinct & _PERMITTING_ACTIONS
+    blocking = distinct & _BLOCKING_ACTIONS
+    if permitting and blocking and not precedence:
+        return TargetPolicyEvaluation(
+            action=PolicyAction.AMBIGUOUS,
+            fault_flag=POLICY_AMBIGUITY,
+        )
     if "deny" in distinct:
-        return TargetPolicyEvaluation(action=PolicyAction.DENY)
+        return TargetPolicyEvaluation(
+            action=PolicyAction.DENY,
+            fault_flag=CONTAINMENT_POLICY_DENIED,
+        )
+    if "escalate" in distinct:
+        return TargetPolicyEvaluation(
+            action=PolicyAction.ESCALATE,
+            fault_flag=CONTAINMENT_POLICY_ESCALATION_REQUIRED,
+        )
     return TargetPolicyEvaluation(action=PolicyAction.ALLOW)

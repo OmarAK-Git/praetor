@@ -26,6 +26,7 @@ from praetor.contracts.judgment import ModelJudgment
 from praetor.contracts.org_config import OrgConfigSnapshot
 from praetor.contracts.policy import PolicyGateResult
 from praetor.evidence.citations import validate_evidence_citations
+from praetor.evidence.provenance import meets_host_cited_corroboration
 from praetor.hashing import derive_idempotency_key
 from praetor.policy.circuit_breaker import (
     BreakerTripResult,
@@ -34,6 +35,8 @@ from praetor.policy.circuit_breaker import (
     record_rate_limit_failure_in_transaction,
 )
 from praetor.policy.containment_policy import (
+    CONTAINMENT_POLICY_DENIED,
+    CONTAINMENT_POLICY_ESCALATION_REQUIRED,
     NEVER_CONTAIN_LIVE_CONFLICT,
     NEVER_CONTAIN_SNAPSHOT,
     POLICY_AMBIGUITY,
@@ -49,6 +52,7 @@ from praetor.policy.identity import (
     ACCOUNT_CONTAINMENT_DISABLED,
     AMBIGUOUS_CONTAINMENT_TARGET,
     AMBIGUOUS_TARGET_IDENTITY,
+    INSUFFICIENT_CORROBORATION,
     evaluate_account_containment_eligibility,
 )
 from praetor.policy.rate_limit import (
@@ -313,6 +317,11 @@ def evaluate_policy_gate(
     if target is None:
         return _escalate(proposed, AMBIGUOUS_TARGET_IDENTITY, system_fault=False)
 
+    if target.target_type == "host" and not meets_host_cited_corroboration(
+        citation_result.resolved
+    ):
+        return _escalate(proposed, INSUFFICIENT_CORROBORATION, system_fault=False)
+
     if target_blocked_by_snapshot(org_snapshot, target):
         return _escalate(proposed, NEVER_CONTAIN_SNAPSHOT, system_fault=False)
 
@@ -339,8 +348,18 @@ def evaluate_policy_gate(
             policy_eval.fault_flag or POLICY_AMBIGUITY,
             system_fault=False,
         )
-    if policy_eval.action != PolicyAction.ALLOW:
-        return _escalate(proposed, POLICY_AMBIGUITY, system_fault=False)
+    if policy_eval.action == PolicyAction.DENY:
+        return _escalate(
+            proposed,
+            policy_eval.fault_flag or CONTAINMENT_POLICY_DENIED,
+            system_fault=False,
+        )
+    if policy_eval.action == PolicyAction.ESCALATE:
+        return _escalate(
+            proposed,
+            policy_eval.fault_flag or CONTAINMENT_POLICY_ESCALATION_REQUIRED,
+            system_fault=False,
+        )
 
     if is_containment_breaker_open(
         conn,

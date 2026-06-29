@@ -40,6 +40,7 @@ from praetor.engine.orchestrator import (
     _CountingJudgmentProvider,
     process_alert_intake,
 )
+from praetor.evidence.provenance import SYSMON_EVENT_LOG, WINDOWS_SECURITY_LOG
 from praetor.judgment.excerpt import MAX_PROMPT_EXCERPT_CHARS, build_prompt_excerpt_set
 from praetor.judgment.fake_provider import FakeProvider, FakeProviderMode
 from praetor.judgment.prompt import build_judgment_prompt_payload
@@ -340,20 +341,70 @@ def _disposition(value: str) -> Disposition:
     return Disposition(value)
 
 
+def _citable_field_path(fact: EvidenceFact) -> str:
+    for key in ("process_name", "host_id", "target_sid", "account_name"):
+        if key in fact.normalized_fields:
+            return key
+    return "process_name"
+
+
 def _host_bundle(*, host_id: str = "ws-01") -> EvidenceBundle:
     return EvidenceBundle(
         facts=[
             EvidenceFact(
-                evidence_id="ev-host-1",
+                evidence_id="ev-host-sysmon",
                 normalized_fields={"host_id": host_id, "process_name": "cmd.exe"},
-                source_event_reference="syn:host:1",
+                source_event_reference="syn:host:sysmon:1",
                 raw_source="{}",
-                provenance_path="synthetic/walking_skeleton",
+                provenance_path=SYSMON_EVENT_LOG,
                 ambiguity_flag=False,
                 timestamp=FIXED_NOW,
-            )
+            ),
+            EvidenceFact(
+                evidence_id="ev-host-security",
+                normalized_fields={"host_id": host_id, "event_id": 4624},
+                source_event_reference="syn:host:security:1",
+                raw_source="{}",
+                provenance_path=WINDOWS_SECURITY_LOG,
+                ambiguity_flag=False,
+                timestamp=FIXED_NOW,
+            ),
         ]
     )
+
+
+def _default_auto_contain_citation_refs(
+    bundle: EvidenceBundle,
+) -> list[CitedEvidenceRef]:
+    sysmon = next(
+        (fact for fact in bundle.facts if fact.provenance_path == SYSMON_EVENT_LOG),
+        None,
+    )
+    security = next(
+        (
+            fact
+            for fact in bundle.facts
+            if fact.provenance_path == WINDOWS_SECURITY_LOG
+        ),
+        None,
+    )
+    if sysmon is not None and security is not None:
+        return [
+            CitedEvidenceRef(
+                evidence_id=sysmon.evidence_id,
+                field_path=_citable_field_path(sysmon),
+            ),
+            CitedEvidenceRef(
+                evidence_id=security.evidence_id,
+                field_path=_citable_field_path(security),
+            ),
+        ]
+    return [
+        CitedEvidenceRef(
+            evidence_id=bundle.facts[0].evidence_id,
+            field_path=_citable_field_path(bundle.facts[0]),
+        )
+    ]
 
 
 def _incomplete_account_bundle() -> EvidenceBundle:
@@ -389,12 +440,7 @@ def _judgment_for_bundle(
     cited_refs: list[CitedEvidenceRef] | None = None,
 ) -> ModelJudgment:
     if cited_refs is None:
-        cited_refs = [
-            CitedEvidenceRef(
-                evidence_id=bundle.facts[0].evidence_id,
-                field_path="process_name",
-            )
-        ]
+        cited_refs = _default_auto_contain_citation_refs(bundle)
     return ModelJudgment(
         proposed_disposition=proposed,
         cited_evidence_refs=cited_refs,
@@ -458,6 +504,39 @@ def _persist_snapshot_with_overrides(
     )
     store.conn.commit()
     return updated
+
+
+def _permissive_containment_policy() -> ContainmentPolicy:
+    return ContainmentPolicy(
+        rules=[
+            ContainmentRule(
+                name="allow_hosts",
+                action="auto_contain",
+                scope={"catch_all": True},
+            ),
+        ],
+    )
+
+
+def _maybe_apply_permissive_containment(
+    store: StateStore,
+    base: OrgConfigSnapshot,
+    *,
+    proposed_disposition: str,
+    preconditions: Mapping[str, Any] | None,
+) -> OrgConfigSnapshot | None:
+    if proposed_disposition != Disposition.AUTO_CONTAIN.value:
+        return None
+    if isinstance(preconditions, Mapping):
+        if preconditions.get("conflicting_containment_rules"):
+            return None
+        if preconditions.get("containment_policy_blocks"):
+            return None
+    return _persist_snapshot_with_overrides(
+        store,
+        base,
+        containment_policy=_permissive_containment_policy(),
+    )
 
 
 def _assert_outcome(
@@ -550,6 +629,26 @@ def _run_engine_intake(
 ) -> None:
     setup = scenario.setup
     expectations = scenario.expectations
+    base = fetch_active_snapshot(store.conn)
+    if base is not None:
+        proposed_name = str(
+            setup.get(
+                "proposed_disposition",
+                setup.get("provider_proposed_disposition", "standard_review"),
+            )
+        )
+        wants_auto_contain = (
+            proposed_name == Disposition.AUTO_CONTAIN.value
+            or expectations.get("final_disposition") == Disposition.AUTO_CONTAIN.value
+        )
+        if wants_auto_contain:
+            preconditions = setup.get("policy_preconditions", {})
+            _maybe_apply_permissive_containment(
+                store,
+                base,
+                proposed_disposition=Disposition.AUTO_CONTAIN.value,
+                preconditions=preconditions if isinstance(preconditions, Mapping) else None,
+            )
     alert_identity = str(setup.get("alert_identity", scenario.scenario_id))
     kwargs: dict[str, Any] = {
         "alert_identity": alert_identity,
@@ -695,6 +794,21 @@ def _apply_policy_setup(store: StateStore, setup: Mapping[str, Any], verifier: T
             store, base, containment_policy=policy
         )
 
+    if isinstance(preconditions, Mapping) and preconditions.get("deny_only_rule"):
+        host_id = str(setup.get("host_id", "ws-01"))
+        deny_policy = ContainmentPolicy(
+            rules=[
+                ContainmentRule(
+                    name="host_deny",
+                    action="deny",
+                    scope={"target_type": "host", "target_id": host_id},
+                ),
+            ],
+        )
+        snapshot_override = _persist_snapshot_with_overrides(
+            store, base, containment_policy=deny_policy
+        )
+
     emergency = setup.get("emergency_never_contain")
     if isinstance(emergency, dict):
         add_emergency_never_contain(
@@ -731,6 +845,16 @@ def _apply_policy_setup(store: StateStore, setup: Mapping[str, Any], verifier: T
                 (FIXED_NOW.isoformat(), BreakerDomain.CONTAINMENT.value),
             )
             store.conn.commit()
+
+    proposed = str(setup.get("proposed_disposition", ""))
+    permissive = _maybe_apply_permissive_containment(
+        store,
+        base,
+        proposed_disposition=proposed,
+        preconditions=preconditions if isinstance(preconditions, Mapping) else None,
+    )
+    if permissive is not None:
+        snapshot_override = permissive
 
     return snapshot_override
 
@@ -985,6 +1109,12 @@ def _run_revocation_feed_degraded_mode(
 
     auto_expect = expectations.get("auto_contain")
     if isinstance(auto_expect, dict):
+        base = snapshot
+        snapshot = _persist_snapshot_with_overrides(
+            store,
+            base,
+            containment_policy=_permissive_containment_policy(),
+        )
         bundle = _host_bundle(host_id=str(setup.get("host_id", "ws-01")))
         judgment = _judgment_for_bundle(bundle, proposed=Disposition.AUTO_CONTAIN)
         blocked = evaluate_policy_gate(

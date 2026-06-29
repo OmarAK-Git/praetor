@@ -1,0 +1,17 @@
+schema_version: "1"
+scenario_id: insufficient_corroboration
+description: Host auto_contain with a single cited provenance escalates insufficient_corroboration.
+runner: policy_gate
+setup:
+  alert_identity: insufficient_corroboration
+  bundle: host
+  host_id: ws-01
+  proposed_disposition: auto_contain
+  citation_refs:
+    - evidence_id: ev-host-sysmon
+      field_path: process_name
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - insufficient_corroboration
+  system_fault_escalation: false

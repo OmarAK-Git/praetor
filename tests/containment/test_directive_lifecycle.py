@@ -6,7 +6,11 @@ from datetime import timedelta
 
 import pytest
 from tests.containment.conftest import NOW, sample_host_directive
-from tests.policy.conftest import auto_contain_judgment, host_bundle
+from tests.policy.conftest import (
+    auto_contain_judgment,
+    host_bundle,
+    permissive_org_snapshot,
+)
 
 from praetor.containment.lifecycle import (
     build_proposed_directive_in_transaction,
@@ -229,11 +233,12 @@ def test_minimum_feed_sequence_excludes_pending_unexported(
 
 def test_consumer_verifies_embedded_hash(activated, org_snapshot) -> None:
     bundle = host_bundle(host_id="ws-01")
+    snapshot = permissive_org_snapshot(activated, org_snapshot)
     result = evaluate_policy_gate(
         activated.conn,
         judgment=auto_contain_judgment(bundle),
         evidence_bundle=bundle,
-        org_snapshot=org_snapshot,
+        org_snapshot=snapshot,
         alert_identity="ALERT-CONSUMER",
         decision_id="dec-consumer",
         now=NOW,

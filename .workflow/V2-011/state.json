@@ -1,0 +1,10 @@
+{
+  "task_id": "V2-011",
+  "title": "Host Auto-Contain Corroboration Floor",
+  "tier": "T3",
+  "status": "complete",
+  "branch": "feature/v2-011-host-corroboration-floor",
+  "worktree": ".worktrees/feature/v2-011-host-corroboration-floor",
+  "depends_on": ["V2-002"],
+  "started_at": "2026-06-29"
+}

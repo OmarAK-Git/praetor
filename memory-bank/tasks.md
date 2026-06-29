@@ -15,8 +15,9 @@ Index of `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints
 | V2-003 | Revocation and Snapshot Owner Decisions | V2-0 | **complete** | — | M |
 | V2-004 | Provider Unavailable Outcome Matrix Row | V2-0 | **complete** | — | S |
 | V2-005 | Strict ContainmentRule Schema and Scope Preflight | V2-1 | **complete** | V2-001 | L |
+| V2-011 | Host Auto-Contain Corroboration Floor | V2-2 | **complete** | V2-002 | L |
 
-**Next up:** V2-006 (Gate 1); V2 Gate 1 in progress (V2-005 – V2-010).
+**Next up:** V2-006 (Gate 1); V2 Gate 1 in progress (V2-005 – V2-010). V2-012 next in sprint V2-2 after Gate 2 tasks.
 
 Full task definitions, tests-first criteria, file paths, and done-when gates: **`docs/proposals/v2_implementation_plan.md`**.
 
@@ -99,7 +100,11 @@ Full task definitions, tests-first criteria, file paths, and done-when gates: **
 - Proposed org-config sweep artifacts remain non-activatable.
 - Marker-gated tests for real providers / live Splunk; fixture-backed tests in default suite.
 
-## V2 — complete (Gate 0 + Gate 1 partial)
+## V2 — complete (Gate 0 + Gate 1 partial + V2-011)
+
+| ID | Task | Evidence |
+|---|---|---|
+| V2-011 | Host Auto-Contain Corroboration Floor | `.workflow/V2-011/verification.md` — insufficient_corroboration wired; pytest 792 (excl. splunk); harness 31/31 |
 
 | ID | Task | Evidence |
 |---|---|---|

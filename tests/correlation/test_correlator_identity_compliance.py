@@ -9,6 +9,8 @@ from pathlib import Path
 from tests.policy.conftest import (
     NOW,
     auto_contain_judgment,
+    host_auto_contain_policy,
+    permissive_org_snapshot,
     persist_snapshot_with_overrides,
 )
 
@@ -33,6 +35,7 @@ from praetor.policy.gate import PolicyGateEvaluation, evaluate_policy_gate
 from praetor.policy.identity import (
     ACCOUNT_CONTAINMENT_DISABLED,
     AMBIGUOUS_TARGET_IDENTITY,
+    INSUFFICIENT_CORROBORATION,
     evaluate_account_containment_eligibility,
 )
 from praetor.state.store import StateStore
@@ -105,14 +108,20 @@ def _run_policy_gate(
     *,
     alert_identity: str,
     extra_refs: list[CitedEvidenceRef] | None = None,
+    permissive_policy: bool = True,
 ) -> PolicyGateEvaluation:
+    snapshot = (
+        permissive_org_snapshot(activated, org_snapshot)
+        if permissive_policy
+        else org_snapshot
+    )
     refs = extra_refs or [_judgment_for_bundle(bundle)]
     judgment = auto_contain_judgment(bundle, refs=refs)
     return evaluate_policy_gate(
         activated.conn,
         judgment=judgment,
         evidence_bundle=bundle,
-        org_snapshot=org_snapshot,
+        org_snapshot=snapshot,
         alert_identity=alert_identity,
         decision_id=f"dec-{alert_identity.lower()}",
         now=NOW,
@@ -182,11 +191,10 @@ def test_two_sysmon_facts_reject_corroboration_and_host_contain_via_policy_gate(
         bundle,
         alert_identity="ALERT-2-SYSMON",
     )
-    assert result.final_disposition == Disposition.AUTO_CONTAIN
+    assert result.final_disposition == Disposition.ESCALATE
+    assert result.fault_flags == [INSUFFICIENT_CORROBORATION]
     assert AMBIGUOUS_TARGET_IDENTITY not in result.fault_flags
-    assert result.containment_directive is not None
-    assert result.containment_directive.target_type == TargetType.HOST
-    assert result.containment_directive.target_id == "WORKSTATION1"
+    assert result.containment_directive is None
 
 
 def test_ambiguous_sysmon_sets_ambiguity_flag() -> None:
@@ -220,10 +228,10 @@ def test_ambiguous_sysmon_only_resolves_host_via_policy_gate(
         bundle,
         alert_identity="ALERT-AMB-SYSMON",
     )
-    assert result.final_disposition == Disposition.AUTO_CONTAIN
+    assert result.final_disposition == Disposition.ESCALATE
+    assert result.fault_flags == [INSUFFICIENT_CORROBORATION]
     assert AMBIGUOUS_TARGET_IDENTITY not in result.fault_flags
-    assert result.containment_directive is not None
-    assert result.containment_directive.target_type == TargetType.HOST
+    assert result.containment_directive is None
 
 
 def test_corroborated_ambiguous_identity_auto_contain_when_gate_enabled(
@@ -246,6 +254,7 @@ def test_corroborated_ambiguous_identity_auto_contain_when_gate_enabled(
         activated,
         org_snapshot,
         account_auto_contain_enabled=True,
+        containment_policy=host_auto_contain_policy(),
     )
     security_fact = next(
         fact for fact in bundle.facts if fact.provenance_path == WINDOWS_SECURITY_LOG
@@ -306,6 +315,7 @@ def test_real_correlated_bundle_account_auto_contain_when_gate_enabled(
         activated,
         org_snapshot,
         account_auto_contain_enabled=True,
+        containment_policy=host_auto_contain_policy(),
     )
     security_fact = next(
         fact for fact in bundle.facts if fact.provenance_path == WINDOWS_SECURITY_LOG

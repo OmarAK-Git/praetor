@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from tests.policy.conftest import NOW, host_bundle
+from tests.policy.conftest import (
+    NOW,
+    auto_contain_judgment,
+    host_bundle,
+    permissive_org_snapshot,
+)
 
 from praetor.hashing import compute_never_contain_entries_hash
 from praetor.policy.containment_policy import ContainmentTarget
@@ -13,13 +18,13 @@ from praetor.state.sqlite_guard import critical_transaction
 
 def test_directive_embedded_hash_matches_via_gate(activated, org_snapshot) -> None:
     bundle = host_bundle(host_id="ws-01")
-    from tests.policy.conftest import auto_contain_judgment
+    snapshot = permissive_org_snapshot(activated, org_snapshot)
 
     result = evaluate_policy_gate(
         activated.conn,
         judgment=auto_contain_judgment(bundle),
         evidence_bundle=bundle,
-        org_snapshot=org_snapshot,
+        org_snapshot=snapshot,
         alert_identity="ALERT-HASH-GATE",
         decision_id="dec-hash-gate",
         now=NOW,

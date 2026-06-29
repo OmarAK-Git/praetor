@@ -11,5 +11,8 @@ build/
 venv/
 tmp-*.db
 state/
+.worktrees/
 *.db
 /dream-loop-success-story.md
+.worktrees/
+.worktrees/
