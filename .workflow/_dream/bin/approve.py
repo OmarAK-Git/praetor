@@ -123,10 +123,18 @@ def main(argv: list[str] | None = None) -> int:
     dl.atomic_write(digest_file, dl.render_digest_text(dl.parse_playbook(new_body)))
 
     # diff entry sets for the ledger
-    old_ids = {e.id for e in dl.parse_markers(playbook_text)}
+    old_markers = dl.parse_markers(playbook_text)
+    old_ids = {e.id for e in old_markers}
+    old_superseded = {e.id for e in old_markers if e.status == "superseded"}
     new_entries = dl.parse_markers(new_body)
     added = [e.id for e in new_entries if e.id not in old_ids]
-    superseded = [e.id for e in new_entries if e.status == "superseded"]
+    # Only entries THIS promotion newly superseded — not ones already superseded
+    # in the prior playbook (those were attributed to the run that did it).
+    superseded = [
+        e.id
+        for e in new_entries
+        if e.status == "superseded" and e.id not in old_superseded
+    ]
 
     # (3) Append-only provenance ledger.
     record: dict[str, Any] = {
