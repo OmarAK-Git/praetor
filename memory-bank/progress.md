@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-06-29 — V2-012 complete (Gate 2 continued)
+
+- **DEC-058 default_action primitive:** required typed field on `ContainmentPolicy`; preflight `missing_default_action` / invalid action; policy layer applies `default_action` when no scoped rule matches.
+- Example org: `default_action: escalate`, empty `rules`; snapshot hash re-pinned (`fe7421df…`).
+- Flight Recorder: `.workflow/V2-012/`.
+- Verification: pytest **834** passed, 2 deselected, 1 xfailed; mypy **118** clean; ruff clean.
+- Follow-on: V2-013 eval/walkthrough posture flip.
+
 ## 2026-06-29 — V2-010 complete (Gate 1 closed)
 
 - **DEC-060 implementation:** `fetch_orphan_outstanding_directives`, `surface_orphan_outstanding_directive_alerts`, stable alert_id per directive; recovery `auto_contain` downgrade tests (success + failed stamp paths).

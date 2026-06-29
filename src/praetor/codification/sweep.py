@@ -43,14 +43,8 @@ _DEFAULT_POLICY_TEMPLATE: dict[str, Any] = {
         "notes": "Placeholder — replace after SOC review of sweep output.",
     },
     "containment_policy": {
-        "precedence": ["deny_over_allow"],
-        "rules": [
-            {
-                "name": "default_escalate",
-                "action": "escalate",
-                "scope": {"catch_all": True},
-            },
-        ],
+        "default_action": "escalate",
+        "rules": [],
     },
     "account_auto_contain_enabled": False,
     "directive_lifetime_policy": {"max_lifetime_seconds": 300},

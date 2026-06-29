@@ -102,6 +102,7 @@ def test_duplicate_yaml_keys_rejected(tmp_path: Path) -> None:
 def test_containment_conflict_without_precedence_fails() -> None:
     doc = load_org_config_document(EXAMPLE_CONFIG)
     doc["containment_policy"] = {
+        "default_action": "escalate",
         "rules": [
             {"name": "a", "action": "allow", "scope": {"catch_all": True}},
             {"name": "b", "action": "deny", "scope": {"catch_all": True}},
@@ -166,6 +167,7 @@ def test_unknown_containment_policy_key_rejected() -> None:
 def test_containment_rule_scopes_round_trip() -> None:
     doc = load_org_config_document(EXAMPLE_CONFIG)
     doc["containment_policy"] = {
+        "default_action": "escalate",
         "precedence": ["deny_over_allow"],
         "rules": [
             {
@@ -193,6 +195,28 @@ def test_containment_rule_scopes_round_trip() -> None:
     }
     assert rules[1].scope.model_dump() == {"asset_id": "eng-workstation-pool"}
     assert rules[2].scope.model_dump() == {"catch_all": True}
+
+
+def test_missing_default_action_fails_preflight() -> None:
+    doc = load_org_config_document(EXAMPLE_CONFIG)
+    del doc["containment_policy"]["default_action"]
+    with pytest.raises(PreflightError) as exc:
+        preflight_document(doc)
+    assert exc.value.code == "missing_default_action"
+
+
+def test_invalid_default_action_fails_preflight() -> None:
+    doc = load_org_config_document(EXAMPLE_CONFIG)
+    doc["containment_policy"]["default_action"] = "permit_all"
+    with pytest.raises(PreflightError) as exc:
+        preflight_document(doc)
+    assert exc.value.code == "invalid_containment_policy"
+
+
+def test_default_action_round_trips_in_snapshot() -> None:
+    snapshot = preflight_path(EXAMPLE_CONFIG)
+    assert snapshot.containment_policy.default_action == "escalate"
+    assert snapshot.containment_policy.rules == []
 
 
 def test_missing_revocation_feed_section_fails() -> None:

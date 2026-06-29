@@ -1,0 +1,15 @@
+{
+  "run": "V2-012",
+  "status": "complete",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-29",
+  "tasks": [
+    {"id": "T-001", "status": "completed", "owner": "agent", "notes": "schema"},
+    {"id": "T-002", "status": "completed", "owner": "agent", "notes": "preflight"},
+    {"id": "T-003", "status": "completed", "owner": "agent", "notes": "policy layer"},
+    {"id": "T-004", "status": "completed", "owner": "agent", "notes": "example config"},
+    {"id": "T-005", "status": "completed", "owner": "agent", "notes": "tests"}
+  ]
+}

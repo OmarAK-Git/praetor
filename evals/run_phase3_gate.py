@@ -224,7 +224,7 @@ def _auto_contain_judgment(
         proposed_disposition=Disposition.AUTO_CONTAIN,
         cited_evidence_refs=refs,
         key_tells=["phase3-gate"],
-        org_config_refs=["containment_policy.default_escalate"],
+        org_config_refs=["containment_policy.default_action"],
         benign_alternatives=[],
         benign_alternatives_ruled_out=[],
         convergence_reasoning="phase3 gate",

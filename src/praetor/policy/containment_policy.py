@@ -248,6 +248,21 @@ def _rule_scope_matches_target(
     return False
 
 
+def _evaluation_for_containment_action(action: str) -> TargetPolicyEvaluation:
+    normalized = action.lower()
+    if normalized == "deny":
+        return TargetPolicyEvaluation(
+            action=PolicyAction.DENY,
+            fault_flag=CONTAINMENT_POLICY_DENIED,
+        )
+    if normalized == "escalate":
+        return TargetPolicyEvaluation(
+            action=PolicyAction.ESCALATE,
+            fault_flag=CONTAINMENT_POLICY_ESCALATION_REQUIRED,
+        )
+    return TargetPolicyEvaluation(action=PolicyAction.ALLOW)
+
+
 def evaluate_target_containment_policy(
     snapshot: OrgConfigSnapshot,
     target: ContainmentTarget,
@@ -260,6 +275,10 @@ def evaluate_target_containment_policy(
         if _rule_scope_matches_target(snapshot, rule.scope, target):
             matched_actions.append(rule.action)
     distinct = {action.lower() for action in matched_actions}
+    if not distinct:
+        return _evaluation_for_containment_action(
+            snapshot.containment_policy.default_action
+        )
     permitting = distinct & _PERMITTING_ACTIONS
     blocking = distinct & _BLOCKING_ACTIONS
     if permitting and blocking and not precedence:

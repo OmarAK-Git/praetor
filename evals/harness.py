@@ -445,7 +445,7 @@ def _judgment_for_bundle(
         proposed_disposition=proposed,
         cited_evidence_refs=cited_refs,
         key_tells=["eval"],
-        org_config_refs=["containment_policy.default_escalate"],
+        org_config_refs=["containment_policy.default_action"],
         benign_alternatives=[],
         benign_alternatives_ruled_out=[],
         convergence_reasoning="eval",
@@ -508,13 +508,8 @@ def _persist_snapshot_with_overrides(
 
 def _permissive_containment_policy() -> ContainmentPolicy:
     return ContainmentPolicy(
-        rules=[
-            ContainmentRule(
-                name="allow_hosts",
-                action="auto_contain",
-                scope={"catch_all": True},
-            ),
-        ],
+        default_action="auto_contain",
+        rules=[],
     )
 
 
@@ -794,6 +789,7 @@ def _apply_policy_setup(store: StateStore, setup: Mapping[str, Any], verifier: T
     preconditions = setup.get("policy_preconditions", {})
     if isinstance(preconditions, Mapping) and preconditions.get("conflicting_containment_rules"):
         policy = ContainmentPolicy(
+            default_action="escalate",
             rules=[
                 ContainmentRule.model_validate(
                     {
@@ -819,6 +815,7 @@ def _apply_policy_setup(store: StateStore, setup: Mapping[str, Any], verifier: T
     if isinstance(preconditions, Mapping) and preconditions.get("deny_only_rule"):
         host_id = str(setup.get("host_id", "ws-01"))
         deny_policy = ContainmentPolicy(
+            default_action="escalate",
             rules=[
                 ContainmentRule(
                     name="host_deny",

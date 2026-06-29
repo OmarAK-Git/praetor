@@ -61,7 +61,8 @@ class ContainmentRule(ContractModel):
 
 
 class ContainmentPolicy(ContractModel):
-    rules: list[ContainmentRule] = Field(..., min_length=1)
+    default_action: ContainmentActionLiteral
+    rules: list[ContainmentRule] = Field(default_factory=list)
     precedence: list[str] | None = None
 
 

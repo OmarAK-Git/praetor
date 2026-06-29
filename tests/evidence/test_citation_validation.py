@@ -46,7 +46,7 @@ def _judgment(
         proposed_disposition=proposed,
         cited_evidence_refs=[] if refs is None else refs,
         key_tells=["suspicious process"],
-        org_config_refs=["containment_policy.default_escalate"],
+        org_config_refs=["containment_policy.default_action"],
         benign_alternatives=["admin script"],
         benign_alternatives_ruled_out=["no change window"],
         convergence_reasoning="process behavior matched the alert",

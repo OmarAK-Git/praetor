@@ -18,7 +18,7 @@ from praetor.contracts.disposition import Disposition
 from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
 from praetor.contracts.judgment import CitedEvidenceRef, ModelJudgment
 from praetor.contracts.org_config import OrgConfigSnapshot
-from praetor.contracts.org_config_sections import ContainmentPolicy, ContainmentRule
+from praetor.contracts.org_config_sections import ContainmentPolicy
 from praetor.evidence.provenance import SYSMON_EVENT_LOG, WINDOWS_SECURITY_LOG
 from praetor.state.store import StateStore, open_state_store
 
@@ -162,7 +162,7 @@ def auto_contain_judgment(
         proposed_disposition=Disposition.AUTO_CONTAIN,
         cited_evidence_refs=refs,
         key_tells=["test"],
-        org_config_refs=["containment_policy.default_escalate"],
+        org_config_refs=["containment_policy.default_action"],
         benign_alternatives=[],
         benign_alternatives_ruled_out=[],
         convergence_reasoning="test",
@@ -202,15 +202,10 @@ def persist_snapshot_with_overrides(
 
 
 def host_auto_contain_policy() -> ContainmentPolicy:
-    """Catch-all permit policy for tests that need gate auto_contain to succeed."""
+    """Permissive policy for tests that need gate auto_contain to succeed."""
     return ContainmentPolicy(
-        rules=[
-            ContainmentRule(
-                name="allow_hosts",
-                action="auto_contain",
-                scope={"catch_all": True},
-            ),
-        ],
+        default_action="auto_contain",
+        rules=[],
     )
 
 

@@ -243,6 +243,7 @@ def test_sole_escalate_rule_blocks_auto_contain(activated, org_snapshot) -> None
 
 def test_sole_deny_rule_blocks_auto_contain(activated, org_snapshot) -> None:
     policy = ContainmentPolicy(
+        default_action="escalate",
         rules=[
             ContainmentRule(
                 name="host_deny",
@@ -264,6 +265,7 @@ def test_sole_deny_rule_blocks_auto_contain(activated, org_snapshot) -> None:
 
 def test_policy_ambiguity_escalates(activated, org_snapshot) -> None:
     policy = ContainmentPolicy(
+        default_action="escalate",
         rules=[
             ContainmentRule.model_validate(
                 {

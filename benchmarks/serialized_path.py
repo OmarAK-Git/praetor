@@ -126,7 +126,7 @@ def _auto_contain_judgment(bundle: EvidenceBundle) -> ModelJudgment:
             ),
         ],
         key_tells=["benchmark"],
-        org_config_refs=["containment_policy.default_escalate"],
+        org_config_refs=["containment_policy.default_action"],
         benign_alternatives=[],
         benign_alternatives_ruled_out=[],
         convergence_reasoning="benchmark",

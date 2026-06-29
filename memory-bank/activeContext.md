@@ -8,7 +8,7 @@
 
 **Sprint V2-1 (Safety-Critical V1 Gap Closure):** V2-005 through V2-010 complete. **V2 Gate 1 closed.**
 
-**Sprint V2-2 (Authorization Rewire Foundations):** V2-011 complete. **V2-012** next — default action primitive (Gate 2).
+**Sprint V2-2 (Authorization Rewire Foundations):** V2-011 and V2-012 complete. **V2-013** next — posture flip (Gate 2).
 
 ## Build order (V2)
 
@@ -24,7 +24,7 @@
 
 ## Current blockers
 
-- **V2 Gate 2** — V2-012 default action primitive is next.
+- **V2 Gate 2** — V2-013 default-deny / configurable posture flip is next.
 - REVIEW-004 correlator cross-host xfail → V2-014.
 - Live Splunk HEC demo env-gated → V2-029.
 

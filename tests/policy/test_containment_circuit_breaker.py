@@ -64,6 +64,7 @@ def _permissive_snapshot(store, base, *, failure_threshold: int = 2):
             ]
         ),
         containment_policy=ContainmentPolicy(
+            default_action="auto_contain",
             precedence=["deny_over_allow"],
             rules=[
                 ContainmentRule(
@@ -192,6 +193,7 @@ def test_breaker_recovers_after_window_elapses(activated, org_snapshot) -> None:
             ]
         ),
         containment_policy=ContainmentPolicy(
+            default_action="auto_contain",
             precedence=["deny_over_allow"],
             rules=[
                 ContainmentRule(

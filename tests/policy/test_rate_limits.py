@@ -52,6 +52,7 @@ def _snapshot_with_registry(store, base, entries: list[AssetEntry]):
         base,
         assets_and_asset_groups=AssetsAndAssetGroups(entries=entries),
         containment_policy=ContainmentPolicy(
+            default_action="auto_contain",
             precedence=["deny_over_allow"],
             rules=[
                 ContainmentRule(
@@ -140,6 +141,7 @@ def test_per_asset_group_scope_collapses_to_per_host_for_v1(
             ]
         ),
         containment_policy=ContainmentPolicy(
+            default_action="auto_contain",
             precedence=["deny_over_allow"],
             rules=[
                 ContainmentRule(

@@ -229,9 +229,16 @@ def _validate_rate_limit_scopes(policy: Any) -> None:
 def _validate_containment_policy(policy: Any) -> None:
     if not isinstance(policy, dict):
         raise PreflightError("invalid_containment_policy", "containment_policy must be a mapping")
+    if "default_action" not in policy:
+        raise PreflightError(
+            "missing_default_action",
+            "containment_policy.default_action is required",
+        )
     rules = policy.get("rules")
-    if not isinstance(rules, list) or not rules:
+    if rules is None:
         raise PreflightError("invalid_containment_policy", "containment_policy.rules required")
+    if not isinstance(rules, list):
+        raise PreflightError("invalid_containment_policy", "containment_policy.rules must be a list")
     for rule in rules:
         if not isinstance(rule, dict):
             raise PreflightError("invalid_containment_policy", "each rule must be a mapping")
@@ -266,8 +273,10 @@ def _validate_containment_policy_conflicts(policy: Any) -> None:
     if not isinstance(policy, dict):
         raise PreflightError("invalid_containment_policy", "containment_policy must be a mapping")
     rules = policy.get("rules")
-    if not isinstance(rules, list) or not rules:
+    if rules is None:
         raise PreflightError("invalid_containment_policy", "containment_policy.rules required")
+    if not isinstance(rules, list):
+        raise PreflightError("invalid_containment_policy", "containment_policy.rules must be a list")
     precedence = policy.get("precedence")
     if precedence is not None:
         if not isinstance(precedence, list) or not precedence:

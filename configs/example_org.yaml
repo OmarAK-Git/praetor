@@ -32,13 +32,8 @@ business_context:
   notes: Example org for development and tests.
 
 containment_policy:
-  precedence:
-    - deny_over_allow
-  rules:
-    - name: default_escalate
-      action: escalate
-      scope:
-        catch_all: true
+  default_action: escalate
+  rules: []
 
 account_auto_contain_enabled: false
 

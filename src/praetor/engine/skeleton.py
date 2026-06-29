@@ -61,7 +61,7 @@ def skeleton_model_judgment(
         proposed_disposition=proposed,
         cited_evidence_refs=refs,
         key_tells=["walking-skeleton"],
-        org_config_refs=["containment_policy.default_escalate"],
+        org_config_refs=["containment_policy.default_action"],
         benign_alternatives=["scheduled task"],
         benign_alternatives_ruled_out=["none"],
         convergence_reasoning="skeleton fixture",
