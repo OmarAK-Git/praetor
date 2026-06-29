@@ -49,6 +49,7 @@ from praetor.judgment.provider import (
     ProviderRefusalError,
     ProviderRetryPolicy,
     ProviderTimeoutError,
+    ProviderUnavailableError,
 )
 from praetor.metrics.collector import MetricsCollector
 from praetor.metrics.events import BreakerMetricDomain, OutcomeMatrixFaultFlag
@@ -364,6 +365,14 @@ def process_alert_intake(
             attempt,
             judgment_provider,
             fault_flag=OutcomeMatrixFaultFlag.PROVIDER_REFUSAL.value,
+            metrics_collector=metrics_collector,
+        )
+    except ProviderUnavailableError:
+        return _finish_provider_fault(
+            store,
+            attempt,
+            judgment_provider,
+            fault_flag=OutcomeMatrixFaultFlag.PROVIDER_UNAVAILABLE.value,
             metrics_collector=metrics_collector,
         )
     calls = getattr(judgment_provider, "calls", 0)

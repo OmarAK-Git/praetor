@@ -1,0 +1,12 @@
+schema_version: "1"
+scenario_id: provider_unavailable
+description: Provider unavailable escalates with system_fault_escalation true.
+runner: engine_intake
+setup:
+  alert_identity: provider_unavailable
+  provider_mode: unavailable
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - provider_unavailable
+  system_fault_escalation: true

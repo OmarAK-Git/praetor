@@ -19,6 +19,7 @@ OUTCOME_MATRIX_SFE: dict[OutcomeMatrixFaultFlag, bool] = {
     OutcomeMatrixFaultFlag.PROVIDER_MALFORMED_JSON: True,
     OutcomeMatrixFaultFlag.PROVIDER_TIMEOUT: True,
     OutcomeMatrixFaultFlag.PROVIDER_REFUSAL: True,
+    OutcomeMatrixFaultFlag.PROVIDER_UNAVAILABLE: True,
     OutcomeMatrixFaultFlag.NEVER_CONTAIN_SNAPSHOT: False,
     OutcomeMatrixFaultFlag.NEVER_CONTAIN_LIVE_CONFLICT: False,
     OutcomeMatrixFaultFlag.AMBIGUOUS_TARGET_IDENTITY: False,

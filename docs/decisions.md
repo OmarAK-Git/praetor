@@ -19,7 +19,8 @@ This file records implementation choices that refine or operationalize those doc
 | DEC-057 | 2026-06-16 | Sweep placeholder activation scan (`collect_sweep_placeholder_violations`) covers only safety-critical fields: `assets_and_asset_groups.entries[].subnet_membership` and `containment_exclusions.never_contain[].target_id`. Advisory placeholder prose in `business_context.notes` and `normal_admin_patterns[].description` is intentionally **not** activation-blocking — SOC review reminders, not containment topology | Subnet and never-contain target IDs directly affect isolation scope; narrative fields are review prompts and do not gate containment decisions | `src/praetor/codification/placeholders.py`, `src/praetor/codification/sweep.py`, `tests/codification/test_sweep.py` |
 | DEC-058 | 2026-06-29 | V2 containment authorization posture is **deployment-configurable** via a required `default_action` on `ContainmentPolicy`; v1 implicit default-allow is **retired drift**; sole matching `escalate` rules **block** `auto_contain` | Containment must be earned by explicit configuration, not granted by omission; operators need a catch-all primitive for progressive authorization; `escalate` as hint-only contradicts operator intent (example `default_escalate` + silent scope drop) | V2-001; `docs/proposals/v2_hardening.md` Item 2; implementation in V2-005–V2-006, V2-012–V2-013 |
 | DEC-059 | 2026-06-29 | V2 host corroboration floor: cited facts for host `auto_contain` require ≥2 distinct `provenance_path` values with ≥1 non-attacker-controllable; sole `ambiguity_flag=true` cited fact cannot authorize host containment; fault flag `insufficient_corroboration` (`system_fault_escalation=false`); account path unchanged (`ambiguous_target_identity`) | v1 solved citation-anchored targeting (DEC-052) but not evidence sufficiency; extends account corroboration discipline to hosts; raises bar from single forged log line to convergent independent collection paths | V2-002; `docs/contracts.md` §12a/§13; implementation in V2-011 |
-| DEC-060 | 2026-06-29 | V2 revocation/snapshot semantics: `NeverContainSnapshotRecord` appended only in engine post-stamp transaction paired with `DecisionEdict` (not in PolicyGate); expired-directive fresh re-issue retains §4.2 carve-out (no revocation record/feed row, `supersedes_directive_id` unset); expired-unrevoked rows may remain in SQLite but are excluded from step-6 idempotency; orphan directives without ledger edicts are skipped at step 6 and surfaced as operator health condition (V2-010) | Closes REVIEW-007/008 and startup ambiguity blocking V2-009/V2-010/V2-018; ratifies existing v1 behavior where tests already pass; prevents feed inflation on natural expiry and duplicate idempotency on half-commits | V2-003; `docs/contracts.md` §4.2/§7a; implementation in V2-009, V2-010, V2-018 |
+| DEC-060 | 2026-06-29 | V2 revocation/snapshot semantics: `NeverContainSnapshotRecord` appended only in engine post-stamp transaction paired with `DecisionEdict` (not in PolicyGate); `snapshot_content` is the gate-supplied full live never-contain list from serializable PolicyGate evaluation (conflict rebuild paths may refresh); expired-directive fresh re-issue retains §4.2 carve-out; expired-unrevoked rows excluded from step-6 idempotency; orphan directives skipped at step 6 and surfaced in V2-010 | Closes REVIEW-007/008 timing ambiguity; ratifies v1 intake behavior; commit-time-only capture is not the v1 contract | V2-003; `docs/contracts.md` §4.2/§7a; V2-003 reopen 2026-06-29 |
+| DEC-061 | 2026-06-29 | V2 `provider_unavailable` Outcome Matrix row for `ProviderUnavailableError`: `escalate` with `system_fault_escalation=true`; distinct from `provider_timeout`, `provider_refusal`, and `provider_health_breaker_open`; breaker tripping unchanged | Intake lacked documented fault flag for provider unavailability; closes Gate 0 provider mapping | V2-004; `docs/contracts.md` §13; V2-007 extends intake/metrics tests |
 
 Add rows when implementation choices diverge from or refine authoritative docs.
 
@@ -168,10 +169,23 @@ Any new `provenance_path` introduced by a correlation normalizer defaults to **a
 **Decision:** Option 2 — engine edict-append pairing (refines DEC-028 and DEC-053).
 
 - PolicyGate is a **pure evaluator** and must **not** append `NeverContainSnapshotRecord` (or any ledger row).
-- The gate returns `live_never_contain_entries` captured at evaluation time.
-- The engine appends `NeverContainSnapshotRecord` and `DecisionEdict` in **one** terminal post-stamp `critical_transaction`, using the full live list at commit time.
+- The engine appends `NeverContainSnapshotRecord` and `DecisionEdict` in **one** terminal post-stamp `critical_transaction`.
 - `DecisionEdict.live_never_contain_hash` must match the snapshot record's `snapshot_content` hash (§9 relationship paragraph).
 - **No duplicate snapshot writes** — exactly one snapshot record per qualifying edict commit.
+
+### NeverContainSnapshotRecord `snapshot_content` timing (V2-003 reopen)
+
+**Decision:** Ratify existing v1 intake behavior — **gate-evaluation capture**, not commit-time re-read as the default contract.
+
+On the production intake path (`evaluate_policy_gate(..., persist_directive=False)` → terminal stamp → engine commit):
+
+1. PolicyGate returns `live_never_contain_entries`: the **full** combined permanent + active-emergency list read inside the gate's serializable evaluation transaction (`read_live_never_contain_entries` at in-tx refresh time).
+2. The engine uses that gate-supplied tuple as `NeverContainSnapshotRecord.snapshot_content` when building and appending the paired edict + snapshot (empty tuple may fall back to a live read — v1 seam only).
+3. **Conflict rebuild paths** (e.g. `DeferredDirectivePersistConflict` between gate evaluation and post-stamp persist) **may refresh** `snapshot_content` via `read_live_never_contain_entries` immediately before rebuilding the edict and appending — the refreshed list is authoritative for that commit.
+
+**Not the v1 contract:** requiring commit-time `read_live_never_contain_entries` on every intake path regardless of gate output. That would be **implementation work** for an owning follow-on task if product intent changes; current code does not generally do that on the happy path.
+
+Recovery and other non-intake edict-append paths read the live list at their own commit site; they are out of V2-003 scope but are not the intake gate-evaluation capture model above.
 
 ### Expired-directive fresh re-issue (REVIEW-008)
 
@@ -214,3 +228,42 @@ An outstanding directive row whose `decision_id` has **no** matching ledger `Dec
 | V2-018 | Feed supersession verifiability aligned with DEC-060 expired vs live supersession split |
 
 **Doc placement.** §4.2 and §7a pins land in V2-003. `docs/spec.md` mirror deferred until spec unfreeze.
+
+## DEC-061 — Provider unavailable Outcome Matrix row
+
+**Status:** accepted (2026-06-29, V2-004)
+
+**Context.** TASK-019 wired `ProviderUnavailableError` into `provider_failure_trips_breaker`, but intake had no Outcome Matrix row — `process_alert_intake` could not map the exception to a documented fault flag (`docs/proposals/delivery_backlog.md` P1 row). V2 Gate 0 requires provider-unavailable mapping ratified before V2-007 intake hardening.
+
+### Fault flag and disposition
+
+**Decision:** add canonical fault flag **`provider_unavailable`** (not alias to `provider_timeout` or `provider_refusal`).
+
+| Condition | Disposition | Fault flag | system_fault_escalation |
+|---|---|---|---|
+| Typed `ProviderUnavailableError` before a successful judgment | `escalate` | `provider_unavailable` | `true` |
+
+**Covers:** provider integration not configured for live calls; transport/upstream failures surfaced as `ProviderUnavailableError` (e.g. HTTP 5xx, connection reset); immediate unavailability before bounded-retry timeout exhaustion.
+
+### Distinctions (must not conflate)
+
+| Signal | Fault flag | Notes |
+|---|---|---|
+| Bounded retry window exhausted without response | `provider_timeout` | PE-0019 / PE-0009 |
+| Provider explicitly refused judgment | `provider_refusal` | PE-0009 |
+| Provider-health breaker open blocks call | `provider_health_breaker_open` | Breaker gate, not provider exception mapping |
+| `ProviderUnavailableError` on production/probe call | `provider_unavailable` | This decision |
+
+### Provider-health breaker independence
+
+`ProviderUnavailableError` **continues** to count as a breaker-tripping production failure (`provider_failure_trips_breaker`). Breaker state transitions and final edict fault flags are **orthogonal**: tripping the breaker does not substitute `provider_health_breaker_open` for `provider_unavailable` on the edict emitted from the unavailable exception path unless the breaker open-check blocks the call first (existing behavior).
+
+### Implementation map
+
+| Follow-on | Delivers |
+|---|---|
+| V2-007 | Fuller intake tests, metrics `record_llm_failure` production wiring, breaker recording coverage |
+| V2-016 | Static guard: policy/engine literals ⊆ `OutcomeMatrixFaultFlag` |
+| V2-020 | Metrics production completeness |
+
+**Doc placement.** §13 row lands in V2-004; enum, `evals/outcome_matrix.py`, harness scenario, and minimal orchestrator catch in V2-004. `docs/spec.md` mirror deferred until spec unfreeze.

@@ -40,6 +40,7 @@ class OutcomeMatrixFaultFlag(StrEnum):
     PROVIDER_MALFORMED_JSON = "provider_malformed_json"
     PROVIDER_TIMEOUT = "provider_timeout"
     PROVIDER_REFUSAL = "provider_refusal"
+    PROVIDER_UNAVAILABLE = "provider_unavailable"
     NEVER_CONTAIN_SNAPSHOT = "never_contain_snapshot"
     NEVER_CONTAIN_LIVE_CONFLICT = "never_contain_live_conflict"
     AMBIGUOUS_TARGET_IDENTITY = "ambiguous_target_identity"
@@ -62,6 +63,7 @@ LLM_FAILURE_FAULT_FLAGS = frozenset(
         OutcomeMatrixFaultFlag.PROVIDER_MALFORMED_JSON,
         OutcomeMatrixFaultFlag.PROVIDER_TIMEOUT,
         OutcomeMatrixFaultFlag.PROVIDER_REFUSAL,
+        OutcomeMatrixFaultFlag.PROVIDER_UNAVAILABLE,
     }
 )
 

@@ -25,6 +25,7 @@ from praetor.judgment.provider import (
     ProviderRefusalError,
     ProviderRetryPolicy,
     ProviderTimeoutError,
+    ProviderUnavailableError,
     call_provider_with_retries,
 )
 from praetor.judgment.vertex_provider import VertexProvider
@@ -187,6 +188,32 @@ def test_provider_refusal_escalates(
         result.edict,
         final_disposition=Disposition.ESCALATE,
         fault_flags=["provider_refusal"],
+        system_fault_escalation=True,
+        proposed_disposition=Disposition.STANDARD_REVIEW,
+    )
+    assert_edict_snapshot_pairing(activated.conn, result.edict)
+
+
+def test_provider_unavailable_escalates(
+    activated: StateStore,
+) -> None:
+    provider = FakeProvider(mode=FakeProviderMode.UNAVAILABLE)
+
+    with pytest.raises(ProviderUnavailableError):
+        provider.generate_judgment(JudgmentRequest(scenario_id="provider_unavailable"))
+
+    result = process_alert_intake(
+        activated,
+        judgment_provider=provider,
+        stamp_backend=SucceedingStampBackend(),
+        alert_identity="ALERT-PROVIDER-UNAVAILABLE",
+    )
+
+    assert result.edict is not None
+    assert_outcome_matrix_edict(
+        result.edict,
+        final_disposition=Disposition.ESCALATE,
+        fault_flags=["provider_unavailable"],
         system_fault_escalation=True,
         proposed_disposition=Disposition.STANDARD_REVIEW,
     )

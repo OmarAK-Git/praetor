@@ -1,5 +1,21 @@
 # Progress Log
 
+## 2026-06-29 — V2-004 complete (Gate 0 closed)
+
+- Ratified **DEC-061**: `provider_unavailable` Outcome Matrix row (`escalate`, `system_fault_escalation=true`); distinct from `provider_timeout`, `provider_refusal`, `provider_health_breaker_open`; breaker tripping unchanged.
+- Updated `docs/contracts.md` §13, `docs/decisions.md`, `docs/proposals/delivery_backlog.md`.
+- Code: `OutcomeMatrixFaultFlag.PROVIDER_UNAVAILABLE`, `LLM_FAILURE_FAULT_FLAGS`, `evals/outcome_matrix.py`, `FakeProviderMode.UNAVAILABLE`, orchestrator catch, harness scenario `provider_unavailable.yaml`.
+- Tests: `tests/evals/test_provider_unavailable_matrix.py` (3), `test_provider_unavailable_escalates`.
+- Flight Recorder: `.workflow/V2-004/`.
+- Verification: pytest **785** passed, 2 deselected, 1 xfailed.
+- **V2 Gate 0 closed** (V2-001 – V2-004). Follow-on: V2-007 metrics/breaker intake tests.
+
+## 2026-06-29 — V2-003 reopen (snapshot_content timing)
+
+- Corrected DEC-060 / `docs/contracts.md` §7a: `snapshot_content` is gate-evaluation capture on intake (not commit-time re-read as default); conflict rebuild paths may refresh; commit-time-only capture marked as follow-on implementation work.
+- Flight Recorder: `.workflow/V2-003/` review/verification/final-report updated.
+- Verification: pytest **785**; DEC-060 grep pass. No code or behavioral test changes.
+
 ## 2026-06-29 — V2-003 complete
 
 - Ratified **DEC-060**: `NeverContainSnapshotRecord` engine-only append paired with `DecisionEdict`; expired re-issue retains §4.2 carve-out (no revocation record); expired-unrevoked rows excluded from step 6; orphan directives skipped + health surfacing deferred to V2-010.

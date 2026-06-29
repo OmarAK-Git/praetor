@@ -15,6 +15,7 @@ from praetor.judgment.provider import (
     ProviderProbeResult,
     ProviderRefusalError,
     ProviderTimeoutError,
+    ProviderUnavailableError,
     parse_model_judgment_json,
 )
 
@@ -24,6 +25,7 @@ class FakeProviderMode(StrEnum):
     MALFORMED_JSON = "malformed_json"
     TIMEOUT = "timeout"
     REFUSAL = "refusal"
+    UNAVAILABLE = "unavailable"
     FABRICATED_CITATION = "fabricated_citation"
 
 
@@ -42,6 +44,8 @@ class FakeProvider:
             raise ProviderTimeoutError("fake provider timeout")
         if mode == FakeProviderMode.REFUSAL:
             raise ProviderRefusalError("fake provider refusal")
+        if mode == FakeProviderMode.UNAVAILABLE:
+            raise ProviderUnavailableError("fake provider unavailable")
         if mode == FakeProviderMode.MALFORMED_JSON:
             return parse_model_judgment_json('{"schema_version": "1"')
         if mode == FakeProviderMode.FABRICATED_CITATION:

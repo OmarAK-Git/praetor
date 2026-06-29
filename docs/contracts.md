@@ -261,9 +261,13 @@ The v1 ledger is a hash-chained append-only audit log (see `docs/spec.md` § Led
 
 Field-level shapes of the four interleaved record types are in `schemas/decision_edict.json`, `schemas/directive_revocation_record.json`, `schemas/never_contain_snapshot_record.json`, and `schemas/emergency_never_contain_record.json`. The link construction is pinned here.
 
-### NeverContainSnapshotRecord append site (DEC-060)
+### NeverContainSnapshotRecord append site and `snapshot_content` timing (DEC-060)
 
-`NeverContainSnapshotRecord` is appended to the ledger **only** in the engine's terminal post-stamp `critical_transaction`, atomically paired with its `DecisionEdict` (DEC-028, DEC-053). PolicyGate is a pure evaluator and must not append ledger records. The gate supplies `live_never_contain_entries`; the engine captures the **full** live never-contain list at commit time. Exactly one snapshot record per qualifying edict commit — no duplicate snapshot writes inside PolicyGate.
+`NeverContainSnapshotRecord` is appended to the ledger **only** in the engine's terminal post-stamp `critical_transaction`, atomically paired with its `DecisionEdict` (DEC-028, DEC-053). PolicyGate is a pure evaluator and must not append ledger records. Exactly one snapshot record per qualifying edict commit — no duplicate snapshot writes inside PolicyGate.
+
+**`snapshot_content` on the intake path (v1 contract).** The gate returns `live_never_contain_entries`: the full combined permanent + active-emergency list captured during the serializable PolicyGate evaluation (`read_live_never_contain_entries` at in-tx refresh). The engine uses that gate-supplied list as `snapshot_content` when appending the paired snapshot + edict. **Conflict rebuild paths** (e.g. deferred-directive persist conflict between gate evaluation and post-stamp commit) may refresh via `read_live_never_contain_entries` immediately before rebuilding the edict; the refreshed list is authoritative for that commit.
+
+**Not v1.** Re-reading the live list at engine commit time on every intake path regardless of gate output would be implementation work for an owning follow-on task — current code does not generally do that on the happy path.
 
 ### Domain constant
 
@@ -490,6 +494,7 @@ The eval harness asserts, for every failure class, the disposition, the fault fl
 | Provider returned malformed JSON | escalate | `provider_malformed_json` | true |
 | Provider timed out past bounded retry | escalate | `provider_timeout` | true |
 | Provider refused | escalate | `provider_refusal` | true |
+| Provider unavailable (integration/transport/upstream failure before judgment) | escalate | `provider_unavailable` | true |
 | Target on snapshot never-contain list | escalate | `never_contain_snapshot` | false |
 | Target on live never-contain list at emission | escalate | `never_contain_live_conflict` | false |
 | Account target, insufficient identity corroboration | escalate | `ambiguous_target_identity` | false |
