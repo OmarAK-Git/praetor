@@ -1,0 +1,18 @@
+{
+  "task_id": "V2-010",
+  "title": "Recovery Policy Pinning",
+  "tier": "T3",
+  "status": "complete",
+  "branch": "task/V2-010-recovery-policy-pinning",
+  "worktree": "C:\\Users\\oalan\\Praetor-V2-010",
+  "depends_on": ["V2-003"],
+  "started_at": "2026-06-29",
+  "completed_at": "2026-06-29",
+  "requirements": ["REQ-001", "REQ-002", "REQ-003", "REQ-004"],
+  "implementation_tasks": {
+    "T-001": "complete",
+    "T-002": "complete",
+    "T-003": "complete",
+    "T-004": "complete"
+  }
+}

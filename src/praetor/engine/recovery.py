@@ -23,6 +23,7 @@ from praetor.config.state import (
 )
 from praetor.containment.revocation import (
     never_contain_conflict_alerts,
+    orphan_outstanding_directive_alert,
     revoke_directives_matching_never_contain,
 )
 from praetor.contracts.disposition import Disposition
@@ -43,7 +44,10 @@ from praetor.engine.skeleton import skeleton_model_judgment
 from praetor.hashing import derive_stamp_id
 from praetor.ledger.store import fetch_ledger_rows
 from praetor.policy.gate import QUEUE_AGING_EXCEEDED
-from praetor.policy.state import reconcile_policy_state
+from praetor.policy.state import (
+    fetch_orphan_outstanding_directives,
+    reconcile_policy_state,
+)
 from praetor.state.attempts import (
     AttemptState,
     ProcessingAttempt,
@@ -67,6 +71,7 @@ from praetor.tickets.stamp import StampContext, TicketStampBackend, execute_stam
 class StartupRecoveryResult:
     revoked_directive_ids: list[str]
     emitted_health_alert_ids: list[str]
+    orphan_directive_alert_ids: list[str]
 
 
 class _NoOpStampBackend:
@@ -302,6 +307,29 @@ def recover_single_attempt(
         )
 
 
+def surface_orphan_outstanding_directive_alerts(conn: Any) -> list[str]:
+    """Emit one durable health alert per orphan directive (idempotent per directive_id)."""
+    from praetor.alerts.outbox import (
+        fetch_health_alert_outbox,
+        write_pending_health_alert,
+    )
+    from praetor.config.health_emit import init_health_alert_emit_schema
+
+    init_health_alert_emit_schema(conn)
+    emitted: list[str] = []
+    for directive in fetch_orphan_outstanding_directives(conn):
+        alert_id = f"orphan-directive-{directive.directive_id}"
+        if fetch_health_alert_outbox(conn, alert_id) is not None:
+            continue
+        write_pending_health_alert(
+            conn,
+            orphan_outstanding_directive_alert(),
+            alert_id=alert_id,
+        )
+        emitted.append(alert_id)
+    return emitted
+
+
 def reconcile_outstanding_directives_never_contain(
     store: StateStore,
     *,
@@ -361,9 +389,11 @@ def run_engine_startup_recovery(
     for attempt in fetch_all_non_terminal_attempts(store.conn):
         recover_single_attempt(store, attempt, backend)
     reconcile_policy_state(store.conn)
+    orphan_alerts = surface_orphan_outstanding_directive_alerts(store.conn)
     store.conn.commit()
     revoked, emitted = reconcile_outstanding_directives_never_contain(store)
     return StartupRecoveryResult(
         revoked_directive_ids=revoked,
         emitted_health_alert_ids=emitted,
+        orphan_directive_alert_ids=orphan_alerts,
     )

@@ -19,8 +19,9 @@ Index of `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints
 | V2-007 | ProviderUnavailable Intake Handling | V2-1 | **complete** | V2-004 | M |
 | V2-008 | Compound Fault Flag Preservation | V2-1 | **complete** | — | M |
 | V2-009 | Emergency Never-Contain Gate Alignment | V2-1 | **complete** | V2-003 | M |
+| V2-010 | Recovery Policy Pinning | V2-1 | **complete** | V2-003 | M |
 
-**Next up:** V2-010 (Gate 1); V2 Gate 1 in progress (V2-010 only).
+**Next up:** V2-011 (Gate 2); **V2 Gate 1 closed.**
 
 Full task definitions, tests-first criteria, file paths, and done-when gates: **`docs/proposals/v2_implementation_plan.md`**.
 
@@ -116,6 +117,7 @@ Full task definitions, tests-first criteria, file paths, and done-when gates: **
 | V2-007 | ProviderUnavailable Intake Handling | `.workflow/V2-007/verification.md` — breaker + metrics on intake; scoped pytest 161 |
 | V2-008 | Compound Fault Flag Preservation | `.workflow/V2-008/verification.md` — DEC-053 compound fault flags pinned; pytest 27 (task-scoped) |
 | V2-009 | Emergency Never-Contain Gate Alignment | `.workflow/V2-009/verification.md` — gate authorization + intake harness; scoped pytest 154 |
+| V2-010 | Recovery Policy Pinning | `.workflow/V2-010/verification.md` — DEC-060 orphan alerts + recovery downgrade pinned; scoped pytest 247 |
 
 ## Done (V1 — recent)
 

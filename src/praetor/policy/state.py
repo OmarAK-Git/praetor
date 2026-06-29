@@ -216,3 +216,27 @@ def _alert_identity_for_directive(
     if row is None or row[0] is None:
         return None
     return str(row[0])
+
+
+def directive_has_ledger_edict(conn: sqlite3.Connection, decision_id: str) -> bool:
+    row = conn.execute(
+        """
+        SELECT 1 FROM ledger_chain
+        WHERE record_type = 'decision_edict'
+          AND json_extract(record_json, '$.decision_id') = ?
+        LIMIT 1
+        """,
+        (decision_id,),
+    ).fetchone()
+    return row is not None
+
+
+def fetch_orphan_outstanding_directives(
+    conn: sqlite3.Connection,
+) -> list[ContainmentDirective]:
+    """Outstanding directives with no matching ledger DecisionEdict (DEC-060)."""
+    return [
+        directive
+        for directive in fetch_outstanding_unrevoked_directives(conn)
+        if not directive_has_ledger_edict(conn, directive.decision_id)
+    ]

@@ -20,6 +20,7 @@ from praetor.state.store import RevocationWriteResult, StateStore
 
 NEVER_CONTAIN_CONFLICT_ALERT = "never_contain_conflict"
 POST_ACTIVATION_CONFLICT_ALERT = "never_contain_post_activation_conflict"
+ORPHAN_OUTSTANDING_DIRECTIVE_ALERT = "orphan_outstanding_directive"
 
 
 def new_revocation_record(
@@ -177,3 +178,13 @@ def post_activation_conflict_alerts(
         )
         for _ in range(count)
     ]
+
+
+def orphan_outstanding_directive_alert(
+    *, now: datetime | None = None
+) -> SystemHealthAlert:
+    moment = now or datetime.now(UTC)
+    return SystemHealthAlert(
+        alert_code=ORPHAN_OUTSTANDING_DIRECTIVE_ALERT,
+        emitted_at=moment,
+    )

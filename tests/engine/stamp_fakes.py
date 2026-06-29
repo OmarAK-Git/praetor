@@ -35,6 +35,12 @@ class AlwaysFailedStampBackend:
         return StampBackendResult(outcome=StampBackendOutcome.FAILED, payload={})
 
 
+class AlwaysSucceededStampBackend:
+    def stamp(self, stamp_id: str, payload: dict[str, Any]) -> StampBackendResult:
+        _ = stamp_id, payload
+        return StampBackendResult(outcome=StampBackendOutcome.SUCCEEDED, payload={})
+
+
 class AlwaysTimeoutStampBackend:
     """Every call is ambiguous; the stamp can never resolve to terminal."""
 

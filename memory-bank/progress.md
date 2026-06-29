@@ -1,5 +1,12 @@
 # Progress Log
 
+## 2026-06-29 — V2-010 complete (Gate 1 closed)
+
+- **DEC-060 implementation:** `fetch_orphan_outstanding_directives`, `surface_orphan_outstanding_directive_alerts`, stable alert_id per directive; recovery `auto_contain` downgrade tests (success + failed stamp paths).
+- Flight Recorder: `.workflow/V2-010/`.
+- Verification: scoped pytest **247** passed; mypy/ruff clean.
+- Gaps: expired-row archival deferred; runbook docs deferred (no `docs/` edits).
+
 ## 2026-06-29 — V2-008 complete (Gate 1 continued)
 
 - **DEC-053 compound fault fidelity:** stamp `FAILED` + `DeferredDirectivePersistConflict` preserves both conflict fault flag and `ticket_stamp_failed`; fail-closed escalate with directive suppressed unchanged.
