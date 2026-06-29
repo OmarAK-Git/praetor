@@ -1,5 +1,14 @@
 # Progress Log
 
+## 2026-06-29 — V2-007 complete (Gate 1 continued)
+
+- **ProviderUnavailable intake:** breaker production-failure recorded in edict transaction; metrics record `provider_unavailable` under `LLM_FAILURE_FAULT_FLAGS`.
+- `persist_edict_and_complete_attempt` optional `in_transaction_hook`; all typed provider faults record breaker failure via `_finish_provider_fault`.
+- Tests: `tests/engine/test_provider_unavailable_intake.py` (2); metrics orchestrator (+1).
+- Worktree: `task/V2-007` at `.worktrees/V2-007`.
+- Verification: scoped pytest **161**; mypy **118** clean; ruff clean; harness `provider_unavailable` PASS.
+- Follow-on: V2-008 compound fault flags; rebase onto V2-006 for full-suite green.
+
 ## 2026-06-29 — V2-005 complete (Gate 1 started)
 
 - **v2_hardening Item 2a:** typed `ContainmentRule.scope` (target / asset / catch-all), `extra="forbid"` on containment models, preflight `invalid_containment_rule_scope` for string scopes, gate catch-all matching.
