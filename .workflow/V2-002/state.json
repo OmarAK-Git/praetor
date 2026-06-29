@@ -1,0 +1,46 @@
+{
+  "run": "V2-002",
+  "status": "complete",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-29",
+  "tasks": [
+    {
+      "id": "T-001",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "DEC-059 draft"
+    },
+    {
+      "id": "T-002",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "contracts §12a + §13 row"
+    },
+    {
+      "id": "T-003",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "v2_hardening Item 1"
+    },
+    {
+      "id": "T-004",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "delivery_backlog"
+    },
+    {
+      "id": "T-005",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "memory bank"
+    },
+    {
+      "id": "T-006",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "verification close"
+    }
+  ]
+}

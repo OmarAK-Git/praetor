@@ -46,7 +46,9 @@ Threat-modeling v1 surfaced one architectural truth and three improvement levers
 
 ---
 
-## Item 1 — Evidence corroboration floor for host `auto_contain`  **[BUILD] — priority**
+## Item 1 — Evidence corroboration floor for host `auto_contain`  **[v2 — documented, not implemented]**
+
+**Status:** **ratified (DEC-059, V2-002)** — corroboration promoted to first-class host + account concept; `insufficient_corroboration` Outcome Matrix row in `docs/contracts.md` §13; provenance trust table in §12a. PolicyGate wiring deferred to **V2-011**.
 
 **Problem.** Host containment can be authorized on a single cited fact. An attacker who can
 author telemetry (or an honest-but-fallible model on an ambiguous single signal) can therefore
@@ -71,12 +73,12 @@ independent collection systems." It does **not** verify the threat (impossible d
 Hypothesis: v1 scoped host containment as the shippable path and treated account **identity**
 as the higher-risk problem (SID spoofing, name ambiguity), so the heavy corroboration landed on
 accounts while hosts got target-selection integrity (citation-anchoring) instead of
-evidence-sufficiency. If accepted, this is arguably the single most important correctness lever
-in the engine and should be promoted to a first-class spec section, not an account-only rule.
+evidence-sufficiency. **Accepted (DEC-059):** corroboration is now a first-class spec/contracts
+concept for both host and account authorization, not an account-only rule.
 
-**New fault flag** (candidate): `insufficient_corroboration` (policy/safety class,
-`system_fault_escalation = false`), wired into the Outcome Matrix + enum + harness scenario per
-the completeness contract.
+**Fault flag:** `insufficient_corroboration` (policy/safety class,
+`system_fault_escalation = false`), pinned in `docs/contracts.md` §13. Enum + harness scenario
+wire in V2-011 per completeness contract.
 
 ---
 
@@ -201,8 +203,9 @@ authority"): feedback poisoning + loss of auditability. The sanctioned loop:
 
 ## Independent-review checklist
 
-- [ ] Item 1: accept corroboration floor for hosts? Promote corroboration to a first-class spec
+- [x] Item 1: accept corroboration floor for hosts? Promote corroboration to a first-class spec
       concept? Confirm the `insufficient_corroboration` flag + Outcome Matrix wiring.
+      **Ratified DEC-059 (V2-002)** — `docs/contracts.md` §12a/§13; implementation V2-011.
 - [x] Item 2: posture **ratified (DEC-058, V2-001)** — default-allow retired as drift;
       deployment-configurable required `default_action`; `escalate` blocks containment.
       **2a (near-term):** typed `scope` + `extra="forbid"` + preflight rejects malformed scope (V2-005).

@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-06-29 — V2-002 complete
+
+- Ratified **DEC-059**: host corroboration floor; `insufficient_corroboration` Outcome Matrix row; provenance trust classification (`sysmon_event_log` attacker-controllable, `windows_security_log` not); future paths default attacker-controllable; account `ambiguous_target_identity` unchanged.
+- Updated `docs/contracts.md` §12a/§13, `docs/decisions.md`, `docs/proposals/v2_hardening.md`, `docs/proposals/delivery_backlog.md`.
+- Flight Recorder: `.workflow/V2-002/`.
+- Verification: pytest green (no code changes); DEC-059 grep checks pass.
+- Implementation deferred to V2-011.
+
 ## 2026-06-29 — V2-001 complete
 
 - Ratified **DEC-058**: deployment-configurable required `default_action`; v1 default-allow retired as drift; `escalate` blocks containment; rule-action and precedence semantics documented.

@@ -18,6 +18,7 @@ This file records implementation choices that refine or operationalize those doc
 | DEC-056 | 2026-06-16 | Task 35 production benchmark (`benchmarks/serialized_path.py`) mirrors DEC-053: gate eval with `persist_directive=False` (one `BEGIN IMMEDIATE`), then one engine transaction for deferred directive persist + ledger append; no per-alert revocation/feed outbox; default rate is uncontended distinct-host best case; burst target comparison is informational only in v1 | Prior benchmark used `persist_directive=True` plus spurious per-alert revocation, inverting stamp ordering and polluting capacity numbers; smoke benchmark remains the separate revocation throughput measurement; supersedes DEC-055 | `benchmarks/serialized_path.py`, `tests/benchmarks/test_serialized_path.py`, `docs/operator_runbook.md`, DEC-056 |
 | DEC-057 | 2026-06-16 | Sweep placeholder activation scan (`collect_sweep_placeholder_violations`) covers only safety-critical fields: `assets_and_asset_groups.entries[].subnet_membership` and `containment_exclusions.never_contain[].target_id`. Advisory placeholder prose in `business_context.notes` and `normal_admin_patterns[].description` is intentionally **not** activation-blocking — SOC review reminders, not containment topology | Subnet and never-contain target IDs directly affect isolation scope; narrative fields are review prompts and do not gate containment decisions | `src/praetor/codification/placeholders.py`, `src/praetor/codification/sweep.py`, `tests/codification/test_sweep.py` |
 | DEC-058 | 2026-06-29 | V2 containment authorization posture is **deployment-configurable** via a required `default_action` on `ContainmentPolicy`; v1 implicit default-allow is **retired drift**; sole matching `escalate` rules **block** `auto_contain` | Containment must be earned by explicit configuration, not granted by omission; operators need a catch-all primitive for progressive authorization; `escalate` as hint-only contradicts operator intent (example `default_escalate` + silent scope drop) | V2-001; `docs/proposals/v2_hardening.md` Item 2; implementation in V2-005–V2-006, V2-012–V2-013 |
+| DEC-059 | 2026-06-29 | V2 host corroboration floor: cited facts for host `auto_contain` require ≥2 distinct `provenance_path` values with ≥1 non-attacker-controllable; sole `ambiguity_flag=true` cited fact cannot authorize host containment; fault flag `insufficient_corroboration` (`system_fault_escalation=false`); account path unchanged (`ambiguous_target_identity`) | v1 solved citation-anchored targeting (DEC-052) but not evidence sufficiency; extends account corroboration discipline to hosts; raises bar from single forged log line to convergent independent collection paths | V2-002; `docs/contracts.md` §12a/§13; implementation in V2-011 |
 
 Add rows when implementation choices diverge from or refine authoritative docs.
 
@@ -104,3 +105,53 @@ These actions govern whether PolicyGate **may authorize** an `auto_contain` prop
 | V2-013 | Remove implicit ALLOW; example config + evals express explicit permits |
 
 **Doc placement.** Contracts Outcome Matrix rows for new deny/escalate fault flags land with V2-006; `docs/spec.md` mirror deferred until spec unfreeze (same pattern as DEC-052).
+
+## DEC-059 — Host corroboration contract and `insufficient_corroboration`
+
+**Status:** accepted (2026-06-29, V2-002)
+
+**Context.** DEC-052 made host containment **target selection** citation-anchored (which host), but a single cited Sysmon fact can still authorize host `auto_contain` today. v1 account containment already requires distinct-provenance corroboration (`spec.md` § Account Containment; `meets_account_corroboration` in `provenance.py`), while hosts received targeting integrity without an evidence-sufficiency floor (`docs/proposals/v2_hardening.md` Item 1). V2 promotes corroboration to a first-class authorization concept for **both** host and account paths.
+
+### Corroboration as first-class authorization
+
+Corroboration governs whether PolicyGate **may authorize** an `auto_contain` proposal — alongside never-contain, policy rules, rate/breaker, feed health, and stamp gates. It is evaluated on **resolved citation metadata** (`provenance_path`, `ambiguity_flag`) from `validate_evidence_citations`, not on raw bundle scans unrelated to the model's citations.
+
+### Host corroboration floor (V2-011 implements)
+
+Before authorizing host `auto_contain` for a citation-anchored host target (DEC-052), cited facts must:
+
+1. span **≥2 distinct** `provenance_path` values;
+2. include **≥1** fact from a **non-attacker-controllable** path; and
+3. **not** rely on a **sole** cited fact with `ambiguity_flag = true`.
+
+Failure → `escalate(insufficient_corroboration)` with `system_fault_escalation = false` (policy/safety-gate class). Outcome Matrix row in `docs/contracts.md` §13.
+
+### Account path unchanged
+
+Account identity corroboration rules are **unchanged**. SID-backed account targets that fail distinct-provenance corroboration continue to escalate **`ambiguous_target_identity`** (`system_fault_escalation = false`). Host corroboration does not subsume or rename the account identity fault flag.
+
+| Target kind | Corroboration failure | Fault flag |
+|---|---|---|
+| Account (SID-backed, uncorroborated) | Insufficient distinct provenance for identity | `ambiguous_target_identity` |
+| Host (cited-evidence floor) | Insufficient cited provenance / sole ambiguous basis | `insufficient_corroboration` |
+
+### Attacker-controllable provenance classification (v1 Windows)
+
+| `provenance_path` | Classification | Notes |
+|---|---|---|
+| `sysmon_event_log` | **Attacker-controllable** | Command lines, process metadata, and other injectable event payload content |
+| `windows_security_log` | **Non-attacker-controllable** | Independent Security-channel authentication events |
+
+These constants match `src/praetor/evidence/provenance.py` (`SYSMON_EVENT_LOG`, `WINDOWS_SECURITY_LOG`).
+
+### Default for future normalizers
+
+Any new `provenance_path` introduced by a correlation normalizer defaults to **attacker-controllable** until explicitly listed as non-attacker-controllable in `docs/contracts.md` §12a. This fail-closed default prevents a new telemetry source from silently satisfying corroboration without an owner-reviewed trust classification.
+
+### Implementation map (out of V2-002 scope)
+
+| Follow-on | Delivers |
+|---|---|
+| V2-011 | Gate reads resolved citation `provenance_path` / `ambiguity_flag`; `meets_host_corroboration` helper; `OutcomeMatrixFaultFlag.INSUFFICIENT_CORROBORATION`; harness scenario; policy tests |
+
+**Doc placement.** §12a and §13 row land in V2-002; enum/metrics/harness wiring lands in V2-011 per AG-0068 completeness contract. `docs/spec.md` mirror deferred until spec unfreeze.

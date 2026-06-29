@@ -4,7 +4,7 @@
 
 **V2 plan initialized** — executable backlog in `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints). V1 complete (pytest **778** at TASK-035).
 
-**Sprint V2-0 (Decision and Contract Ratification):** V2-001 complete (DEC-058). **V2-002 – V2-004** pending — close Gate 0 before V2-005.
+**Sprint V2-0 (Decision and Contract Ratification):** V2-001 complete (DEC-058). V2-002 complete (DEC-059). **V2-003 – V2-004** pending — close Gate 0 before V2-005.
 
 ## Build order (V2)
 
@@ -21,7 +21,7 @@
 
 ## Current blockers
 
-- **V2 Gate 0** — V2-002 – V2-004 owner decisions not yet ratified.
+- **V2 Gate 0** — V2-003 – V2-004 owner decisions not yet ratified (host corroboration contract closed in V2-002 / DEC-059).
 - `ProviderUnavailableError` intake catch blocked on V2-004 Outcome Matrix row.
 - REVIEW-004 correlator cross-host xfail → V2-014.
 - Live Splunk HEC demo env-gated → V2-029.
@@ -38,5 +38,5 @@
 8. New hash/serialization contracts: doc update + exact test vectors before code.
 9. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.
 10. Eval harness: `python -m evals.harness`; Phase 3 gate: `python -m evals.run_phase3_gate`.
-11. Host containment (DEC-052): citation-anchored targeting; V2-011 adds host corroboration floor.
+11. Host containment (DEC-052): citation-anchored targeting; V2-002 (DEC-059) pins host corroboration floor; V2-011 implements.
 12. Operator docs: `docs/operator_runbook.md`, `docs/architecture.md`, `docs/eval_gates.md`.

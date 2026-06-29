@@ -428,9 +428,47 @@ These are Pydantic v2 `@model_validator` rules at the schema level (not the stor
 
 ---
 
+## 12a. Containment evidence corroboration (host and account)
+
+Corroboration is a **first-class authorization concept** for `auto_contain`, not an account-only rule (DEC-059). PolicyGate evaluates corroboration on **resolved citation metadata** (`provenance_path`, `ambiguity_flag`) from `validate_evidence_citations` — the same fields the citation validator already resolves today.
+
+### Provenance-path trust classification (v1 Windows)
+
+| `provenance_path` | Attacker-controllable | Rationale |
+|---|---|---|
+| `sysmon_event_log` | **yes** | Process-creation and command-line content is injectable or spoofable in the event payload |
+| `windows_security_log` | **no** | Independent Windows Security channel authentication events; distinct collection path from Sysmon |
+
+**Default for future normalizers:** any `provenance_path` not listed in this table is **attacker-controllable** until explicitly classified here (fail-closed). Adding a non-attacker-controllable path requires a `docs/contracts.md` update before the normalizer ships.
+
+### Account `auto_contain` corroboration (unchanged v1)
+
+Account containment authorization requires the cited facts (or the account-identity facts the gate evaluates) to include:
+
+- at least **two distinct** `provenance_path` values, and
+- at least **one** from a **non-attacker-controllable** path per the table above.
+
+For v1 Windows/Sysmon, the approved pair is one `sysmon_event_log` fact plus one `windows_security_log` fact. Two facts sharing the same `provenance_path` do not corroborate.
+
+When a SID-backed account target fails this check, PolicyGate escalates with fault flag **`ambiguous_target_identity`** (`system_fault_escalation = false`). This path is unchanged from v1.
+
+### Host `auto_contain` corroboration floor (V2)
+
+Before authorizing host `auto_contain`, the **cited facts** anchoring the host target (DEC-052) must satisfy:
+
+1. **Distinct provenance** — cited facts span **≥2 distinct** `provenance_path` values.
+2. **Independent source** — at least **one** cited fact comes from a **non-attacker-controllable** `provenance_path` per the table above.
+3. **No sole ambiguous basis** — host containment must not rest on a **single** cited fact when that fact has `ambiguity_flag = true`.
+
+When any check fails, PolicyGate escalates with fault flag **`insufficient_corroboration`** (`system_fault_escalation = false`, policy/safety-gate class). Implementation: V2-011.
+
+**Scope note.** Host corroboration applies to **host** containment targets after citation-anchored target resolution. It does not replace account identity corroboration or multi-host ambiguity (`ambiguous_containment_target`).
+
+---
+
 ## 13. Outcome Matrix (behavioral contract)
 
-The eval harness asserts, for every failure class, the disposition, the fault flag, and the `system_fault_escalation` value. `true` = infrastructure / model-quality / feed / latency-queue fault requiring operational triage. `false` = deliberate policy or safety-gate enforcement (the engine working as designed). This table is the authoritative contract. The frozen `docs/spec.md` §Outcome Matrix mirror is deferred until spec unfreeze (DEC-052); until then, this section carries one row not yet mirrored in the spec — `ambiguous_containment_target` — to be reconciled when the spec unfreezes.
+The eval harness asserts, for every failure class, the disposition, the fault flag, and the `system_fault_escalation` value. `true` = infrastructure / model-quality / feed / latency-queue fault requiring operational triage. `false` = deliberate policy or safety-gate enforcement (the engine working as designed). This table is the authoritative contract. The frozen `docs/spec.md` §Outcome Matrix mirror is deferred until spec unfreeze (DEC-052); until then, this section carries rows not yet mirrored in the spec — `ambiguous_containment_target`, `insufficient_corroboration` — to be reconciled when the spec unfreezes.
 
 | Failure class | Disposition | Fault flag | system_fault_escalation |
 |---|---|---|---|
@@ -444,6 +482,7 @@ The eval harness asserts, for every failure class, the disposition, the fault fl
 | Target on live never-contain list at emission | escalate | `never_contain_live_conflict` | false |
 | Account target, insufficient identity corroboration | escalate | `ambiguous_target_identity` | false |
 | Containment target spans multiple cited hosts | escalate | `ambiguous_containment_target` | false |
+| Host target, insufficient cited-evidence corroboration | escalate | `insufficient_corroboration` | false |
 | Account containment production feature gate disabled | escalate | `account_containment_disabled` | false |
 | Target-scoped containment rule conflict, no precedence | escalate | `policy_ambiguity` | false |
 | Containment rate limit exceeded | escalate | `rate_limit_exceeded` | false |

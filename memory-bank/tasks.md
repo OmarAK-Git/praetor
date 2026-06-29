@@ -11,11 +11,11 @@ Index of `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints
 | ID | Task | Sprint | Status | Depends | Cx |
 |---|---|---|---|---|---|
 | V2-001 | Authorization Posture Decision | V2-0 | **complete** | — | M |
-| V2-002 | Host Corroboration Contract | V2-0 | pending | — | M |
+| V2-002 | Host Corroboration Contract | V2-0 | **complete** | — | M |
 | V2-003 | Revocation and Snapshot Owner Decisions | V2-0 | pending | — | M |
 | V2-004 | Provider Unavailable Outcome Matrix Row | V2-0 | pending | — | S |
 
-**Next up:** V2-002 — Host Corroboration Contract (parallel with V2-003, V2-004 for Gate 0).
+**Next up:** V2-003 – V2-004 (parallel for Gate 0); then V2-005 after Gate 0 closes.
 
 Full task definitions, tests-first criteria, file paths, and done-when gates: **`docs/proposals/v2_implementation_plan.md`**.
 
@@ -103,6 +103,7 @@ Full task definitions, tests-first criteria, file paths, and done-when gates: **
 | ID | Task | Evidence |
 |---|---|---|
 | V2-001 | Authorization Posture Decision | `.workflow/V2-001/verification.md` — DEC-058; pytest 780 |
+| V2-002 | Host Corroboration Contract | `.workflow/V2-002/verification.md` — DEC-059; contracts §12a/§13 |
 
 ## Done (V1 — recent)
 
