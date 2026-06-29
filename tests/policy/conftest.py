@@ -19,6 +19,7 @@ from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
 from praetor.contracts.judgment import CitedEvidenceRef, ModelJudgment
 from praetor.contracts.org_config import OrgConfigSnapshot
 from praetor.contracts.org_config_sections import ContainmentPolicy, ContainmentRule
+from praetor.evidence.provenance import SYSMON_EVENT_LOG, WINDOWS_SECURITY_LOG
 from praetor.state.store import StateStore, open_state_store
 
 NOW = datetime(2026, 6, 8, 12, 0, 0, tzinfo=UTC)
@@ -52,20 +53,70 @@ def org_snapshot(activated: StateStore) -> OrgConfigSnapshot:
     return snapshot
 
 
+def _citable_field_path(fact: EvidenceFact) -> str:
+    for key in ("process_name", "host_id", "target_sid", "account_name"):
+        if key in fact.normalized_fields:
+            return key
+    return "process_name"
+
+
 def host_bundle(*, host_id: str = "ws-01") -> EvidenceBundle:
     return EvidenceBundle(
         facts=[
             EvidenceFact(
-                evidence_id="ev-host-1",
+                evidence_id="ev-host-sysmon",
                 normalized_fields={"host_id": host_id, "process_name": "cmd.exe"},
-                source_event_reference="syn:host:1",
+                source_event_reference="syn:host:sysmon:1",
                 raw_source="{}",
-                provenance_path="synthetic/walking_skeleton",
+                provenance_path=SYSMON_EVENT_LOG,
                 ambiguity_flag=False,
                 timestamp=NOW,
-            )
+            ),
+            EvidenceFact(
+                evidence_id="ev-host-security",
+                normalized_fields={"host_id": host_id, "event_id": 4624},
+                source_event_reference="syn:host:security:1",
+                raw_source="{}",
+                provenance_path=WINDOWS_SECURITY_LOG,
+                ambiguity_flag=False,
+                timestamp=NOW,
+            ),
         ]
     )
+
+
+def default_auto_contain_citation_refs(
+    bundle: EvidenceBundle,
+) -> list[CitedEvidenceRef]:
+    sysmon = next(
+        (fact for fact in bundle.facts if fact.provenance_path == SYSMON_EVENT_LOG),
+        None,
+    )
+    security = next(
+        (
+            fact
+            for fact in bundle.facts
+            if fact.provenance_path == WINDOWS_SECURITY_LOG
+        ),
+        None,
+    )
+    if sysmon is not None and security is not None:
+        return [
+            CitedEvidenceRef(
+                evidence_id=sysmon.evidence_id,
+                field_path=_citable_field_path(sysmon),
+            ),
+            CitedEvidenceRef(
+                evidence_id=security.evidence_id,
+                field_path=_citable_field_path(security),
+            ),
+        ]
+    return [
+        CitedEvidenceRef(
+            evidence_id=bundle.facts[0].evidence_id,
+            field_path=_citable_field_path(bundle.facts[0]),
+        )
+    ]
 
 
 def account_bundle() -> EvidenceBundle:
@@ -106,12 +157,7 @@ def auto_contain_judgment(
     refs: list[CitedEvidenceRef] | None = None,
 ) -> ModelJudgment:
     if refs is None:
-        refs = [
-            CitedEvidenceRef(
-                evidence_id=bundle.facts[0].evidence_id,
-                field_path="process_name",
-            )
-        ]
+        refs = default_auto_contain_citation_refs(bundle)
     return ModelJudgment(
         proposed_disposition=Disposition.AUTO_CONTAIN,
         cited_evidence_refs=refs,

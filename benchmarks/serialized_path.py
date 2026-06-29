@@ -82,31 +82,48 @@ class SerializedPathBenchmarkResult:
 
 
 def _host_bundle(*, host_id: str, moment: datetime) -> EvidenceBundle:
-    evidence_id = f"ev-{host_id}"
     return EvidenceBundle(
         facts=[
             EvidenceFact(
-                evidence_id=evidence_id,
+                evidence_id=f"ev-{host_id}-sysmon",
                 normalized_fields={"host_id": host_id, "process_name": "cmd.exe"},
-                source_event_reference=f"bench:{host_id}",
+                source_event_reference=f"bench:{host_id}:sysmon",
                 raw_source="{}",
-                provenance_path="synthetic/benchmark",
+                provenance_path="sysmon_event_log",
                 ambiguity_flag=False,
                 timestamp=moment,
-            )
+            ),
+            EvidenceFact(
+                evidence_id=f"ev-{host_id}-security",
+                normalized_fields={"host_id": host_id, "event_id": 4624},
+                source_event_reference=f"bench:{host_id}:security",
+                raw_source="{}",
+                provenance_path="windows_security_log",
+                ambiguity_flag=False,
+                timestamp=moment,
+            ),
         ]
     )
 
 
 def _auto_contain_judgment(bundle: EvidenceBundle) -> ModelJudgment:
-    fact = bundle.facts[0]
+    sysmon = next(
+        fact for fact in bundle.facts if fact.provenance_path == "sysmon_event_log"
+    )
+    security = next(
+        fact for fact in bundle.facts if fact.provenance_path == "windows_security_log"
+    )
     return ModelJudgment(
         proposed_disposition=Disposition.AUTO_CONTAIN,
         cited_evidence_refs=[
             CitedEvidenceRef(
-                evidence_id=fact.evidence_id,
+                evidence_id=sysmon.evidence_id,
                 field_path="host_id",
-            )
+            ),
+            CitedEvidenceRef(
+                evidence_id=security.evidence_id,
+                field_path="host_id",
+            ),
         ],
         key_tells=["benchmark"],
         org_config_refs=["containment_policy.default_escalate"],

@@ -35,6 +35,7 @@ from praetor.policy.gate import PolicyGateEvaluation, evaluate_policy_gate
 from praetor.policy.identity import (
     ACCOUNT_CONTAINMENT_DISABLED,
     AMBIGUOUS_TARGET_IDENTITY,
+    INSUFFICIENT_CORROBORATION,
     evaluate_account_containment_eligibility,
 )
 from praetor.state.store import StateStore
@@ -190,11 +191,10 @@ def test_two_sysmon_facts_reject_corroboration_and_host_contain_via_policy_gate(
         bundle,
         alert_identity="ALERT-2-SYSMON",
     )
-    assert result.final_disposition == Disposition.AUTO_CONTAIN
+    assert result.final_disposition == Disposition.ESCALATE
+    assert result.fault_flags == [INSUFFICIENT_CORROBORATION]
     assert AMBIGUOUS_TARGET_IDENTITY not in result.fault_flags
-    assert result.containment_directive is not None
-    assert result.containment_directive.target_type == TargetType.HOST
-    assert result.containment_directive.target_id == "WORKSTATION1"
+    assert result.containment_directive is None
 
 
 def test_ambiguous_sysmon_sets_ambiguity_flag() -> None:
@@ -228,10 +228,10 @@ def test_ambiguous_sysmon_only_resolves_host_via_policy_gate(
         bundle,
         alert_identity="ALERT-AMB-SYSMON",
     )
-    assert result.final_disposition == Disposition.AUTO_CONTAIN
+    assert result.final_disposition == Disposition.ESCALATE
+    assert result.fault_flags == [INSUFFICIENT_CORROBORATION]
     assert AMBIGUOUS_TARGET_IDENTITY not in result.fault_flags
-    assert result.containment_directive is not None
-    assert result.containment_directive.target_type == TargetType.HOST
+    assert result.containment_directive is None
 
 
 def test_corroborated_ambiguous_identity_auto_contain_when_gate_enabled(

@@ -8,12 +8,10 @@ from datetime import UTC, datetime
 from evals.correlation_gate import REPO_ROOT, load_correlation_expected
 from evals.run_phase3_gate import (
     INCIDENT_HOST_ID,
-    NOISE_HOST_ID,
     REQUIRED_EXPECTED_PATH,
 )
 from tests.policy.conftest import NOW, auto_contain_judgment, permissive_org_snapshot
 
-from praetor.contracts.containment import TargetType
 from praetor.contracts.disposition import Disposition
 from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
 from praetor.contracts.judgment import CitedEvidenceRef
@@ -24,7 +22,10 @@ from praetor.policy.containment_policy import (
     resolve_host_target_from_citations,
 )
 from praetor.policy.gate import evaluate_policy_gate
-from praetor.policy.identity import AMBIGUOUS_CONTAINMENT_TARGET
+from praetor.policy.identity import (
+    AMBIGUOUS_CONTAINMENT_TARGET,
+    INSUFFICIENT_CORROBORATION,
+)
 
 
 def _two_host_bundle() -> EvidenceBundle:
@@ -134,11 +135,9 @@ def test_uncited_cross_host_noise_does_not_capture_target(
         now=NOW,
     )
 
-    assert result.final_disposition == Disposition.AUTO_CONTAIN
-    assert result.containment_directive is not None
-    assert result.containment_directive.target_type == TargetType.HOST
-    assert result.containment_directive.target_id == INCIDENT_HOST_ID
-    assert result.containment_directive.target_id != NOISE_HOST_ID
+    assert result.final_disposition == Disposition.ESCALATE
+    assert result.fault_flags == [INSUFFICIENT_CORROBORATION]
+    assert result.containment_directive is None
 
 
 def test_multi_cited_hosts_escalates_ambiguous_containment_target(
@@ -189,11 +188,11 @@ def test_single_host_multi_citation_auto_contain(activated, org_snapshot) -> Non
                 evidence_id="host-a-2",
                 normalized_fields={
                     "host_id": "WORKSTATION1",
-                    "process_name": "powershell.exe",
+                    "event_id": 4624,
                 },
                 source_event_reference="syn:a:2",
                 raw_source="{}",
-                provenance_path="sysmon_event_log",
+                provenance_path="windows_security_log",
                 ambiguity_flag=False,
                 timestamp=ts,
             ),
@@ -203,7 +202,7 @@ def test_single_host_multi_citation_auto_contain(activated, org_snapshot) -> Non
         bundle,
         refs=[
             CitedEvidenceRef(evidence_id="host-a-1", field_path="host_id"),
-            CitedEvidenceRef(evidence_id="host-a-2", field_path="process_name"),
+            CitedEvidenceRef(evidence_id="host-a-2", field_path="host_id"),
         ],
     )
 
