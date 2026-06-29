@@ -7,6 +7,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
+from praetor.config.emergency import live_never_contain_blocks_containment_authorization
 from praetor.config.health_emit import (
     flush_health_alert_batch,
     init_health_alert_emit_schema,
@@ -42,7 +43,6 @@ from praetor.policy.containment_policy import (
     evaluate_target_containment_policy,
     extract_account_identity,
     resolve_containment_target,
-    target_blocked_by_live,
     target_blocked_by_snapshot,
 )
 from praetor.policy.identity import (
@@ -77,6 +77,17 @@ PROVIDER_HEALTH_BREAKER_OPEN = "provider_health_breaker_open"
 REVOCATION_FEED_UNHEALTHY = "revocation_feed_unhealthy"
 LATENCY_SLA_EXCEEDED = "latency_sla_exceeded"
 QUEUE_AGING_EXCEEDED = "queue_aging_exceeded"
+
+
+def _live_never_contain_blocks_authorization(
+    live_entries: list[dict[str, object]],
+    target: ContainmentTarget,
+) -> bool:
+    return live_never_contain_blocks_containment_authorization(
+        target_type=target.target_type,
+        target_id=target.target_id,
+        live_entries=live_entries,
+    )
 
 
 class _PolicyGateRollback(Exception):
@@ -227,7 +238,7 @@ def persist_deferred_policy_gate_directive_in_transaction(
             system_fault_escalation=True,
         )
     refreshed_live = read_live_never_contain_entries(conn)
-    if target_blocked_by_live(refreshed_live, target):
+    if _live_never_contain_blocks_authorization(refreshed_live, target):
         raise DeferredDirectivePersistConflict(
             NEVER_CONTAIN_LIVE_CONFLICT,
             system_fault_escalation=False,
@@ -317,7 +328,7 @@ def evaluate_policy_gate(
         return _escalate(proposed, NEVER_CONTAIN_SNAPSHOT, system_fault=False)
 
     live_entries = read_live_never_contain_entries(conn)
-    if target_blocked_by_live(live_entries, target):
+    if _live_never_contain_blocks_authorization(live_entries, target):
         return _escalate(proposed, NEVER_CONTAIN_LIVE_CONFLICT, system_fault=False)
 
     if target.target_type == "account":
@@ -407,7 +418,7 @@ def evaluate_policy_gate(
                     _escalate(proposed, REVOCATION_FEED_UNHEALTHY, system_fault=True)
                 )
             refreshed_live = read_live_never_contain_entries(conn)
-            if target_blocked_by_live(refreshed_live, target):
+            if _live_never_contain_blocks_authorization(refreshed_live, target):
                 raise _PolicyGateRollback(
                     _escalate(proposed, NEVER_CONTAIN_LIVE_CONFLICT, system_fault=False)
                 )

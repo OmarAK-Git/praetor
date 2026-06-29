@@ -546,10 +546,12 @@ def _serialized_prompt_value(value: Any) -> str:
 def _run_engine_intake(
     scenario: ScenarioDocument,
     store: StateStore,
+    verifier: TokenVerifier,
     errors: list[str],
 ) -> None:
     setup = scenario.setup
     expectations = scenario.expectations
+    _apply_emergency_never_contain_setup(store, setup, verifier)
     alert_identity = str(setup.get("alert_identity", scenario.scenario_id))
     kwargs: dict[str, Any] = {
         "alert_identity": alert_identity,
@@ -664,6 +666,26 @@ def _resolve_policy_bundle(setup: Mapping[str, Any]) -> EvidenceBundle:
     raise ValueError(msg)
 
 
+def _apply_emergency_never_contain_setup(
+    store: StateStore,
+    setup: Mapping[str, Any],
+    verifier: TokenVerifier,
+) -> None:
+    emergency = setup.get("emergency_never_contain")
+    if isinstance(emergency, dict):
+        add_emergency_never_contain(
+            store,
+            token=SOC_LEAD_TOKEN,
+            verifier=verifier,
+            target_specification={
+                "target_type": emergency["target_type"],
+                "target_id": emergency["target_id"],
+            },
+            lifetime_seconds=int(emergency.get("lifetime_seconds", 3600)),
+            audit_reason=str(emergency.get("audit_reason", "eval")),
+        )
+
+
 def _apply_policy_setup(store: StateStore, setup: Mapping[str, Any], verifier: TokenVerifier) -> OrgConfigSnapshot | None:
     snapshot_override: OrgConfigSnapshot | None = None
     base = fetch_active_snapshot(store.conn)
@@ -695,19 +717,7 @@ def _apply_policy_setup(store: StateStore, setup: Mapping[str, Any], verifier: T
             store, base, containment_policy=policy
         )
 
-    emergency = setup.get("emergency_never_contain")
-    if isinstance(emergency, dict):
-        add_emergency_never_contain(
-            store,
-            token=SOC_LEAD_TOKEN,
-            verifier=verifier,
-            target_specification={
-                "target_type": emergency["target_type"],
-                "target_id": emergency["target_id"],
-            },
-            lifetime_seconds=int(emergency.get("lifetime_seconds", 3600)),
-            audit_reason=str(emergency.get("audit_reason", "eval")),
-        )
+    _apply_emergency_never_contain_setup(store, setup, verifier)
     if setup.get("feed_unhealthy"):
         init_revocation_feed_export_schema(store.conn)
         set_feed_unhealthy(store.conn, unhealthy=True)
@@ -1041,7 +1051,7 @@ def run_scenario(
     store = _open_activated_store(db_path, resolved_verifier)
     try:
         if scenario.runner == "engine_intake":
-            _run_engine_intake(scenario, store, errors)
+            _run_engine_intake(scenario, store, resolved_verifier, errors)
         elif scenario.runner == "policy_gate":
             _run_policy_gate(scenario, store, resolved_verifier, errors)
         elif scenario.runner == "prompt_isolation":

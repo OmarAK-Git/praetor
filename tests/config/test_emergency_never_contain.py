@@ -19,6 +19,7 @@ from praetor.config.emergency import (
     add_emergency_never_contain,
     emergency_cannot_authorize_containment,
     evaluate_live_never_contain_for_target,
+    live_never_contain_blocks_containment_authorization,
 )
 from praetor.config.loader import load_org_config_document
 from praetor.config.state import fetch_active_emergency_records
@@ -219,6 +220,20 @@ def test_emergency_cannot_authorize_containment() -> None:
         proposed_disposition="auto_contain",
         target_type="host",
         target_id="eng-99",
+        live_entries=entries,
+    )
+
+
+def test_live_never_contain_blocks_containment_authorization() -> None:
+    entries = [{"target_type": "host", "target_id": "eng-99", "source": "emergency"}]
+    assert live_never_contain_blocks_containment_authorization(
+        target_type="host",
+        target_id="eng-99",
+        live_entries=entries,
+    )
+    assert not live_never_contain_blocks_containment_authorization(
+        target_type="host",
+        target_id="other",
         live_entries=entries,
     )
 
