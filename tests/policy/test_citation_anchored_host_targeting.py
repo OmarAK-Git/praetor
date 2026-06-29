@@ -11,7 +11,7 @@ from evals.run_phase3_gate import (
     NOISE_HOST_ID,
     REQUIRED_EXPECTED_PATH,
 )
-from tests.policy.conftest import NOW, auto_contain_judgment
+from tests.policy.conftest import NOW, auto_contain_judgment, permissive_org_snapshot
 
 from praetor.contracts.containment import TargetType
 from praetor.contracts.disposition import Disposition
@@ -123,11 +123,12 @@ def test_uncited_cross_host_noise_does_not_capture_target(
         ],
     )
 
+    snapshot = permissive_org_snapshot(activated, org_snapshot)
     result = evaluate_policy_gate(
         activated.conn,
         judgment=judgment,
         evidence_bundle=bundle,
-        org_snapshot=org_snapshot,
+        org_snapshot=snapshot,
         alert_identity="ALERT-CITATION-NOISE",
         decision_id="dec-citation-noise",
         now=NOW,
@@ -214,11 +215,12 @@ def test_single_host_multi_citation_auto_contain(activated, org_snapshot) -> Non
     assert resolution.target is not None
     assert resolution.target.target_id == "WORKSTATION1"
 
+    snapshot = permissive_org_snapshot(activated, org_snapshot)
     result = evaluate_policy_gate(
         activated.conn,
         judgment=judgment,
         evidence_bundle=bundle,
-        org_snapshot=org_snapshot,
+        org_snapshot=snapshot,
         alert_identity="ALERT-SINGLE-HOST-MULTI-CITE",
         decision_id="dec-single-host-multi-cite",
         now=NOW,

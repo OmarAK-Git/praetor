@@ -23,7 +23,11 @@ from evals.correlation_gate import (
     load_correlation_expected,
     run_correlation_gate,
 )
-from evals.harness import run_all_scenarios
+from evals.harness import (
+    _permissive_containment_policy,
+    _persist_snapshot_with_overrides,
+    run_all_scenarios,
+)
 from praetor.auth.principal import Principal
 from praetor.auth.verifier import PrincipalMapVerifier
 from praetor.config.activation import activate_org_config
@@ -314,6 +318,11 @@ def check_phase2_safety_on_noisy_bundle(
                     if fact.provenance_path == SYSMON_EVENT_LOG
                     and fact.normalized_fields.get("host_id") == INCIDENT_HOST_ID
                 )
+                host_snapshot = _persist_snapshot_with_overrides(
+                    store,
+                    snapshot,
+                    containment_policy=_permissive_containment_policy(),
+                )
                 host_result = evaluate_policy_gate(
                     store.conn,
                     judgment=_auto_contain_judgment(
@@ -326,7 +335,7 @@ def check_phase2_safety_on_noisy_bundle(
                         ],
                     ),
                     evidence_bundle=sysmon_only_bundle,
-                    org_snapshot=snapshot,
+                    org_snapshot=host_snapshot,
                     alert_identity="phase3-noisy-host-autocontain",
                     decision_id="dec-phase3-noisy-host-autocontain",
                     now=FIXED_NOW,

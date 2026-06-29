@@ -47,6 +47,8 @@ class OutcomeMatrixFaultFlag(StrEnum):
     AMBIGUOUS_CONTAINMENT_TARGET = "ambiguous_containment_target"
     ACCOUNT_CONTAINMENT_DISABLED = "account_containment_disabled"
     POLICY_AMBIGUITY = "policy_ambiguity"
+    CONTAINMENT_POLICY_DENIED = "containment_policy_denied"
+    CONTAINMENT_POLICY_ESCALATION_REQUIRED = "containment_policy_escalation_required"
     RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"
     CONTAINMENT_BREAKER_OPEN = "containment_breaker_open"
     PROVIDER_HEALTH_BREAKER_OPEN = "provider_health_breaker_open"

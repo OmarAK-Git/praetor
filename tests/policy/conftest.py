@@ -18,6 +18,7 @@ from praetor.contracts.disposition import Disposition
 from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
 from praetor.contracts.judgment import CitedEvidenceRef, ModelJudgment
 from praetor.contracts.org_config import OrgConfigSnapshot
+from praetor.contracts.org_config_sections import ContainmentPolicy, ContainmentRule
 from praetor.state.store import StateStore, open_state_store
 
 NOW = datetime(2026, 6, 8, 12, 0, 0, tzinfo=UTC)
@@ -152,3 +153,27 @@ def persist_snapshot_with_overrides(
     )
     store.conn.commit()
     return updated
+
+
+def host_auto_contain_policy() -> ContainmentPolicy:
+    """Catch-all permit policy for tests that need gate auto_contain to succeed."""
+    return ContainmentPolicy(
+        rules=[
+            ContainmentRule(
+                name="allow_hosts",
+                action="auto_contain",
+                scope={"catch_all": True},
+            ),
+        ],
+    )
+
+
+def permissive_org_snapshot(
+    store: StateStore,
+    base: OrgConfigSnapshot,
+) -> OrgConfigSnapshot:
+    return persist_snapshot_with_overrides(
+        store,
+        base,
+        containment_policy=host_auto_contain_policy(),
+    )

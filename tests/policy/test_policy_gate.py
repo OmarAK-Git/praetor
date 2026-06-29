@@ -10,7 +10,9 @@ from tests.policy.conftest import (
     NOW,
     account_bundle,
     auto_contain_judgment,
+    host_auto_contain_policy,
     host_bundle,
+    permissive_org_snapshot,
     persist_snapshot_with_overrides,
 )
 
@@ -26,6 +28,8 @@ from praetor.contracts.org_config_sections import ContainmentPolicy, Containment
 from praetor.hashing import derive_idempotency_key
 from praetor.ledger.store import fetch_ledger_rows
 from praetor.policy.containment_policy import (
+    CONTAINMENT_POLICY_DENIED,
+    CONTAINMENT_POLICY_ESCALATION_REQUIRED,
     NEVER_CONTAIN_LIVE_CONFLICT,
     NEVER_CONTAIN_SNAPSHOT,
     POLICY_AMBIGUITY,
@@ -134,7 +138,10 @@ def test_emergency_entry_embedded_in_directive(
         audit_reason="hold",
     )
     bundle = host_bundle(host_id="ws-02")
-    result = _gate(activated, org_snapshot, bundle=bundle, alert_identity="ALERT-EMBED")
+    snapshot = permissive_org_snapshot(activated, org_snapshot)
+    result = _gate(
+        activated, snapshot, bundle=bundle, alert_identity="ALERT-EMBED"
+    )
     assert result.final_disposition == Disposition.AUTO_CONTAIN
     assert any(
         entry.get("source") == "emergency"
@@ -214,6 +221,7 @@ def test_account_auto_contain_when_feature_gate_enabled(
         activated,
         org_snapshot,
         account_auto_contain_enabled=True,
+        containment_policy=host_auto_contain_policy(),
     )
     result = _gate(
         activated,
@@ -224,6 +232,34 @@ def test_account_auto_contain_when_feature_gate_enabled(
     assert result.final_disposition == Disposition.AUTO_CONTAIN
     assert result.containment_directive is not None
     assert result.containment_directive.target_type == TargetType.ACCOUNT
+
+
+def test_sole_escalate_rule_blocks_auto_contain(activated, org_snapshot) -> None:
+    result = _gate(activated, org_snapshot, alert_identity="ALERT-ESC-BLOCK")
+    assert result.final_disposition == Disposition.ESCALATE
+    assert result.fault_flags == [CONTAINMENT_POLICY_ESCALATION_REQUIRED]
+    assert result.system_fault_escalation is False
+
+
+def test_sole_deny_rule_blocks_auto_contain(activated, org_snapshot) -> None:
+    policy = ContainmentPolicy(
+        rules=[
+            ContainmentRule(
+                name="host_deny",
+                action="deny",
+                scope={"target_type": "host", "target_id": "ws-01"},
+            ),
+        ],
+    )
+    snapshot = persist_snapshot_with_overrides(
+        activated,
+        org_snapshot,
+        containment_policy=policy,
+    )
+    result = _gate(activated, snapshot, alert_identity="ALERT-DENY-BLOCK")
+    assert result.final_disposition == Disposition.ESCALATE
+    assert result.fault_flags == [CONTAINMENT_POLICY_DENIED]
+    assert result.system_fault_escalation is False
 
 
 def test_policy_ambiguity_escalates(activated, org_snapshot) -> None:
@@ -258,25 +294,27 @@ def test_policy_ambiguity_escalates(activated, org_snapshot) -> None:
 
 
 def test_rate_limit_exceeded_escalates(activated, org_snapshot) -> None:
+    snapshot = permissive_org_snapshot(activated, org_snapshot)
     init_policy_state_schema(activated.conn)
     scope_key = rate_limit_scope_key("per_host", target_type="host", target_id="ws-01")
     set_rate_counter(activated.conn, scope_key, 1)
     activated.conn.commit()
-    result = _gate(activated, org_snapshot, alert_identity="ALERT-RATE")
+    result = _gate(activated, snapshot, alert_identity="ALERT-RATE")
     assert result.final_disposition == Disposition.ESCALATE
     assert result.fault_flags == [RATE_LIMIT_EXCEEDED]
     assert result.system_fault_escalation is False
 
 
 def test_duplicate_idempotency_key_suppresses_emission(activated, org_snapshot) -> None:
+    snapshot = permissive_org_snapshot(activated, org_snapshot)
     bundle = host_bundle(host_id="ws-03")
-    first = _gate(activated, org_snapshot, bundle=bundle, alert_identity="ALERT-DUP")
+    first = _gate(activated, snapshot, bundle=bundle, alert_identity="ALERT-DUP")
     assert first.containment_directive is not None
     assert first.directive_suppressed is False
 
     second = _gate(
         activated,
-        org_snapshot,
+        snapshot,
         bundle=bundle,
         alert_identity="ALERT-DUP",
         decision_id="dec-dup-2",
@@ -334,9 +372,10 @@ def test_expired_directive_allows_fresh_reissue(activated, org_snapshot) -> None
     )
     activated.conn.commit()
 
+    snapshot = permissive_org_snapshot(activated, org_snapshot)
     result = _gate(
         activated,
-        org_snapshot,
+        snapshot,
         bundle=bundle,
         alert_identity="ALERT-SUPER",
         decision_id="dec-new",
@@ -355,10 +394,11 @@ def test_expired_directive_allows_fresh_reissue(activated, org_snapshot) -> None
 
 
 def test_feed_unhealthy_blocks_auto_contain(activated, org_snapshot) -> None:
+    snapshot = permissive_org_snapshot(activated, org_snapshot)
     init_revocation_feed_export_schema(activated.conn)
     set_feed_unhealthy(activated.conn, unhealthy=True)
     activated.conn.commit()
-    result = _gate(activated, org_snapshot, alert_identity="ALERT-FEED")
+    result = _gate(activated, snapshot, alert_identity="ALERT-FEED")
     assert result.final_disposition == Disposition.ESCALATE
     assert result.fault_flags == [REVOCATION_FEED_UNHEALTHY]
     assert result.system_fault_escalation is True
@@ -367,7 +407,8 @@ def test_feed_unhealthy_blocks_auto_contain(activated, org_snapshot) -> None:
 def test_proposed_and_final_dispositions_recorded_separately(
     activated, org_snapshot
 ) -> None:
-    result = _gate(activated, org_snapshot, alert_identity="ALERT-RECORD")
+    snapshot = permissive_org_snapshot(activated, org_snapshot)
+    result = _gate(activated, snapshot, alert_identity="ALERT-RECORD")
     gate_result = evaluation_to_policy_gate_result(result)
     assert gate_result.proposed_disposition == Disposition.AUTO_CONTAIN
     assert gate_result.final_disposition == Disposition.AUTO_CONTAIN
@@ -376,6 +417,7 @@ def test_proposed_and_final_dispositions_recorded_separately(
 def test_auto_contain_blocked_when_containment_breaker_open(
     activated, org_snapshot
 ) -> None:
+    snapshot = permissive_org_snapshot(activated, org_snapshot)
     init_policy_state_schema(activated.conn)
     set_breaker_open(activated.conn, BreakerDomain.CONTAINMENT, open_=True)
     activated.conn.execute(
@@ -387,7 +429,7 @@ def test_auto_contain_blocked_when_containment_breaker_open(
         (NOW.isoformat(), BreakerDomain.CONTAINMENT.value),
     )
     activated.conn.commit()
-    result = _gate(activated, org_snapshot, alert_identity="ALERT-BREAKER")
+    result = _gate(activated, snapshot, alert_identity="ALERT-BREAKER")
     assert result.final_disposition == Disposition.ESCALATE
     assert result.fault_flags == [CONTAINMENT_BREAKER_OPEN]
     assert result.system_fault_escalation is False
@@ -424,7 +466,8 @@ def test_auto_contain_mutations_occur_in_one_transaction(
     from praetor.policy.state import rate_limit_scope_key, read_rate_counter
     from praetor.state.idempotency import fetch_active_idempotency_key
 
-    result = _gate(activated, org_snapshot, alert_identity="ALERT-TX")
+    snapshot = permissive_org_snapshot(activated, org_snapshot)
+    result = _gate(activated, snapshot, alert_identity="ALERT-TX")
     assert result.final_disposition == Disposition.AUTO_CONTAIN
     assert result.containment_directive is not None
     key = result.containment_directive.idempotency_key

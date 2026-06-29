@@ -34,6 +34,8 @@ from praetor.policy.circuit_breaker import (
     record_rate_limit_failure_in_transaction,
 )
 from praetor.policy.containment_policy import (
+    CONTAINMENT_POLICY_DENIED,
+    CONTAINMENT_POLICY_ESCALATION_REQUIRED,
     NEVER_CONTAIN_LIVE_CONFLICT,
     NEVER_CONTAIN_SNAPSHOT,
     POLICY_AMBIGUITY,
@@ -339,8 +341,18 @@ def evaluate_policy_gate(
             policy_eval.fault_flag or POLICY_AMBIGUITY,
             system_fault=False,
         )
-    if policy_eval.action != PolicyAction.ALLOW:
-        return _escalate(proposed, POLICY_AMBIGUITY, system_fault=False)
+    if policy_eval.action == PolicyAction.DENY:
+        return _escalate(
+            proposed,
+            policy_eval.fault_flag or CONTAINMENT_POLICY_DENIED,
+            system_fault=False,
+        )
+    if policy_eval.action == PolicyAction.ESCALATE:
+        return _escalate(
+            proposed,
+            policy_eval.fault_flag or CONTAINMENT_POLICY_ESCALATION_REQUIRED,
+            system_fault=False,
+        )
 
     if is_containment_breaker_open(
         conn,

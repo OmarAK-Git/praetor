@@ -4,9 +4,15 @@ from __future__ import annotations
 
 import inspect
 
-from tests.policy.conftest import auto_contain_judgment, host_bundle
+from tests.policy.conftest import (
+    auto_contain_judgment,
+    host_auto_contain_policy,
+    host_bundle,
+    persist_snapshot_with_overrides,
+)
 
 import praetor.engine.orchestrator as orchestrator_module
+from praetor.config.state import fetch_active_snapshot
 from praetor.contracts.disposition import Disposition
 from praetor.engine.orchestrator import (
     SucceedingStampBackend,
@@ -26,6 +32,13 @@ def test_intake_emits_auto_contain_when_gate_approves(
     activated,
 ) -> None:
     """Engine intake analog of confirmed_malicious_sequence."""
+    snapshot = fetch_active_snapshot(activated.conn)
+    assert snapshot is not None
+    persist_snapshot_with_overrides(
+        activated,
+        snapshot,
+        containment_policy=host_auto_contain_policy(),
+    )
     bundle = host_bundle(host_id="ws-01")
     judgment = auto_contain_judgment(bundle)
     provider = _CountingJudgmentProvider(judgment=judgment)

@@ -1,0 +1,16 @@
+schema_version: "1"
+scenario_id: containment_policy_escalation_required
+description: Sole matching escalate rule blocks auto_contain with containment_policy_escalation_required.
+runner: policy_gate
+setup:
+  alert_identity: containment_policy_escalation_required
+  bundle: host
+  host_id: ws-01
+  proposed_disposition: auto_contain
+  policy_preconditions:
+    containment_policy_blocks: true
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - containment_policy_escalation_required
+  system_fault_escalation: false

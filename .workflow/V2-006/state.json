@@ -1,0 +1,17 @@
+{
+  "run": "V2-006",
+  "status": "complete",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-29",
+  "tasks": [
+    {"id": "T-001", "status": "completed", "owner": "agent", "notes": "fault flags + PolicyAction.ESCALATE"},
+    {"id": "T-002", "status": "completed", "owner": "agent", "notes": "evaluate_target_containment_policy"},
+    {"id": "T-003", "status": "completed", "owner": "agent", "notes": "gate.py mapping"},
+    {"id": "T-004", "status": "completed", "owner": "agent", "notes": "unit tests"},
+    {"id": "T-005", "status": "completed", "owner": "agent", "notes": "gate tests + conftest helper"},
+    {"id": "T-006", "status": "completed", "owner": "agent", "notes": "harness + integration test fixes"},
+    {"id": "T-007", "status": "completed", "owner": "agent", "notes": "verification + memory bank"}
+  ]
+}

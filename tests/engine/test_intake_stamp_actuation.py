@@ -17,12 +17,18 @@ from tests.engine.stamp_fakes import (
     FailedInjectNeverContainOnStampBackend,
     InjectNeverContainOnStampBackend,
 )
-from tests.policy.conftest import auto_contain_judgment, host_bundle
+from tests.policy.conftest import (
+    auto_contain_judgment,
+    host_auto_contain_policy,
+    host_bundle,
+    persist_snapshot_with_overrides,
+)
 
 import praetor.engine.orchestrator as orchestrator_module
 import praetor.policy.gate as policy_gate_module
 import praetor.state.sqlite_guard as sqlite_guard_module
 from praetor.config.emergency import add_emergency_never_contain
+from praetor.config.state import fetch_active_snapshot
 from praetor.contracts.disposition import Disposition
 from praetor.engine.orchestrator import (
     _CountingJudgmentProvider,
@@ -38,6 +44,14 @@ def _outstanding_directive_count(conn) -> int:
     ).fetchone()
     assert row is not None
     return int(row["c"])
+
+
+def _permissive_containment(activated) -> None:
+    snapshot = fetch_active_snapshot(activated.conn)
+    assert snapshot is not None
+    persist_snapshot_with_overrides(
+        activated, snapshot, containment_policy=host_auto_contain_policy()
+    )
 
 
 def test_unknown_stamp_leaves_no_outstanding_directive_for_auto_contain(
@@ -81,6 +95,7 @@ def test_pending_stamp_backend_leaves_no_outstanding_directive(
 def test_failed_stamp_auto_contain_emits_directive_and_preserves_candidate(
     activated,
 ) -> None:
+    _permissive_containment(activated)
     bundle = host_bundle(host_id="ws-01")
     judgment = auto_contain_judgment(bundle)
     provider = _CountingJudgmentProvider(judgment=judgment)
@@ -109,6 +124,7 @@ def test_deferred_persist_never_contain_conflict_escalates_in_band(
     verifier,
 ) -> None:
     """Live never-contain added after gate eval but before deferred persist."""
+    _permissive_containment(activated)
     bundle = host_bundle(host_id="ws-01")
     judgment = auto_contain_judgment(bundle)
     provider = _CountingJudgmentProvider(judgment=judgment)
@@ -147,6 +163,7 @@ def test_failed_stamp_and_deferred_persist_conflict_preserves_both_fault_flags(
     verifier,
 ) -> None:
     """Compound path: stamp FAILED + live never-contain drift keeps both audit flags."""
+    _permissive_containment(activated)
     bundle = host_bundle(host_id="ws-01")
     judgment = auto_contain_judgment(bundle)
     provider = _CountingJudgmentProvider(judgment=judgment)
@@ -186,6 +203,7 @@ def test_intake_auto_contain_critical_transaction_count_matches_benchmark(
     activated,
 ) -> None:
     """Orchestrator post-stamp path uses the same critical_transaction count as the benchmark."""
+    _permissive_containment(activated)
     bundle = host_bundle(host_id="ws-bench-tx")
     judgment = auto_contain_judgment(bundle)
     provider = _CountingJudgmentProvider(judgment=judgment)

@@ -1,5 +1,15 @@
 # Progress Log
 
+## 2026-06-29 — V2-006 complete (Gate 1 continued)
+
+- **DEC-058 rule actions:** `escalate` and `deny` block `auto_contain` at policy layer with distinct fault flags (`containment_policy_escalation_required`, `containment_policy_denied`); unresolved permit+block conflict → `policy_ambiguity`.
+- `PolicyAction.ESCALATE`; `evaluate_target_containment_policy` blocking semantics; gate maps deny/escalate distinctly.
+- Example org catch-all `escalate` now correctly blocks; tests needing `auto_contain` use explicit permissive policy overrides.
+- Eval harness: permissive policy for auto_contain scenarios; new scenarios for deny/escalate fault flags.
+- Flight Recorder: `.workflow/V2-006/`.
+- Verification: pytest **799** passed, 2 deselected, 1 xfailed; mypy **118** clean; ruff clean.
+- Follow-on: V2-007 provider unavailable intake; V2-012 `default_action`; V2-013 posture flip.
+
 ## 2026-06-29 — V2-005 complete (Gate 1 started)
 
 - **v2_hardening Item 2a:** typed `ContainmentRule.scope` (target / asset / catch-all), `extra="forbid"` on containment models, preflight `invalid_containment_rule_scope` for string scopes, gate catch-all matching.

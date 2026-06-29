@@ -9,6 +9,8 @@ from pathlib import Path
 from tests.policy.conftest import (
     NOW,
     auto_contain_judgment,
+    host_auto_contain_policy,
+    permissive_org_snapshot,
     persist_snapshot_with_overrides,
 )
 
@@ -105,14 +107,20 @@ def _run_policy_gate(
     *,
     alert_identity: str,
     extra_refs: list[CitedEvidenceRef] | None = None,
+    permissive_policy: bool = True,
 ) -> PolicyGateEvaluation:
+    snapshot = (
+        permissive_org_snapshot(activated, org_snapshot)
+        if permissive_policy
+        else org_snapshot
+    )
     refs = extra_refs or [_judgment_for_bundle(bundle)]
     judgment = auto_contain_judgment(bundle, refs=refs)
     return evaluate_policy_gate(
         activated.conn,
         judgment=judgment,
         evidence_bundle=bundle,
-        org_snapshot=org_snapshot,
+        org_snapshot=snapshot,
         alert_identity=alert_identity,
         decision_id=f"dec-{alert_identity.lower()}",
         now=NOW,
@@ -246,6 +254,7 @@ def test_corroborated_ambiguous_identity_auto_contain_when_gate_enabled(
         activated,
         org_snapshot,
         account_auto_contain_enabled=True,
+        containment_policy=host_auto_contain_policy(),
     )
     security_fact = next(
         fact for fact in bundle.facts if fact.provenance_path == WINDOWS_SECURITY_LOG
@@ -306,6 +315,7 @@ def test_real_correlated_bundle_account_auto_contain_when_gate_enabled(
         activated,
         org_snapshot,
         account_auto_contain_enabled=True,
+        containment_policy=host_auto_contain_policy(),
     )
     security_fact = next(
         fact for fact in bundle.facts if fact.provenance_path == WINDOWS_SECURITY_LOG
