@@ -24,6 +24,7 @@ from praetor.engine.skeleton import (
 )
 from praetor.hashing import derive_stamp_id
 from praetor.judgment.fake_provider import FakeProvider
+from praetor.policy.containment_policy import NEVER_CONTAIN_LIVE_CONFLICT
 from praetor.state.attempts import (
     ActiveAttemptExistsError,
     AttemptState,
@@ -182,6 +183,24 @@ def test_apply_terminal_stamp_raises_for_non_terminal_status(
     pre = _pre_stamp_for(Disposition.STANDARD_REVIEW)
     with pytest.raises(ValueError, match="is not terminal for edict append"):
         apply_terminal_stamp_to_disposition(status, pre_stamp_disposition=pre)
+
+
+def test_stamp_failure_after_deferred_persist_conflict_escalation() -> None:
+    """Compound fault: conflict escalate row + FAILED stamp keeps both flags."""
+    pre = StampContractDisposition(
+        final_disposition=Disposition.ESCALATE,
+        fault_flags=[NEVER_CONTAIN_LIVE_CONFLICT],
+        system_fault_escalation=False,
+        proposed_disposition=Disposition.AUTO_CONTAIN,
+    )
+    result = apply_terminal_stamp_to_disposition(
+        StampStatus.FAILED,
+        pre_stamp_disposition=pre,
+    )
+    assert result.final_disposition == Disposition.ESCALATE
+    assert result.fault_flags == [NEVER_CONTAIN_LIVE_CONFLICT, TICKET_STAMP_FAILED]
+    assert result.system_fault_escalation is False
+    assert result.proposed_disposition == Disposition.AUTO_CONTAIN
 
 
 def test_stamp_failure_preserves_autocontain_candidate() -> None:

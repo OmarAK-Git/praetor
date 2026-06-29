@@ -1,5 +1,15 @@
 # Progress Log
 
+## 2026-06-29 — V2-008 complete (Gate 1 continued, parallel branch)
+
+- **DEC-053 compound fault fidelity:** stamp `FAILED` + `DeferredDirectivePersistConflict` preserves both conflict fault flag and `ticket_stamp_failed`; fail-closed escalate with directive suppressed unchanged.
+- Orchestrator conflict path already re-applies `apply_terminal_stamp_to_disposition` on HEAD; added contract unit test `test_stamp_failure_appends_flag_after_deferred_persist_conflict_escalation`.
+- Integration coverage: `test_failed_stamp_and_deferred_persist_conflict_preserves_both_fault_flags` (existing).
+- Closed DEC-053 known-fidelity-gap note in `memory-bank/decisions.md`.
+- Isolated worktree: `.worktrees/V2-008` on branch `task/V2-008`.
+- Flight Recorder: `.workflow/V2-008/`.
+- Verification: VS-0001 (counts recorded in verification.md).
+
 ## 2026-06-29 — V2-005 complete (Gate 1 started)
 
 - **v2_hardening Item 2a:** typed `ContainmentRule.scope` (target / asset / catch-all), `extra="forbid"` on containment models, preflight `invalid_containment_rule_scope` for string scopes, gate catch-all matching.
