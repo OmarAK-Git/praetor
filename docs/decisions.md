@@ -19,6 +19,7 @@ This file records implementation choices that refine or operationalize those doc
 | DEC-057 | 2026-06-16 | Sweep placeholder activation scan (`collect_sweep_placeholder_violations`) covers only safety-critical fields: `assets_and_asset_groups.entries[].subnet_membership` and `containment_exclusions.never_contain[].target_id`. Advisory placeholder prose in `business_context.notes` and `normal_admin_patterns[].description` is intentionally **not** activation-blocking — SOC review reminders, not containment topology | Subnet and never-contain target IDs directly affect isolation scope; narrative fields are review prompts and do not gate containment decisions | `src/praetor/codification/placeholders.py`, `src/praetor/codification/sweep.py`, `tests/codification/test_sweep.py` |
 | DEC-058 | 2026-06-29 | V2 containment authorization posture is **deployment-configurable** via a required `default_action` on `ContainmentPolicy`; v1 implicit default-allow is **retired drift**; sole matching `escalate` rules **block** `auto_contain` | Containment must be earned by explicit configuration, not granted by omission; operators need a catch-all primitive for progressive authorization; `escalate` as hint-only contradicts operator intent (example `default_escalate` + silent scope drop) | V2-001; `docs/proposals/v2_hardening.md` Item 2; implementation in V2-005–V2-006, V2-012–V2-013 |
 | DEC-059 | 2026-06-29 | V2 host corroboration floor: cited facts for host `auto_contain` require ≥2 distinct `provenance_path` values with ≥1 non-attacker-controllable; sole `ambiguity_flag=true` cited fact cannot authorize host containment; fault flag `insufficient_corroboration` (`system_fault_escalation=false`); account path unchanged (`ambiguous_target_identity`) | v1 solved citation-anchored targeting (DEC-052) but not evidence sufficiency; extends account corroboration discipline to hosts; raises bar from single forged log line to convergent independent collection paths | V2-002; `docs/contracts.md` §12a/§13; implementation in V2-011 |
+| DEC-060 | 2026-06-29 | V2 revocation/snapshot semantics: `NeverContainSnapshotRecord` appended only in engine post-stamp transaction paired with `DecisionEdict` (not in PolicyGate); expired-directive fresh re-issue retains §4.2 carve-out (no revocation record/feed row, `supersedes_directive_id` unset); expired-unrevoked rows may remain in SQLite but are excluded from step-6 idempotency; orphan directives without ledger edicts are skipped at step 6 and surfaced as operator health condition (V2-010) | Closes REVIEW-007/008 and startup ambiguity blocking V2-009/V2-010/V2-018; ratifies existing v1 behavior where tests already pass; prevents feed inflation on natural expiry and duplicate idempotency on half-commits | V2-003; `docs/contracts.md` §4.2/§7a; implementation in V2-009, V2-010, V2-018 |
 
 Add rows when implementation choices diverge from or refine authoritative docs.
 
@@ -155,3 +156,61 @@ Any new `provenance_path` introduced by a correlation normalizer defaults to **a
 | V2-011 | Gate reads resolved citation `provenance_path` / `ambiguity_flag`; `meets_host_corroboration` helper; `OutcomeMatrixFaultFlag.INSUFFICIENT_CORROBORATION`; harness scenario; policy tests |
 
 **Doc placement.** §12a and §13 row land in V2-002; enum/metrics/harness wiring lands in V2-011 per AG-0068 completeness contract. `docs/spec.md` mirror deferred until spec unfreeze.
+
+## DEC-060 — Revocation, snapshot placement, and startup reconciliation semantics
+
+**Status:** accepted (2026-06-29, V2-003)
+
+**Context.** TASK-017 left REVIEW-007 (where `NeverContainSnapshotRecord` is appended), REVIEW-008 (whether expired-directive re-issue writes a supersession revocation), and startup reconciliation for expired-unrevoked and orphan outstanding directive rows as open owner decisions. v1 code and tests already implement much of the recommended posture; V2-003 ratifies a single semantic target for downstream ledger/revocation tasks.
+
+### NeverContainSnapshotRecord placement (REVIEW-007)
+
+**Decision:** Option 2 — engine edict-append pairing (refines DEC-028 and DEC-053).
+
+- PolicyGate is a **pure evaluator** and must **not** append `NeverContainSnapshotRecord` (or any ledger row).
+- The gate returns `live_never_contain_entries` captured at evaluation time.
+- The engine appends `NeverContainSnapshotRecord` and `DecisionEdict` in **one** terminal post-stamp `critical_transaction`, using the full live list at commit time.
+- `DecisionEdict.live_never_contain_hash` must match the snapshot record's `snapshot_content` hash (§9 relationship paragraph).
+- **No duplicate snapshot writes** — exactly one snapshot record per qualifying edict commit.
+
+### Expired-directive fresh re-issue (REVIEW-008)
+
+**Decision:** Retain `docs/contracts.md` §4.2 carve-out (PE-0015). Natural expiry is **not** supersession.
+
+When a directive is past `expires_at` but still `revoked = 0`:
+
+- A fresh emission for the same alert-target-scope may reuse the **same idempotency key**.
+- The replacement gets a **new** `directive_id`.
+- `supersedes_directive_id` remains **unset** on the replacement (expiry already made the prior directive non-outstanding).
+- **No** `DirectiveRevocationRecord` and **no** revocation feed row are written for the expired directive.
+
+**Still-live supersession** (outstanding, unexpired, unrevoked) continues to require a `DirectiveRevocationRecord` with `reason = supersession`, a feed row, and `superseded_by_directive_id` on the revocation record. v1 PolicyGate suppresses re-issue while a directive is live via idempotency, so live supersession remains defined but rarely exercised until later tasks.
+
+### Expired-unrevoked rows at startup
+
+**Decision:** Retain as audit residue; exclude from active reconciliation.
+
+- `outstanding_containment_directives` may contain expired-unrevoked rows (`revoked = 0`, `expires_at <= now`).
+- `fetch_outstanding_unrevoked_directives` filters `expires_at > now`, so startup step 6 (`reconcile_policy_state`) does **not** re-register idempotency for expired rows.
+- Duplicate suppression and fresh re-issue at PolicyGate use the same non-expired filter — correctness does **not** require purging expired rows.
+- Optional archival purge or compaction is deferred to **V2-010** (operator-visible cleanup), not V2-003.
+
+### Orphan outstanding directives (no ledger edict)
+
+**Decision:** Skip idempotency at step 6; surface health condition in V2-010.
+
+An outstanding directive row whose `decision_id` has **no** matching ledger `DecisionEdict` (half-committed directive without edict) is an **orphan**:
+
+- Startup step 6 **must not** re-register its idempotency key (AG-0045; `test_reconcile_skips_idempotency_when_ledger_edict_missing`).
+- Orphans **must not** be silently ignored — **V2-010** emits an operator-visible `SystemHealthAlert` (or equivalent audit condition) when orphans exist at startup.
+- Engine startup recovery (steps 4/5) remains authoritative for resolving the parent attempt; automatic orphan purge without recovery context is **forbidden**.
+
+### Implementation map (out of V2-003 scope)
+
+| Follow-on | Delivers |
+|---|---|
+| V2-009 | Emergency never-contain gate alignment; unified ledger-append policy for activation/emergency/recovery revocation paths |
+| V2-010 | Recovery pinning; orphan health surfacing; optional expired-row archival |
+| V2-018 | Feed supersession verifiability aligned with DEC-060 expired vs live supersession split |
+
+**Doc placement.** §4.2 and §7a pins land in V2-003. `docs/spec.md` mirror deferred until spec unfreeze.

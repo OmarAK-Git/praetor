@@ -186,6 +186,14 @@ The key has states active / expired / cleared.
 - The key is **cleared** only by SOC-lead manual revocation, in the same SQLite transaction that writes the `DirectiveRevocationRecord` — after which a new directive for that target is again possible.
 - Automated revocations (never-contain conflict, supersession) write the revocation record and feed row but **do not** clear the key; the target stays blocked.
 
+### 4.2.1 Startup reconciliation (step 6)
+
+Startup step 6 (`reconcile_policy_state`) aligns idempotency keys with durable directive state. The following pins apply (DEC-060):
+
+**Expired-unrevoked rows.** Rows with `revoked = 0` and `expires_at <= now` may remain in `outstanding_containment_directives` as audit residue. `fetch_outstanding_unrevoked_directives` returns only rows with `expires_at > now`, so step 6 does **not** re-register idempotency for expired directives. Fresh re-issue after natural expiry (§4.2 second bullet) does not require purging expired rows for correctness.
+
+**Orphan outstanding directives.** A row whose `decision_id` has no matching ledger `DecisionEdict` is an orphan half-commit. Step 6 **skips** idempotency re-registration for orphans and must **not** paper over the gap by registering the key. Orphans are surfaced as an operator-visible health/audit condition (implementation: V2-010); engine startup recovery (steps 4/5) remains authoritative for the parent attempt.
+
 ---
 
 ## 5. `stamp_id`
@@ -252,6 +260,10 @@ praetor:v1:empty_bundle
 The v1 ledger is a hash-chained append-only audit log (see `docs/spec.md` § Ledger). Each appended row receives a `ledger_current_hash` linking it to the prior tip. Tamper evidence comes from recomputing these links at startup and on verification walks; it is distinct from the revocation-feed `record_checksum` (§8.1), which detects corruption only.
 
 Field-level shapes of the four interleaved record types are in `schemas/decision_edict.json`, `schemas/directive_revocation_record.json`, `schemas/never_contain_snapshot_record.json`, and `schemas/emergency_never_contain_record.json`. The link construction is pinned here.
+
+### NeverContainSnapshotRecord append site (DEC-060)
+
+`NeverContainSnapshotRecord` is appended to the ledger **only** in the engine's terminal post-stamp `critical_transaction`, atomically paired with its `DecisionEdict` (DEC-028, DEC-053). PolicyGate is a pure evaluator and must not append ledger records. The gate supplies `live_never_contain_entries`; the engine captures the **full** live never-contain list at commit time. Exactly one snapshot record per qualifying edict commit — no duplicate snapshot writes inside PolicyGate.
 
 ### Domain constant
 

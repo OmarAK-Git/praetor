@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-06-29 — V2-003 complete
+
+- Ratified **DEC-060**: `NeverContainSnapshotRecord` engine-only append paired with `DecisionEdict`; expired re-issue retains §4.2 carve-out (no revocation record); expired-unrevoked rows excluded from step 6; orphan directives skipped + health surfacing deferred to V2-010.
+- Updated `docs/contracts.md` §4.2.1/§7a, `docs/decisions.md`, `docs/proposals/delivery_backlog.md`.
+- Flight Recorder: `.workflow/V2-003/`.
+- Verification: pytest green (no code changes); DEC-060 grep checks pass.
+- Implementation deferred to V2-009, V2-010, V2-018.
+
 ## 2026-06-29 — V2-002 complete
 
 - Ratified **DEC-059**: host corroboration floor; `insufficient_corroboration` Outcome Matrix row; provenance trust classification (`sysmon_event_log` attacker-controllable, `windows_security_log` not); future paths default attacker-controllable; account `ambiguous_target_identity` unchanged.

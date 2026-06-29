@@ -4,7 +4,7 @@
 
 **V2 plan initialized** — executable backlog in `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints). V1 complete (pytest **778** at TASK-035).
 
-**Sprint V2-0 (Decision and Contract Ratification):** V2-001 complete (DEC-058). V2-002 complete (DEC-059). **V2-003 – V2-004** pending — close Gate 0 before V2-005.
+**Sprint V2-0 (Decision and Contract Ratification):** V2-001 complete (DEC-058). V2-002 complete (DEC-059). V2-003 complete (DEC-060). **V2-004** pending — close Gate 0 before V2-005.
 
 ## Build order (V2)
 
@@ -21,7 +21,7 @@
 
 ## Current blockers
 
-- **V2 Gate 0** — V2-003 – V2-004 owner decisions not yet ratified (host corroboration contract closed in V2-002 / DEC-059).
+- **V2 Gate 0** — V2-004 owner decision not yet ratified (revocation/snapshot semantics closed in V2-003 / DEC-060).
 - `ProviderUnavailableError` intake catch blocked on V2-004 Outcome Matrix row.
 - REVIEW-004 correlator cross-host xfail → V2-014.
 - Live Splunk HEC demo env-gated → V2-029.
