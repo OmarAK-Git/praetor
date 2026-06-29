@@ -12,3 +12,4 @@ venv/
 tmp-*.db
 state/
 *.db
+/dream-loop-success-story.md
