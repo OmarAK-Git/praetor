@@ -6,7 +6,7 @@
 
 **Sprint V2-0 (Decision and Contract Ratification):** V2-001 through V2-004 complete (DEC-058 – DEC-061). **Gate 0 closed.**
 
-**Sprint V2-1 (Safety-Critical V1 Gap Closure):** V2-005 and V2-006 complete. **V2-007** next — provider unavailable intake handling (V2 Gate 1).
+**Sprint V2-1 (Safety-Critical V1 Gap Closure):** V2-005, V2-006, and V2-007 complete. **V2-008** next — compound fault flag preservation (V2 Gate 1).
 
 ## Build order (V2)
 
@@ -23,7 +23,7 @@
 
 ## Current blockers
 
-- **V2 Gate 1** — V2-007 provider unavailable intake handling is next.
+- **V2 Gate 1** — V2-008 compound fault flag preservation is next.
 - REVIEW-004 correlator cross-host xfail → V2-014.
 - Live Splunk HEC demo env-gated → V2-029.
 

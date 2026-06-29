@@ -16,8 +16,13 @@ from praetor.engine.orchestrator import (
     _CountingJudgmentProvider,
     process_alert_intake,
 )
+from praetor.judgment.fake_provider import FakeProvider, FakeProviderMode
 from praetor.metrics.collector import MetricsCollector
-from praetor.metrics.events import BreakerMetricDomain
+from praetor.metrics.events import (
+    LLM_FAILURE_FAULT_FLAGS,
+    BreakerMetricDomain,
+    OutcomeMatrixFaultFlag,
+)
 from praetor.tickets.outbox import StampStatus
 
 
@@ -96,6 +101,30 @@ def test_intake_records_bypass_gate_metrics_on_correlation_failure(activated) ->
     assert snap.policy_gate_evaluations_total == 0
     assert snap.disposition_counts[Disposition.ESCALATE.value] == 1
     assert snap.llm_failure_by_fault_flag["correlation_failure"] == 1
+
+
+def test_intake_records_provider_unavailable_llm_failure_metric(activated) -> None:
+    provider = FakeProvider(mode=FakeProviderMode.UNAVAILABLE)
+    metrics = MetricsCollector()
+
+    result = process_alert_intake(
+        activated,
+        judgment_provider=provider,
+        stamp_backend=SucceedingStampBackend(),
+        alert_identity="metrics-provider-unavailable",
+        metrics_collector=metrics,
+    )
+
+    assert result.disposition == Disposition.ESCALATE
+    snap = metrics.snapshot()
+    flag = OutcomeMatrixFaultFlag.PROVIDER_UNAVAILABLE.value
+    assert flag in LLM_FAILURE_FAULT_FLAGS
+    assert snap.policy_gate_evaluations_total == 0
+    assert snap.llm_failure_by_fault_flag == {flag: 1}
+    assert snap.disposition_counts[Disposition.ESCALATE.value] == 1
+    assert set(snap.llm_failure_by_fault_flag) <= {
+        member.value for member in LLM_FAILURE_FAULT_FLAGS
+    }
 
 
 def test_unknown_stamp_does_not_increment_gate_or_disposition_metrics(

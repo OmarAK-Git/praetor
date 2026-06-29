@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-06-29 — V2-007 complete (Gate 1 continued)
+
+- **ProviderUnavailable intake:** breaker production-failure recorded in edict transaction; metrics record `provider_unavailable` under `LLM_FAILURE_FAULT_FLAGS`.
+- `persist_edict_and_complete_attempt` optional `in_transaction_hook`; all typed provider faults record breaker failure via `_finish_provider_fault`.
+- Tests: `tests/engine/test_provider_unavailable_intake.py` (2); metrics orchestrator (+1).
+- Verification: scoped pytest **161**; mypy **118** clean; ruff clean; harness `provider_unavailable` PASS.
+- Follow-on: V2-008 compound fault flags.
+
 ## 2026-06-29 — V2-006 complete (Gate 1 continued)
 
 - **DEC-058 rule actions:** `escalate` and `deny` block `auto_contain` at policy layer with distinct fault flags (`containment_policy_escalation_required`, `containment_policy_denied`); unresolved permit+block conflict → `policy_ambiguity`.

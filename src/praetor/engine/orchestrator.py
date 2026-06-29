@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
@@ -50,6 +50,9 @@ from praetor.judgment.provider import (
     ProviderRetryPolicy,
     ProviderTimeoutError,
     ProviderUnavailableError,
+)
+from praetor.judgment.provider_health_breaker import (
+    record_provider_production_failure_in_transaction,
 )
 from praetor.metrics.collector import MetricsCollector
 from praetor.metrics.events import BreakerMetricDomain, OutcomeMatrixFaultFlag
@@ -648,6 +651,16 @@ def _finish_config_over_budget(
     )
 
 
+def _record_provider_breaker_failure_hook(conn: sqlite3.Connection) -> None:
+    snapshot = fetch_active_snapshot(conn)
+    if snapshot is None:
+        return
+    record_provider_production_failure_in_transaction(
+        conn,
+        policy=snapshot.provider_health_circuit_breaker_policy,
+    )
+
+
 def _finish_provider_fault(
     store: StateStore,
     attempt: ProcessingAttempt,
@@ -662,6 +675,8 @@ def _finish_provider_fault(
         judgment_provider,
         fault_flag=fault_flag,
         metrics_collector=metrics_collector,
+        in_transaction_hook=_record_provider_breaker_failure_hook,
+        record_provider_breaker_metrics=True,
     )
 
 
@@ -674,6 +689,8 @@ def _finish_system_fault(
     judgment: ModelJudgment | None = None,
     calls: int | None = None,
     metrics_collector: MetricsCollector | None = None,
+    in_transaction_hook: Callable[[sqlite3.Connection], None] | None = None,
+    record_provider_breaker_metrics: bool = False,
 ) -> IntakeResult:
     resolved_judgment = judgment or skeleton_model_judgment(
         proposed=Disposition.STANDARD_REVIEW
@@ -698,6 +715,7 @@ def _finish_system_fault(
         attempt,
         edict,
         never_contain_entries=never_contain,
+        in_transaction_hook=in_transaction_hook,
     )
     provider_calls = (
         calls if calls is not None else getattr(judgment_provider, "calls", 0)
@@ -707,6 +725,11 @@ def _finish_system_fault(
         disposition=Disposition.ESCALATE,
         fault_flag=fault_flag,
     )
+    if record_provider_breaker_metrics and metrics_collector is not None:
+        metrics_collector.record_breaker_state(
+            BreakerMetricDomain.PROVIDER_HEALTH,
+            is_open=is_breaker_open(store.conn, BreakerDomain.PROVIDER_HEALTH),
+        )
     return IntakeResult(
         decision_id=stored.decision_id,
         edict=stored,

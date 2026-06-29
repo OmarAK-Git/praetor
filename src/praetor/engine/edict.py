@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import sqlite3
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any
@@ -254,11 +255,14 @@ def persist_edict_and_complete_attempt(
     edict: DecisionEdict,
     *,
     never_contain_entries: list[dict[str, Any]],
+    in_transaction_hook: Callable[[sqlite3.Connection], None] | None = None,
 ) -> DecisionEdict:
     """Append ledger records and complete attempt in one critical transaction."""
     with critical_transaction(conn):
         stored = _append_edict_and_snapshot_in_transaction(
             conn, edict=edict, never_contain_entries=never_contain_entries
         )
+        if in_transaction_hook is not None:
+            in_transaction_hook(conn)
         _finalize_attempt_with_edict_in_transaction(conn, attempt, stored)
         return stored
