@@ -1,5 +1,14 @@
 # Progress Log
 
+## 2026-06-29 — V2-008 complete (Gate 1 continued)
+
+- **DEC-053 compound fault fidelity:** stamp `FAILED` + `DeferredDirectivePersistConflict` preserves both conflict fault flag and `ticket_stamp_failed`; fail-closed escalate with directive suppressed unchanged.
+- Orchestrator conflict path already re-applies `apply_terminal_stamp_to_disposition` on HEAD; added contract unit test `test_stamp_failure_appends_flag_after_deferred_persist_conflict_escalation`.
+- Integration coverage: `test_failed_stamp_and_deferred_persist_conflict_preserves_both_fault_flags` (existing).
+- Closed DEC-053 known-fidelity-gap note in `memory-bank/decisions.md`.
+- Flight Recorder: `.workflow/V2-008/`.
+- Verification: task-scoped pytest **27**; mypy **118** clean; ruff clean.
+
 ## 2026-06-29 — V2-007 complete (Gate 1 continued)
 
 - **ProviderUnavailable intake:** breaker production-failure recorded in edict transaction; metrics record `provider_unavailable` under `LLM_FAILURE_FAULT_FLAGS`.
