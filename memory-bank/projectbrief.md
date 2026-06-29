@@ -14,7 +14,8 @@ Three dispositions only: `standard_review`, `escalate`, `auto_contain`. No `auto
 |-----|------|
 | `docs/prd.md` | Why — product thesis, decisions, success criteria, non-goals summary |
 | `docs/spec.md` | What — architecture, contracts behavior, acceptance criteria, risks |
-| `docs/plan.md` | How — 35 tasks, sprints, phase gates |
+| `docs/plan.md` | How — 35 V1 tasks, sprints, phase gates (**complete**) |
+| `docs/proposals/v2_implementation_plan.md` | V2 — 36 tasks, 6 sprints, 6 phase gates (**active**) |
 | `docs/contracts.md` | Hashing, IDs, Outcome Matrix, consumer pre-actuation (hard prerequisite for Task 3) |
 
 ## Tech stack

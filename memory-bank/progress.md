@@ -1,5 +1,21 @@
 # Progress Log
 
+## 2026-06-29 — V2-001 complete
+
+- Ratified **DEC-058**: deployment-configurable required `default_action`; v1 default-allow retired as drift; `escalate` blocks containment; rule-action and precedence semantics documented.
+- Updated `docs/decisions.md`, `docs/proposals/v2_hardening.md`, `docs/proposals/delivery_backlog.md`.
+- Flight Recorder: `.workflow/V2-001/`.
+- Verification: pytest **780**, decision grep checks pass.
+- No code changes (implementation deferred to V2-005, V2-006, V2-012, V2-013).
+
+## 2026-06-29 — V2 Memory Bank initialized
+
+- Indexed **36** V2 tasks from `docs/proposals/v2_implementation_plan.md` into `memory-bank/tasks.md`.
+- Sprint groupings V2-0 through V2-5, full dependency index, **6** phase gates, and V1 carry-forward items recorded.
+- `activeContext.md` updated: current focus Sprint V2-0 (V2-001 – V2-004); build order and governing constraints summarized.
+- V1 history preserved under **Done (V1)** in tasks.md; pytest baseline **778** at TASK-035 close.
+- No V2 implementation started; all V2 tasks status **pending**.
+
 ## 2026-06-16 — TASK-035 complete
 
 - Production benchmark: `benchmarks/serialized_path.py` — PolicyGate emit + ledger append + revocation feed outbox vs `provisional_alert_rate_targets`.
@@ -453,7 +469,8 @@
 | Area | State |
 |------|--------|
 | Product definition | Complete in `docs/` |
-| Implementation plan | Complete — 35 tasks in `docs/plan.md` |
+| V1 implementation plan | Complete — 35 tasks in `docs/plan.md` |
+| V2 implementation plan | Initialized — 36 tasks in `docs/proposals/v2_implementation_plan.md`; Memory Bank indexed; **0/36** started |
 | Package / tests | Task 1 done — `pytest` runs, `praetor` imports |
 | Contracts | Task 2 done — `src/praetor/contracts/`, `schemas/` |
 | Hashing | Task 3 done — `src/praetor/hashing/` + `docs/contracts.md` §1–§9 |
@@ -471,4 +488,6 @@
 
 ## Next recommended steps
 
-1. TASK-031 — Phase 3 harness on correlated telemetry per `docs/plan.md`.
+1. **V2-001** — Authorization posture decision (`docs/decisions.md`, `docs/proposals/v2_hardening.md`).
+2. **V2-002** – **V2-004** — parallel decision/contract tasks (no cross-deps within Gate 0).
+3. Close **V2 Gate 0** before V2-005 (strict containment schema).

@@ -88,6 +88,8 @@ def test_docs_changes_limited_to_contracts_md() -> None:
         "docs/operator_runbook.md",
         "docs/architecture.md",
         "docs/eval_gates.md",
+        "docs/proposals/delivery_backlog.md",
+        "docs/proposals/v2_hardening.md",
     }
     unexpected = [path for path in changed if path not in allowed]
     msg = f"only scoped refinement docs may change under docs/: {unexpected}"

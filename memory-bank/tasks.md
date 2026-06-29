@@ -1,14 +1,110 @@
 # Tasks
 
-Index of `docs/plan.md` (35 tasks, 5 sprints).
+## V1 — complete
 
-## Active
+All **35** plan tasks in `docs/plan.md` are done (pytest **778** at TASK-035 close). Evidence and history: **Done (V1)** below.
 
-| ID | Task | Status | Notes |
-|---|---|---|---|
-| — | — | — | TASK-035 complete; all 35 plan tasks done |
+## V2 — active
 
-## Done (recent)
+Index of `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints, **6** phase gates).
+
+| ID | Task | Sprint | Status | Depends | Cx |
+|---|---|---|---|---|---|
+| V2-001 | Authorization Posture Decision | V2-0 | **complete** | — | M |
+| V2-002 | Host Corroboration Contract | V2-0 | pending | — | M |
+| V2-003 | Revocation and Snapshot Owner Decisions | V2-0 | pending | — | M |
+| V2-004 | Provider Unavailable Outcome Matrix Row | V2-0 | pending | — | S |
+
+**Next up:** V2-002 — Host Corroboration Contract (parallel with V2-003, V2-004 for Gate 0).
+
+Full task definitions, tests-first criteria, file paths, and done-when gates: **`docs/proposals/v2_implementation_plan.md`**.
+
+## V2 — upcoming (by sprint)
+
+| Sprint | Tasks | Theme |
+|---|---|---|
+| V2-0 | V2-001 – V2-004 | Decision and contract ratification |
+| V2-1 | V2-005 – V2-010 | Safety-critical V1 gap closure |
+| V2-2 | V2-011 – V2-016 | Authorization rewire foundations |
+| V2-3 | V2-017 – V2-023 | State, ledger, feed, and metrics hardening |
+| V2-4 | V2-024 – V2-031 | Feature enablers and operator readiness |
+| V2-5 | V2-032 – V2-036 | V2 product features (reporting, exemplars, statute curation) |
+
+## V2 — task index
+
+| ID | Task | Depends |
+|---|---|---|
+| V2-001 | Authorization Posture Decision | — |
+| V2-002 | Host Corroboration Contract | — |
+| V2-003 | Revocation and Snapshot Owner Decisions | — |
+| V2-004 | Provider Unavailable Outcome Matrix Row | — |
+| V2-005 | Strict ContainmentRule Schema and Scope Preflight | V2-001 |
+| V2-006 | Escalate Rule Blocks Containment | V2-001, V2-005 |
+| V2-007 | ProviderUnavailable Intake Handling | V2-004 |
+| V2-008 | Compound Fault Flag Preservation | — |
+| V2-009 | Emergency Never-Contain Gate Alignment | V2-003 |
+| V2-010 | Recovery Policy Pinning | V2-003 |
+| V2-011 | Host Auto-Contain Corroboration Floor | V2-002 |
+| V2-012 | Default Action Primitive | V2-001, V2-005, V2-006 |
+| V2-013 | Default-Deny or Configurable Posture Flip | V2-012 |
+| V2-014 | Correlator Host Isolation | V2-011 |
+| V2-015 | Gate Target Ownership Guard | V2-011 |
+| V2-016 | Static Policy Fault-Flag Guard | V2-004, V2-011 |
+| V2-017 | Production State Initialization Guard | — |
+| V2-018 | Revocation Supersession and Feed Verifiability | V2-003 |
+| V2-019 | Ledger Tip Anchor and Feed Floor Hardening | V2-017 |
+| V2-020 | Metrics Production Completeness | V2-007, V2-016 |
+| V2-021 | Evidence ID Contract Pin | — |
+| V2-022 | SID and Normalizer Conformance | V2-011 |
+| V2-023 | Contract Scope Guard and Generated Artifact Hygiene | V2-005, V2-016, V2-021 |
+| V2-024 | Account Containment Production Enablement | V2-011, V2-016, V2-022 |
+| V2-025 | All Containment Through PolicyGate | V2-024 |
+| V2-026 | Org-Config Numeric Rate Ceilings | V2-012 |
+| V2-027 | Org-Config Sweep CLI | — |
+| V2-028 | Real Vertex Provider Implementation | V2-007 |
+| V2-029 | Detection and Splunk Demo Durability | — |
+| V2-030 | Benchmark Burst Measurement and Runbook Pins | V2-020 |
+| V2-031 | Consumer Policy and Feed Roadmap Boundary | V2-018, V2-019 |
+| V2-032 | Progressive Authorization Reporting | V2-020, V2-026 |
+| V2-033 | Judgment Prompt Exemplar Slot | — |
+| V2-034 | Similar-Case Retrieval | V2-032, V2-033 |
+| V2-035 | Statute Curation Workflow | V2-027, V2-032 |
+| V2-036 | Eval Regression Locking Discipline | V2-034, V2-035 |
+
+## V2 — phase gates
+
+| Gate | Required tasks | Pass criteria (summary) |
+|---|---|---|
+| V2 Gate 0 | V2-001 – V2-004 | Authorization posture, host corroboration, snapshot/revocation placement, provider-unavailable mapping ratified |
+| V2 Gate 1 | V2-005 – V2-010 | Malformed scope fails activation; escalate cannot permit containment; provider unavailable mapped; compound faults preserved; emergency never-contain blocks; recovery pinned |
+| V2 Gate 2 | V2-011 – V2-016 | Host corroboration required; explicit default posture; correlator/gate target ownership enforced; fault flags cannot drift |
+| V2 Gate 3 | V2-017 – V2-023 | Production table init; revocation/feed consumer-verifiable; metrics wired; evidence IDs pinned; scope guards strict |
+| V2 Gate 4 | V2-024 – V2-031 | Account containment enablement; all containment through PolicyGate; rate ceilings; sweep CLI; real provider; Splunk demo resolved |
+| V2 Gate 5 | V2-032 – V2-036 | Read-only promotion reporting; bounded exemplars; human-confirmed retrieval; statute curation review-only; eval regression discipline |
+
+## V2 — carry-forward from V1
+
+- `ProviderUnavailableError` not caught in intake until V2-004/V2-007 (Outcome Matrix row).
+- Static fault-flag guard, production-store table init, REVIEW-004 correlator xfail tracked into V2-014/V2-016/V2-017.
+- Live Splunk HEC demo remains env-gated (V2-029).
+- Phase 4 gate PASS-WITH-CONDITIONS items close in V2-029.
+
+## V2 — governing constraints (summary)
+
+- `docs/contracts.md` remains SSOT for hashes, IDs, Outcome Matrix fault flags.
+- Intake: DEC-053 deferred directive persist — `evaluate_policy_gate(..., persist_directive=False)` then one `critical_transaction`.
+- PolicyGate target selection uses gate-resolved target, not raw bundle re-derivation.
+- Recovery must not emit new auto-containment unless explicit owner decision supersedes v1 rule.
+- Proposed org-config sweep artifacts remain non-activatable.
+- Marker-gated tests for real providers / live Splunk; fixture-backed tests in default suite.
+
+## V2 — complete (Gate 0 partial)
+
+| ID | Task | Evidence |
+|---|---|---|
+| V2-001 | Authorization Posture Decision | `.workflow/V2-001/verification.md` — DEC-058; pytest 780 |
+
+## Done (V1 — recent)
 
 | ID | Task | Evidence |
 |---|---|---|
@@ -20,30 +116,7 @@ Index of `docs/plan.md` (35 tasks, 5 sprints).
 | TASK-029 | Correlator Identity Compliance Tests | `.workflow/TASK-029/verification.md` — 12 tests in default suite; policy-gate e2e; pytest 666 |
 | TASK-028a | Production Orchestrator PolicyGate and Metrics Integration | `.workflow/TASK-028a/verification.md` — pytest 646; eval harness 24/24; tripwires pass |
 
-## Gate prerequisites
-
-- Startup recovery step 6 is implemented in TASK-017 (`reconcile_policy_state`).
-- Engine orchestrator runs `evaluate_policy_gate` on intake (Task 28a complete).
-- Provider-health breaker (`praetor.judgment.provider_health_breaker`) is implemented; wire production failure recording into intake as follow-on.
-- `ProviderUnavailableError` maps via `provider_failure_trips_breaker()` but is not caught in intake until an Outcome Matrix row exists.
-- TASK-015 citation surface (TASK-017 reuse): citable field paths are normalized
-  evidence fields (bare or `normalized_fields.*`), nested normalized paths, plus
-  `source_event_reference` and `provenance_path` (TASK-014 prompt excerpts).
-  `raw_source` is unciteable at any path depth. Fact-envelope keys such as
-  `evidence_id` are not citable field paths.
-
-## Upcoming (by phase)
-
-| Phase | Tasks | Pass criteria (summary) |
-|---|---|---|
-| Phase 2 — Judgment & policy | 13–27 | PolicyGate, eval harness (mandatory scenarios), metrics, reference consumer verifier |
-| Phase 3 — Correlation | 28–31 | Real telemetry normalization, identity compliance, correlation gate |
-| Phase 4 — Detection portability | 32–33 | Sigma repo, SPL/Splunk demo |
-| Phase 5 — Codification & ops | 34–35 | Config sweep prototype, production benchmark, operator runbooks |
-
-Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
-
-## Done
+## Done (V1 — full)
 
 | ID | Task | Evidence |
 |---|---|---|
@@ -76,10 +149,5 @@ Full task definitions, tests-first criteria, and file paths: **`docs/plan.md`**.
 | TASK-026 | Mandatory Phase 2 Eval Harness | `.workflow/TASK-026/verification.md` — `pytest` 615 / evals 33; `evals/harness.py` + 24 scenario YAML; full Outcome Matrix + completeness guard |
 | TASK-027 | Real-Provider Adversarial Excerpt Probe | `.workflow/TASK-027/verification.md` — `pytest` 629 / evals 47; `evals/real_provider_adversarial.py`; mocked Gemini path + payload structural checks; `docs/eval_gates.md` |
 | TASK-028 | Correlation Normalization and PromptExcerptSet | `.workflow/TASK-028/verification.md` — `pytest` 638 / correlation 9; `src/praetor/correlation/`; Sysmon+Security normalization, process graph, window filter, PromptExcerptSet |
-| TASK-028a | Production Orchestrator PolicyGate and Metrics Integration | `.workflow/TASK-028a/verification.md` — `pytest` 653; deferred directive persist (DEC-053); eval 25/25; tripwires pass |
-| TASK-029 | Correlator Identity Compliance Tests | `.workflow/TASK-029/verification.md` — 12 tests; policy-gate on real fixtures; pytest 666 |
 | TASK-032 | Sigma Rule Repository | `.workflow/TASK-032/verification.md` — 18 detection tests; 5 sigma rules; pytest 723 |
-| TASK-033 | SPL Compilation and Splunk Demo Harness | `.workflow/TASK-033/verification.md` — 21 splunk tests; compile `--check`; pytest 744 |
-| TASK-034 | Empirical Org-Config Sweep Prototype | `.workflow/TASK-034/verification.md` — 17 codification tests; pytest 778 |
-| TASK-035 | Production Throughput Benchmark and Operator Runbooks | `.workflow/TASK-035/verification.md` — 7 benchmark + 10 doc tests; pytest 778 |
 | PHASE-4-GATE | Detection portability gate (Tasks 32–33) | `.workflow/phase-4-gate-punchlist.md` — PASS-WITH-CONDITIONS; pytest 744 (39 detection+splunk); mypy 112 clean; ruff clean; `compile_sigma.py --check` exit 0; offline SPL match audit |

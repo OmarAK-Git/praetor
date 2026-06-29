@@ -17,6 +17,7 @@ This file records implementation choices that refine or operationalize those doc
 | DEC-055 | 2026-06-16 | **SUPERSEDED BY DEC-056** — Production serialized-path benchmark ran `evaluate_policy_gate` (own `critical_transaction`) then a second transaction for ledger append + automated revocation feed outbox | Superseded when Task 35 gatekeeper realigned the benchmark to DEC-053 deferred-directive persist (no per-alert revocation) | TASK-035; see DEC-056 |
 | DEC-056 | 2026-06-16 | Task 35 production benchmark (`benchmarks/serialized_path.py`) mirrors DEC-053: gate eval with `persist_directive=False` (one `BEGIN IMMEDIATE`), then one engine transaction for deferred directive persist + ledger append; no per-alert revocation/feed outbox; default rate is uncontended distinct-host best case; burst target comparison is informational only in v1 | Prior benchmark used `persist_directive=True` plus spurious per-alert revocation, inverting stamp ordering and polluting capacity numbers; smoke benchmark remains the separate revocation throughput measurement; supersedes DEC-055 | `benchmarks/serialized_path.py`, `tests/benchmarks/test_serialized_path.py`, `docs/operator_runbook.md`, DEC-056 |
 | DEC-057 | 2026-06-16 | Sweep placeholder activation scan (`collect_sweep_placeholder_violations`) covers only safety-critical fields: `assets_and_asset_groups.entries[].subnet_membership` and `containment_exclusions.never_contain[].target_id`. Advisory placeholder prose in `business_context.notes` and `normal_admin_patterns[].description` is intentionally **not** activation-blocking — SOC review reminders, not containment topology | Subnet and never-contain target IDs directly affect isolation scope; narrative fields are review prompts and do not gate containment decisions | `src/praetor/codification/placeholders.py`, `src/praetor/codification/sweep.py`, `tests/codification/test_sweep.py` |
+| DEC-058 | 2026-06-29 | V2 containment authorization posture is **deployment-configurable** via a required `default_action` on `ContainmentPolicy`; v1 implicit default-allow is **retired drift**; sole matching `escalate` rules **block** `auto_contain` | Containment must be earned by explicit configuration, not granted by omission; operators need a catch-all primitive for progressive authorization; `escalate` as hint-only contradicts operator intent (example `default_escalate` + silent scope drop) | V2-001; `docs/proposals/v2_hardening.md` Item 2; implementation in V2-005–V2-006, V2-012–V2-013 |
 
 Add rows when implementation choices diverge from or refine authoritative docs.
 
@@ -53,3 +54,53 @@ Uncited noise (a different host's in-window event that the model did not point a
 **Upgrade path.** The `ambiguous_containment_target` escalation branch is the exact hook for C: when C1–C5 hold, that branch changes from "escalate" to "consult the trusted relatedness signal." No other contract changes; the fault flag and Outcome Matrix row remain (escalation becomes the fallback for genuinely disjoint multi-host targets).
 
 **Doc placement.** Outcome Matrix row added to `docs/contracts.md` §13 this phase; the `docs/spec.md` §Outcome Matrix mirror is deferred until spec unfreezes.
+
+## DEC-058 — V2 containment authorization posture and rule-action semantics
+
+**Status:** accepted (2026-06-29, V2-001)
+
+**Context.** v1 `evaluate_target_containment_policy` returns `ALLOW` when no scoped rule matches the target (`containment_policy.py:251`). Combined with silently dropped malformed rule scopes (`scope: global` string), an operator's cautious config can invert to containment-permitted-by-default. Cross-review with the original spec author confirmed this is **drift**, not an intentional denylist posture (`docs/proposals/v2_hardening.md` Item 2). V2 must ratify posture, rule actions, and precedence before schema/policy code changes (V2 Gate 0).
+
+### Posture decision
+
+**Chosen:** deployment-configurable `default_action` on `ContainmentPolicy` — **not** a hard-coded engine denylist.
+
+- Activated org configs **must** declare `default_action` (preflight rejects missing/invalid values — V2-012).
+- When **no scoped rule** matches the resolved containment target, the policy layer applies `default_action` (catch-all, **lowest precedence**).
+- **Recommended default for new deployments:** `escalate` (progressive authorization: containment earned via explicit allow rules).
+- **Retired:** v1 implicit `ALLOW` fallthrough when no rule matches. That behavior is documented as implementation drift to be removed in V2-013; it is not a product decision.
+
+`default_action` permitted values match rule `action` vocabulary: `allow`, `deny`, `escalate`, `auto_contain`.
+
+### Rule `action` semantics (policy authorization layer)
+
+These actions govern whether PolicyGate **may authorize** an `auto_contain` proposal for a target. They do not force containment without a matching model proposal and downstream gates (never-contain, corroboration, rate/breaker, feed health, stamp, etc.).
+
+| Action | Policy-layer effect | Blocks `auto_contain`? |
+|---|---|---|
+| `allow` | Affirmative authorization for matched scope | No |
+| `auto_contain` | Same as `allow` at authorization layer — explicit permit for matched scope | No |
+| `deny` | Explicit prohibition for matched scope | **Yes** |
+| `escalate` | Operator policy requires human review before containment | **Yes** |
+
+**`escalate` is not hint-only.** A target matched **only** by `action: escalate` (scoped rule or `default_action: escalate`) must **not** reach `auto_contain` at the policy layer (V2-006 implements and tests).
+
+**`deny` vs `escalate` distinction (audit):** both block containment. `deny` means the operator forbids automated containment for the scope; `escalate` means the operator defers containment authority to human review. V2-006 maps these to distinct policy-layer results and Outcome Matrix fault flags (`containment_policy_denied`, `containment_policy_escalation_required` — names provisional until contracts §13 rows land).
+
+### Rule precedence
+
+1. **Scoped rules first** — evaluate all `containment_policy.rules` whose `scope` matches the resolved target (`target_id`, `asset_id`/subnet membership per existing asset-group logic).
+2. **Conflict detection** — if matched actions include both permitting (`allow`/`auto_contain`) and blocking (`deny`/`escalate`) actions, apply `containment_policy.precedence` when present; if precedence does not resolve the conflict, emit `policy_ambiguity` (`system_fault_escalation=false`).
+3. **Blocking wins among non-conflicting multiples** — if any `deny` matches, result is deny-blocked; else if any `escalate` matches (and no permit), result is escalate-blocked; else if any `allow`/`auto_contain` matches, result is permitted.
+4. **Catch-all last** — when no scoped rule matches, apply `default_action` with the same action semantics table above.
+
+### Implementation map (out of V2-001 scope)
+
+| Follow-on | Delivers |
+|---|---|
+| V2-005 | Typed `scope`, `extra="forbid"`, preflight rejects malformed scope |
+| V2-006 | `escalate`/`deny` block containment; distinct policy results; conflict → `policy_ambiguity` |
+| V2-012 | `default_action` schema + preflight |
+| V2-013 | Remove implicit ALLOW; example config + evals express explicit permits |
+
+**Doc placement.** Contracts Outcome Matrix rows for new deny/escalate fault flags land with V2-006; `docs/spec.md` mirror deferred until spec unfreeze (same pattern as DEC-052).

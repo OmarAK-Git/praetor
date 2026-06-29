@@ -138,6 +138,11 @@ stops being a no-op and starts *demonstrating* the intended posture.
 allowlist favors blast-radius safety — the right v2 answer may be a **deployment-configurable
 default** (`default_action` in org config) rather than a hard-coded posture.
 
+**Ratified (DEC-058, V2-001):** deployment-configurable `default_action` wins. v1 implicit
+default-allow is retired drift. Recommended new-deployment default: `escalate`. Sole matching
+`escalate` rules block `auto_contain` (not hint-only). See `docs/decisions.md` DEC-058 for full
+rule-action and precedence semantics.
+
 ---
 
 ## Item 3 — Progressive Authorization ("probationary autonomy")  **[FORMALIZE/BUILD]**
@@ -198,10 +203,11 @@ authority"): feedback poisoning + loss of auditability. The sanctioned loop:
 
 - [ ] Item 1: accept corroboration floor for hosts? Promote corroboration to a first-class spec
       concept? Confirm the `insufficient_corroboration` flag + Outcome Matrix wiring.
-- [ ] Item 2: posture resolved as drift (default-allow → default-deny target). **2a (near-term,
-      chosen):** typed `scope` + `extra="forbid"` + preflight rejects malformed scope.
-      **2b (deferred):** `default_action` catch-all primitive + flip default-deny + rewrite example
-      config / notebook / scenarios + the no-rule-target regression test.
+- [x] Item 2: posture **ratified (DEC-058, V2-001)** — default-allow retired as drift;
+      deployment-configurable required `default_action`; `escalate` blocks containment.
+      **2a (near-term):** typed `scope` + `extra="forbid"` + preflight rejects malformed scope (V2-005).
+      **2b (deferred):** `default_action` catch-all primitive + flip implicit allow + rewrite example
+      config / notebook / scenarios + the no-rule-target regression test (V2-012, V2-013).
 - [ ] Item 3: approve progressive-authorization model; specify promotion thresholds + the
       per-asset-class reporting view.
 - [ ] Item 4: prioritize similar-case exemplar retrieval; define the retrieval/ranking contract

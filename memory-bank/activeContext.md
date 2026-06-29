@@ -2,37 +2,41 @@
 
 ## Current focus
 
-**TASK-035 complete** — production throughput benchmark + operator runbooks; pytest **778**. All **35** plan tasks complete.
+**V2 plan initialized** — executable backlog in `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints). V1 complete (pytest **778** at TASK-035).
+
+**Sprint V2-0 (Decision and Contract Ratification):** V2-001 complete (DEC-058). **V2-002 – V2-004** pending — close Gate 0 before V2-005.
+
+## Build order (V2)
+
+1. Close silent safety inversions (malformed containment schema, authorization posture, host evidence, intake fault mapping).
+2. Harden shared guardrails (Outcome Matrix coverage, state invariants, ledger/feed integrity, correlator isolation).
+3. Add V2 authorization primitives, account-containment enablement, rate limits, metrics.
+4. Build operator-visible features (progressive authorization reporting, exemplars, statute curation).
+5. Defer roadmap-scale features until contracts exist.
 
 ## Recently changed
 
-- TASK-035: `benchmarks/serialized_path.py`, `docs/operator_runbook.md`, `docs/architecture.md`, `tests/docs/test_docs.py`; contracts §15 throughput; eval_gates phase gates; scope guard Phase 5 docs.
-- TASK-034: `src/praetor/codification/` — telemetry sweep, proposed artifact, coverage/risk report; preflight blocks activation; **17** codification tests.
-- TASK-033: SPL compile + Splunk demo harness; **21** splunk tests.
-- Phase 3 gate closed PASS-WITH-CONDITIONS; DEC-053 ratified.
+- Memory Bank: V2 task index, sprint groupings, phase gates, and carry-forward items initialized from `docs/proposals/v2_implementation_plan.md`.
+- V1 close: TASK-035 benchmark + operator runbooks; all 35 plan tasks done.
 
 ## Current blockers
 
-- None for plan tasks. Live Splunk HEC demo remains operator-driven (env-gated test).
+- **V2 Gate 0** — V2-002 – V2-004 owner decisions not yet ratified.
+- `ProviderUnavailableError` intake catch blocked on V2-004 Outcome Matrix row.
+- REVIEW-004 correlator cross-host xfail → V2-014.
+- Live Splunk HEC demo env-gated → V2-029.
 
 ## Important notes for agents
 
 1. Read `docs/contracts.md` before any hashing, feed checksum, or ID code.
-2. **`stamp_id` (§5):** completed-edict three-tuple + `DOMAIN_STAMP_ID` — **no** `processing_attempt_identity`.
-3. **`EMPTY_BUNDLE` (§7):** substitute only via `engine/ids.py` / `decision_id_for_attempt`.
-4. Hash/ID pins that feed derivations require **doc update in the same task** before code.
-5. `docs/contracts.md` is SSOT; `schemas/` are generated artifacts only.
-6. Startup order: singleton lock → SQLite guard → `open_state_store` (ledger verify, **engine recovery incl. step 6**, then feed recovery if active config) → intake.
-7. Stamp contract: failure preserves full candidate row + appends `ticket_stamp_failed`; in-flight (`pending`/`unknown`) defers ledger append; redelivery raises `ActiveAttemptExistsError` (DEC-043).
-8. Provider latency SLA: DEC-039 end-to-end retry loop timing; v1 provisional constant 30s.
-9. Rate limits: DEC-029 limit=1/scope/window; DEC-030 `per_asset_group` = host asset_id only.
-10. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.
-11. Eval harness: `python -m evals.harness` runs all mandatory scenarios; exits non-zero on any safety invariant failure.
-12. Correlation: `correlate_telemetry()` in `praetor.correlation`; intake uses bundle override or telemetry params.
-13. Intake: `process_alert_intake` runs `evaluate_policy_gate(..., persist_directive=False)`; directive + edict co-commit after terminal stamp (DEC-053).
-14. Phase 3 gate: `python -m evals.run_phase3_gate` — correlation expected file, identity compliance, account prerequisite, citation-anchored safety on noisy bundle, Phase 2 harness.
-15. Host containment (DEC-052): target derived from **cited** facts only; ≥2 distinct quoted hosts → `ambiguous_containment_target`.
-16. SPL compile: `python tools/compile_sigma.py --check`; Splunk demo steps in `splunk/README.md`.
-17. Org-config sweep: `run_org_config_sweep()` in `praetor.codification`; proposed artifacts carry `artifact_kind: proposed_org_config` and are rejected by preflight.
-18. Production benchmark: `benchmarks/serialized_path.py`; throughput ceiling in `docs/operator_runbook.md`.
-19. Operator docs: `docs/operator_runbook.md`, `docs/architecture.md`, phase gates in `docs/eval_gates.md`.
+2. V2 plan SSOT: `docs/proposals/v2_implementation_plan.md`; inputs include `docs/proposals/delivery_backlog.md`, `docs/proposals/v2_hardening.md`.
+3. V2 does **not** modify the frozen v1 spec; it hardens and extends on documented decisions.
+4. Intake: DEC-053 — `evaluate_policy_gate(..., persist_directive=False)` then one `critical_transaction` for directive + edict co-commit.
+5. PolicyGate target selection uses gate-resolved target, not raw bundle re-derivation (AG-0080 → V2-015).
+6. Recovery must not emit new auto-containment unless explicit owner decision supersedes v1 rule.
+7. Proposed org-config sweep artifacts (`artifact_kind: proposed_org_config`) remain non-activatable.
+8. New hash/serialization contracts: doc update + exact test vectors before code.
+9. Install/test: `pip install -e ".[dev]"` then `pytest` from repo root.
+10. Eval harness: `python -m evals.harness`; Phase 3 gate: `python -m evals.run_phase3_gate`.
+11. Host containment (DEC-052): citation-anchored targeting; V2-011 adds host corroboration floor.
+12. Operator docs: `docs/operator_runbook.md`, `docs/architecture.md`, `docs/eval_gates.md`.

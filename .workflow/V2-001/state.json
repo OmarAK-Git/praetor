@@ -1,0 +1,40 @@
+{
+  "run": "V2-001",
+  "status": "complete",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-29",
+  "tasks": [
+    {
+      "id": "T-001",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "DEC-058 drafted in docs/decisions.md"
+    },
+    {
+      "id": "T-002",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "v2_hardening Item 2 posture ratified"
+    },
+    {
+      "id": "T-003",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "delivery_backlog posture rows updated"
+    },
+    {
+      "id": "T-004",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "memory-bank updated"
+    },
+    {
+      "id": "T-005",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "verification gate run"
+    }
+  ]
+}
