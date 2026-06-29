@@ -1,5 +1,15 @@
 # Progress Log
 
+- V2-010: recovery downgrade pinned; `orphan_outstanding_directive` health alerts at startup (DEC-060).
+
+## 2026-06-29 — V2-010 complete (parallel worktree)
+
+- **DEC-060 implementation:** `fetch_orphan_outstanding_directives`, `surface_orphan_outstanding_directive_alerts`, stable alert_id per directive; recovery `auto_contain` downgrade tests (success + failed stamp paths).
+- Branch `task/V2-010-recovery-policy-pinning`; worktree `C:\Users\oalan\Praetor-V2-010`.
+- Flight Recorder: `.workflow/V2-010/`.
+- Verification: scoped pytest **247** passed; mypy/ruff clean.
+- Gaps: expired-row archival deferred; runbook docs deferred (no `docs/` edits).
+
 ## 2026-06-29 — V2-005 complete (Gate 1 started)
 
 - **v2_hardening Item 2a:** typed `ContainmentRule.scope` (target / asset / catch-all), `extra="forbid"` on containment models, preflight `invalid_containment_rule_scope` for string scopes, gate catch-all matching.

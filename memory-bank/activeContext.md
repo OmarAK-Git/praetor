@@ -6,7 +6,11 @@
 
 **Sprint V2-0 (Decision and Contract Ratification):** V2-001 through V2-004 complete (DEC-058 – DEC-061). **Gate 0 closed.**
 
-**Sprint V2-1 (Safety-Critical V1 Gap Closure):** V2-005 complete (strict containment-rule schema). **V2-006** next — escalate blocks containment (V2 Gate 1).
+**Sprint V2-1 (Safety-Critical V1 Gap Closure):** V2-005 and **V2-010** complete on branch `task/V2-010-recovery-policy-pinning` (worktree `Praetor-V2-010`). V2-006 – V2-009 remain for Gate 1.
+
+## Parallel worktrees
+
+- **V2-010:** `C:\Users\oalan\Praetor-V2-010` — `task/V2-010-recovery-policy-pinning` (recovery pinning + orphan health alerts).
 
 ## Build order (V2)
 
@@ -23,7 +27,7 @@
 
 ## Current blockers
 
-- **V2 Gate 1** — V2-006 escalate blocks containment is next.
+- **V2 Gate 1** — V2-006 – V2-009 remain; V2-010 complete on parallel worktree.
 - REVIEW-004 correlator cross-host xfail → V2-014.
 - Live Splunk HEC demo env-gated → V2-029.
 
