@@ -1,0 +1,20 @@
+#!/bin/sh
+# Praetor dream loop — post-commit enqueue ONLY. No synthesis, no latency.
+#
+# Loop guards (critical: `git commit --no-verify` does NOT suppress post-commit):
+#   - skip commits carrying the [dream-promote] marker (our own promotions)
+#   - skip commits that touch only .workflow/_dream/ (the tool itself)
+# Always exits 0 so it can never block or fail a commit.
+
+msg=$(git log -1 --pretty=%B 2>/dev/null)
+case "$msg" in
+  *"[dream-promote]"*) exit 0 ;;
+esac
+
+changed=$(git diff-tree --no-commit-id --name-only -r HEAD 2>/dev/null)
+nondream=$(printf '%s\n' "$changed" | grep -v '^\.workflow/_dream/' | grep -v '^[[:space:]]*$')
+[ -z "$nondream" ] && exit 0
+
+root=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0
+python "$root/.workflow/_dream/bin/enqueue.py" --from-head >/dev/null 2>&1 || true
+exit 0
