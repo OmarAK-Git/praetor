@@ -37,7 +37,8 @@ containment_policy:
   rules:
     - name: default_escalate
       action: escalate
-      scope: global
+      scope:
+        catch_all: true
 
 account_auto_contain_enabled: false
 

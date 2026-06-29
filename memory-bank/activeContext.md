@@ -4,7 +4,9 @@
 
 **V2 plan initialized** — executable backlog in `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints). V1 complete (pytest **778** at TASK-035).
 
-**Sprint V2-0 (Decision and Contract Ratification):** V2-001 through V2-004 complete (DEC-058 – DEC-061). **Gate 0 closed.** **V2-005** next — strict containment-rule schema (V2 Gate 1).
+**Sprint V2-0 (Decision and Contract Ratification):** V2-001 through V2-004 complete (DEC-058 – DEC-061). **Gate 0 closed.**
+
+**Sprint V2-1 (Safety-Critical V1 Gap Closure):** V2-005 complete (strict containment-rule schema). **V2-006** next — escalate blocks containment (V2 Gate 1).
 
 ## Build order (V2)
 
@@ -21,7 +23,7 @@
 
 ## Current blockers
 
-- **V2 Gate 1** — V2-005 strict containment-rule schema is next (malformed scope, `escalate` blocks containment).
+- **V2 Gate 1** — V2-006 escalate blocks containment is next.
 - REVIEW-004 correlator cross-host xfail → V2-014.
 - Live Splunk HEC demo env-gated → V2-029.
 

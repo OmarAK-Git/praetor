@@ -1,5 +1,15 @@
 # Progress Log
 
+## 2026-06-29 — V2-005 complete (Gate 1 started)
+
+- **v2_hardening Item 2a:** typed `ContainmentRule.scope` (target / asset / catch-all), `extra="forbid"` on containment models, preflight `invalid_containment_rule_scope` for string scopes, gate catch-all matching.
+- Updated `configs/example_org.yaml` (`catch_all: true`), `EXAMPLE_SNAPSHOT_HASH`, sweep template.
+- Tests: 4 config loader, 1 config gate, 1 containment policy; policy test scope fixes.
+- **Reopen:** ruff E501 wrap in `containment_policy.py`; `test_malformed_object_scope_fails_preflight` (`catch_all: false`, mixed keys); VS-0001 full gate green (pytest **793**, mypy **118**, ruff clean).
+- Flight Recorder: `.workflow/V2-005/`.
+- Verification: pytest **791** passed, 2 deselected, 1 xfailed.
+- Follow-on: V2-006 escalate blocking; V2-012 `default_action`; V2-013 posture flip.
+
 ## 2026-06-29 — V2-004 complete (Gate 0 closed)
 
 - Ratified **DEC-061**: `provider_unavailable` Outcome Matrix row (`escalate`, `system_fault_escalation=true`); distinct from `provider_timeout`, `provider_refusal`, `provider_health_breaker_open`; breaker tripping unchanged.

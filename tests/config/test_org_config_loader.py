@@ -103,13 +103,96 @@ def test_containment_conflict_without_precedence_fails() -> None:
     doc = load_org_config_document(EXAMPLE_CONFIG)
     doc["containment_policy"] = {
         "rules": [
-            {"name": "a", "action": "allow", "scope": "global"},
-            {"name": "b", "action": "deny", "scope": "global"},
+            {"name": "a", "action": "allow", "scope": {"catch_all": True}},
+            {"name": "b", "action": "deny", "scope": {"catch_all": True}},
         ]
     }
     with pytest.raises(PreflightError) as exc:
         preflight_document(doc)
     assert exc.value.code == "containment_policy_conflict"
+
+
+def test_string_scope_global_fails_preflight() -> None:
+    doc = load_org_config_document(EXAMPLE_CONFIG)
+    doc["containment_policy"]["rules"] = [
+        {"name": "default_escalate", "action": "escalate", "scope": "global"},
+    ]
+    with pytest.raises(PreflightError) as exc:
+        preflight_document(doc)
+    assert exc.value.code == "invalid_containment_rule_scope"
+
+
+@pytest.mark.parametrize(
+    "scope",
+    [
+        {"catch_all": False},
+        {"catch_all": True, "target_type": "host", "target_id": "ws-01"},
+    ],
+    ids=["catch_all_false", "mixed_scope_keys"],
+)
+def test_malformed_object_scope_fails_preflight(scope: dict[str, object]) -> None:
+    doc = load_org_config_document(EXAMPLE_CONFIG)
+    doc["containment_policy"]["rules"] = [
+        {"name": "broken_scope", "action": "escalate", "scope": scope},
+    ]
+    with pytest.raises(PreflightError) as exc:
+        preflight_document(doc)
+    assert exc.value.code == "invalid_containment_rule_scope"
+
+
+def test_unknown_containment_rule_key_rejected() -> None:
+    doc = load_org_config_document(EXAMPLE_CONFIG)
+    doc["containment_policy"]["rules"] = [
+        {
+            "name": "bad",
+            "action": "escalate",
+            "scope": {"catch_all": True},
+            "rogue_key": True,
+        },
+    ]
+    with pytest.raises(PreflightError) as exc:
+        preflight_document(doc)
+    assert exc.value.code == "invalid_containment_policy"
+
+
+def test_unknown_containment_policy_key_rejected() -> None:
+    doc = load_org_config_document(EXAMPLE_CONFIG)
+    doc["containment_policy"]["extra_section"] = True
+    with pytest.raises(PreflightError) as exc:
+        preflight_document(doc)
+    assert exc.value.code == "invalid_containment_policy"
+
+
+def test_containment_rule_scopes_round_trip() -> None:
+    doc = load_org_config_document(EXAMPLE_CONFIG)
+    doc["containment_policy"] = {
+        "precedence": ["deny_over_allow"],
+        "rules": [
+            {
+                "name": "target_rule",
+                "action": "allow",
+                "scope": {"target_type": "host", "target_id": "ws-01"},
+            },
+            {
+                "name": "asset_rule",
+                "action": "deny",
+                "scope": {"asset_id": "eng-workstation-pool"},
+            },
+            {
+                "name": "catch_all_rule",
+                "action": "escalate",
+                "scope": {"catch_all": True},
+            },
+        ],
+    }
+    snapshot = preflight_document(doc)
+    rules = snapshot.containment_policy.rules
+    assert rules[0].scope.model_dump() == {
+        "target_type": "host",
+        "target_id": "ws-01",
+    }
+    assert rules[1].scope.model_dump() == {"asset_id": "eng-workstation-pool"}
+    assert rules[2].scope.model_dump() == {"catch_all": True}
 
 
 def test_missing_revocation_feed_section_fails() -> None:

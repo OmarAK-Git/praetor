@@ -48,7 +48,7 @@ _DEFAULT_POLICY_TEMPLATE: dict[str, Any] = {
             {
                 "name": "default_escalate",
                 "action": "escalate",
-                "scope": "global",
+                "scope": {"catch_all": True},
             },
         ],
     },

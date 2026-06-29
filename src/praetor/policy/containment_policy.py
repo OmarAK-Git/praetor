@@ -9,7 +9,13 @@ from praetor.config.live import target_in_never_contain_list
 from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
 from praetor.contracts.identity import CanonicalAccountIdentity
 from praetor.contracts.org_config import OrgConfigSnapshot
-from praetor.contracts.org_config_sections import AssetEntry
+from praetor.contracts.org_config_sections import (
+    AssetEntry,
+    ContainmentRuleAssetScope,
+    ContainmentRuleCatchAllScope,
+    ContainmentRuleScope,
+    ContainmentRuleTargetScope,
+)
 from praetor.evidence.provenance import (
     WINDOWS_SECURITY_LOG,
     meets_account_corroboration,
@@ -219,6 +225,23 @@ def _asset_groups_for_target(
     return groups
 
 
+def _rule_scope_matches_target(
+    snapshot: OrgConfigSnapshot,
+    scope: ContainmentRuleScope,
+    target: ContainmentTarget,
+) -> bool:
+    if isinstance(scope, ContainmentRuleCatchAllScope):
+        return True
+    if isinstance(scope, ContainmentRuleTargetScope):
+        return (
+            scope.target_type == target.target_type
+            and scope.target_id == target.target_id
+        )
+    if isinstance(scope, ContainmentRuleAssetScope):
+        return scope.asset_id in _asset_groups_for_target(snapshot, target)
+    return False
+
+
 def evaluate_target_containment_policy(
     snapshot: OrgConfigSnapshot,
     target: ContainmentTarget,
@@ -228,16 +251,7 @@ def evaluate_target_containment_policy(
     precedence = snapshot.containment_policy.precedence or []
     matched_actions: list[str] = []
     for rule in rules:
-        rule_scope = getattr(rule, "scope", None)
-        if not isinstance(rule_scope, dict):
-            continue
-        if rule_scope.get("target_type") == target.target_type and rule_scope.get(
-            "target_id"
-        ) == target.target_id:
-            matched_actions.append(rule.action)
-            continue
-        asset_id = rule_scope.get("asset_id")
-        if asset_id and asset_id in _asset_groups_for_target(snapshot, target):
+        if _rule_scope_matches_target(snapshot, rule.scope, target):
             matched_actions.append(rule.action)
     distinct = {action.lower() for action in matched_actions}
     if "auto_contain" in distinct and ("escalate" in distinct or "deny" in distinct):

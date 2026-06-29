@@ -31,6 +31,7 @@ from praetor.config.snapshot import (
     verbatim_character_count,
 )
 from praetor.contracts.org_config import OrgConfigSnapshot
+from praetor.contracts.org_config_sections import ContainmentPolicy, ContainmentRule
 
 
 def _require_bool(value: Any, *, field: str) -> bool:
@@ -125,6 +126,7 @@ def run_preflight(document: dict[str, Any], *, verbatim_text: str) -> OrgConfigS
     validate_never_contain_entries(never_contain)
 
     _validate_rate_limit_scopes(doc["rate_limit_policy"])
+    _validate_containment_policy(doc["containment_policy"])
     _validate_containment_policy_conflicts(doc["containment_policy"])
     _validate_policy_integer_fields(doc)
     _validate_provisional_targets(doc["provisional_alert_rate_targets"])
@@ -222,6 +224,42 @@ def _validate_rate_limit_scopes(policy: Any) -> None:
             "invalid_rate_limits",
             f"rate_limit_policy missing scopes: {sorted(missing)}",
         )
+
+
+def _validate_containment_policy(policy: Any) -> None:
+    if not isinstance(policy, dict):
+        raise PreflightError("invalid_containment_policy", "containment_policy must be a mapping")
+    rules = policy.get("rules")
+    if not isinstance(rules, list) or not rules:
+        raise PreflightError("invalid_containment_policy", "containment_policy.rules required")
+    for rule in rules:
+        if not isinstance(rule, dict):
+            raise PreflightError("invalid_containment_policy", "each rule must be a mapping")
+        scope = rule.get("scope")
+        rule_name = rule.get("name", "<unnamed>")
+        if isinstance(scope, str):
+            raise PreflightError(
+                "invalid_containment_rule_scope",
+                f"rule {rule_name!r}: scope must be an object, not a string",
+            )
+        try:
+            ContainmentRule.model_validate(rule)
+        except ValidationError as exc:
+            raise _containment_rule_preflight_error(rule_name, exc) from exc
+    try:
+        ContainmentPolicy.model_validate(policy)
+    except ValidationError as exc:
+        raise PreflightError("invalid_containment_policy", str(exc)) from exc
+
+
+def _containment_rule_preflight_error(rule_name: str, exc: ValidationError) -> PreflightError:
+    for error in exc.errors():
+        if error["loc"] and error["loc"][0] == "scope":
+            return PreflightError(
+                "invalid_containment_rule_scope",
+                f"rule {rule_name!r}: {exc}",
+            )
+    return PreflightError("invalid_containment_policy", str(exc))
 
 
 def _validate_containment_policy_conflicts(policy: Any) -> None:

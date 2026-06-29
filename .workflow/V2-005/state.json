@@ -1,0 +1,52 @@
+{
+  "run": "V2-005",
+  "status": "complete",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-29",
+  "tasks": [
+    {
+      "id": "T-001",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Scope models + strict ContainmentRule/Policy"
+    },
+    {
+      "id": "T-002",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Preflight scope validation"
+    },
+    {
+      "id": "T-003",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Gate catch-all matching"
+    },
+    {
+      "id": "T-004",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Example config + hash"
+    },
+    {
+      "id": "T-005",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Config tests"
+    },
+    {
+      "id": "T-006",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Policy test scope fixes"
+    },
+    {
+      "id": "T-007",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "Verification close"
+    }
+  ]
+}

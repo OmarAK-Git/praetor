@@ -9,6 +9,7 @@ from pydantic import ConfigDict, Field, StrictInt
 from praetor.contracts._base import ContractModel
 
 TargetTypeLiteral = Literal["host", "account"]
+ContainmentActionLiteral = Literal["allow", "deny", "escalate", "auto_contain"]
 
 
 class NeverContainEntry(ContractModel):
@@ -33,16 +34,33 @@ class AssetsAndAssetGroups(ContractModel):
     entries: list[AssetEntry] = Field(..., min_length=1)
 
 
-class ContainmentRule(ContractModel):
-    model_config = ConfigDict(extra="allow")
+class ContainmentRuleTargetScope(ContractModel):
+    target_type: TargetTypeLiteral
+    target_id: str = Field(..., min_length=1)
 
+
+class ContainmentRuleAssetScope(ContractModel):
+    asset_id: str = Field(..., min_length=1)
+
+
+class ContainmentRuleCatchAllScope(ContractModel):
+    catch_all: Literal[True] = True
+
+
+ContainmentRuleScope = (
+    ContainmentRuleTargetScope
+    | ContainmentRuleAssetScope
+    | ContainmentRuleCatchAllScope
+)
+
+
+class ContainmentRule(ContractModel):
     name: str = Field(..., min_length=1)
-    action: str = Field(..., min_length=1)
+    action: ContainmentActionLiteral
+    scope: ContainmentRuleScope
 
 
 class ContainmentPolicy(ContractModel):
-    model_config = ConfigDict(extra="allow")
-
     rules: list[ContainmentRule] = Field(..., min_length=1)
     precedence: list[str] | None = None
 

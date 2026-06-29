@@ -413,6 +413,16 @@ def test_provider_breaker_missing_probe_rate_rejected() -> None:
         preflight_document(doc)
 
 
+def test_activation_rejects_string_containment_rule_scope() -> None:
+    doc = load_org_config_source(EXAMPLE_CONFIG).document
+    doc["containment_policy"]["rules"] = [
+        {"name": "broken", "action": "escalate", "scope": "global"},
+    ]
+    with pytest.raises(PreflightError) as exc:
+        preflight_document(doc)
+    assert exc.value.code == "invalid_containment_rule_scope"
+
+
 def test_asset_groups_extra_field_allowed() -> None:
     doc = load_org_config_source(EXAMPLE_CONFIG).document
     doc["assets_and_asset_groups"]["asset_groups"] = [{"group_id": "eng-pool"}]

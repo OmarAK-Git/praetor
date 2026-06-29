@@ -69,7 +69,7 @@ def _permissive_snapshot(store, base, *, failure_threshold: int = 2):
                 ContainmentRule(
                     name="allow_hosts",
                     action="auto_contain",
-                    scope={"target_type": "host"},
+                    scope={"catch_all": True},
                 )
             ],
         ),
@@ -197,7 +197,7 @@ def test_breaker_recovers_after_window_elapses(activated, org_snapshot) -> None:
                 ContainmentRule(
                     name="allow_hosts",
                     action="auto_contain",
-                    scope={"target_type": "host"},
+                    scope={"catch_all": True},
                 )
             ],
         ),

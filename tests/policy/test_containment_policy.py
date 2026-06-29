@@ -35,6 +35,23 @@ def test_snapshot_never_contain_blocks_target(org_snapshot) -> None:
     assert target_blocked_by_snapshot(org_snapshot, target)
 
 
+def test_catch_all_scope_matches_any_target(org_snapshot) -> None:
+    policy = ContainmentPolicy(
+        rules=[
+            ContainmentRule(
+                name="catch_all_deny",
+                action="deny",
+                scope={"catch_all": True},
+            ),
+        ],
+    )
+    snapshot = org_snapshot.model_copy(update={"containment_policy": policy})
+    target = resolve_host_target(host_bundle(host_id="ws-99"))
+    assert target is not None
+    evaluation = evaluate_target_containment_policy(snapshot, target)
+    assert evaluation.action == PolicyAction.DENY
+
+
 def test_target_scoped_policy_conflict_is_ambiguous(org_snapshot) -> None:
     policy = ContainmentPolicy(
         rules=[

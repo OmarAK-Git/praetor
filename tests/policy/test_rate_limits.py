@@ -57,7 +57,7 @@ def _snapshot_with_registry(store, base, entries: list[AssetEntry]):
                 ContainmentRule(
                     name="allow_hosts",
                     action="auto_contain",
-                    scope={"target_type": "host"},
+                    scope={"catch_all": True},
                 )
             ],
         ),

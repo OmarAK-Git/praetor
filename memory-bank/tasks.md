@@ -14,8 +14,9 @@ Index of `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints
 | V2-002 | Host Corroboration Contract | V2-0 | **complete** | — | M |
 | V2-003 | Revocation and Snapshot Owner Decisions | V2-0 | **complete** | — | M |
 | V2-004 | Provider Unavailable Outcome Matrix Row | V2-0 | **complete** | — | S |
+| V2-005 | Strict ContainmentRule Schema and Scope Preflight | V2-1 | **complete** | V2-001 | L |
 
-**Next up:** V2-005 (Gate 0 closed); V2 Gate 1 starts with V2-005 – V2-010.
+**Next up:** V2-006 (Gate 1); V2 Gate 1 in progress (V2-005 – V2-010).
 
 Full task definitions, tests-first criteria, file paths, and done-when gates: **`docs/proposals/v2_implementation_plan.md`**.
 
@@ -98,7 +99,7 @@ Full task definitions, tests-first criteria, file paths, and done-when gates: **
 - Proposed org-config sweep artifacts remain non-activatable.
 - Marker-gated tests for real providers / live Splunk; fixture-backed tests in default suite.
 
-## V2 — complete (Gate 0 partial)
+## V2 — complete (Gate 0 + Gate 1 partial)
 
 | ID | Task | Evidence |
 |---|---|---|
@@ -106,6 +107,7 @@ Full task definitions, tests-first criteria, file paths, and done-when gates: **
 | V2-002 | Host Corroboration Contract | `.workflow/V2-002/verification.md` — DEC-059; contracts §12a/§13 |
 | V2-003 | Revocation and Snapshot Owner Decisions | `.workflow/V2-003/verification.md` — DEC-060; contracts §4.2.1/§7a (gate-evaluation `snapshot_content` timing); pytest 785 |
 | V2-004 | Provider Unavailable Outcome Matrix Row | `.workflow/V2-004/verification.md` — DEC-061; contracts §13; pytest 785 |
+| V2-005 | Strict ContainmentRule Schema and Scope Preflight | `.workflow/V2-005/verification.md` — typed scope + preflight; pytest 791 |
 
 ## Done (V1 — recent)
 
