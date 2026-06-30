@@ -10,6 +10,10 @@ from typing import Any
 from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
 from praetor.correlation._event_fields import event_timestamp
 from praetor.correlation.excerpts import build_correlation_prompt_excerpts
+from praetor.correlation.host_isolation import (
+    filter_events_to_anchor_host,
+    resolve_anchor_host_id,
+)
 from praetor.correlation.security_log import (
     normalize_security_event,
     supports_security_event,
@@ -34,6 +38,7 @@ def correlate_telemetry(
     security_events: Sequence[Mapping[str, Any]],
     anchor_time: datetime,
     window_seconds: int = DEFAULT_CORRELATION_WINDOW_SECONDS,
+    anchor_host_id: str | None = None,
 ) -> CorrelationResult:
     """Normalize and window-filter telemetry into bundle + prompt excerpts."""
     filtered_sysmon = filter_events_in_window(
@@ -48,6 +53,22 @@ def correlate_telemetry(
         window_seconds=window_seconds,
         timestamp_of=event_timestamp,
     )
+
+    resolved_anchor_host = resolve_anchor_host_id(
+        sysmon_events=filtered_sysmon,
+        security_events=filtered_security,
+        anchor_host_id=anchor_host_id,
+        anchor_time=anchor_time,
+    )
+    if resolved_anchor_host is not None:
+        filtered_sysmon = filter_events_to_anchor_host(
+            filtered_sysmon,
+            anchor_host_id=resolved_anchor_host,
+        )
+        filtered_security = filter_events_to_anchor_host(
+            filtered_security,
+            anchor_host_id=resolved_anchor_host,
+        )
 
     facts: list[EvidenceFact] = []
     for event in filtered_sysmon:

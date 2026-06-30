@@ -8,8 +8,8 @@ from pathlib import Path
 
 from tests.policy.conftest import (
     NOW,
+    auto_contain_default_policy,
     auto_contain_judgment,
-    host_auto_contain_policy,
     permissive_org_snapshot,
     persist_snapshot_with_overrides,
 )
@@ -254,7 +254,7 @@ def test_corroborated_ambiguous_identity_auto_contain_when_gate_enabled(
         activated,
         org_snapshot,
         account_auto_contain_enabled=True,
-        containment_policy=host_auto_contain_policy(),
+        containment_policy=auto_contain_default_policy(),
     )
     security_fact = next(
         fact for fact in bundle.facts if fact.provenance_path == WINDOWS_SECURITY_LOG
@@ -270,6 +270,7 @@ def test_corroborated_ambiguous_identity_auto_contain_when_gate_enabled(
                 field_path="target_sid",
             )
         ],
+        permissive_policy=False,
     )
 
     assert result.final_disposition == Disposition.AUTO_CONTAIN
@@ -315,7 +316,7 @@ def test_real_correlated_bundle_account_auto_contain_when_gate_enabled(
         activated,
         org_snapshot,
         account_auto_contain_enabled=True,
-        containment_policy=host_auto_contain_policy(),
+        containment_policy=auto_contain_default_policy(),
     )
     security_fact = next(
         fact for fact in bundle.facts if fact.provenance_path == WINDOWS_SECURITY_LOG
@@ -331,6 +332,7 @@ def test_real_correlated_bundle_account_auto_contain_when_gate_enabled(
                 field_path="target_sid",
             )
         ],
+        permissive_policy=False,
     )
 
     assert result.final_disposition == Disposition.AUTO_CONTAIN

@@ -216,7 +216,8 @@ def test_invalid_default_action_fails_preflight() -> None:
 def test_default_action_round_trips_in_snapshot() -> None:
     snapshot = preflight_path(EXAMPLE_CONFIG)
     assert snapshot.containment_policy.default_action == "escalate"
-    assert snapshot.containment_policy.rules == []
+    assert len(snapshot.containment_policy.rules) == 1
+    assert snapshot.containment_policy.rules[0].action == "allow"
 
 
 def test_missing_revocation_feed_section_fails() -> None:

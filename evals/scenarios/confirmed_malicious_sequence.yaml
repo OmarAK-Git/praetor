@@ -7,6 +7,8 @@ setup:
   bundle: host
   host_id: ws-01
   proposed_disposition: auto_contain
+  containment_allow:
+    hosts: [ws-01]
 expectations:
   final_disposition: auto_contain
   fault_flags: []

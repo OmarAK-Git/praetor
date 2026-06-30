@@ -18,7 +18,7 @@ from praetor.contracts.disposition import Disposition
 from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
 from praetor.contracts.judgment import CitedEvidenceRef, ModelJudgment
 from praetor.contracts.org_config import OrgConfigSnapshot
-from praetor.contracts.org_config_sections import ContainmentPolicy
+from praetor.contracts.org_config_sections import ContainmentPolicy, ContainmentRule
 from praetor.evidence.provenance import SYSMON_EVENT_LOG, WINDOWS_SECURITY_LOG
 from praetor.state.store import StateStore, open_state_store
 
@@ -201,20 +201,34 @@ def persist_snapshot_with_overrides(
     return updated
 
 
-def host_auto_contain_policy() -> ContainmentPolicy:
-    """Permissive policy for tests that need gate auto_contain to succeed."""
+def host_auto_contain_policy(*host_ids: str) -> ContainmentPolicy:
+    """Explicit host allowlist for tests that need gate auto_contain on cited hosts."""
+    targets = host_ids or ("ws-01",)
     return ContainmentPolicy(
-        default_action="auto_contain",
-        rules=[],
+        default_action="escalate",
+        rules=[
+            ContainmentRule(
+                name=f"test_allow_{host_id}",
+                action="allow",
+                scope={"target_type": "host", "target_id": host_id},
+            )
+            for host_id in targets
+        ],
     )
+
+
+def auto_contain_default_policy() -> ContainmentPolicy:
+    """Explicit default_action=auto_contain for non-host targets (e.g. account)."""
+    return ContainmentPolicy(default_action="auto_contain", rules=[])
 
 
 def permissive_org_snapshot(
     store: StateStore,
     base: OrgConfigSnapshot,
+    *host_ids: str,
 ) -> OrgConfigSnapshot:
     return persist_snapshot_with_overrides(
         store,
         base,
-        containment_policy=host_auto_contain_policy(),
+        containment_policy=host_auto_contain_policy(*host_ids),
     )

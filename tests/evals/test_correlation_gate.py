@@ -50,23 +50,21 @@ def test_gate_passes_noise_below_threshold() -> None:
 def test_gate_passes_unrelated_in_window_noise_below_threshold() -> None:
     result = run_correlation_gate(UNRELATED_NOISE_SCENARIO, repo_root=REPO_ROOT)
     assert result.passed is True, result.errors
-    assert set(result.collected_record_ids) == {"1001", "1002", "1004", "2001"}
-    assert result.collected_noise_record_ids == ("1004",)
-    assert result.noise_overcollection == 1
+    assert set(result.collected_record_ids) == {"1001", "1002", "2001"}
+    assert result.collected_noise_record_ids == ()
+    assert result.noise_overcollection == 0
 
 
-def test_gate_fails_unrelated_noise_at_zero_threshold(tmp_path: Path) -> None:
+def test_gate_fails_when_cross_host_record_required(tmp_path: Path) -> None:
     scenario = load_correlation_expected(UNRELATED_NOISE_SCENARIO)
-    scenario.raw["expectations"]["max_noise_overcollection"] = 0
-    tampered = tmp_path / "zero_noise.yaml"
+    scenario.raw["expectations"]["required_record_ids"].append("1004")
+    scenario.raw["expectations"]["excluded_record_ids"] = []
+    tampered = tmp_path / "require_cross_host.yaml"
     tampered.write_text(yaml.safe_dump(scenario.raw), encoding="utf-8")
 
     result = run_correlation_gate(tampered, repo_root=REPO_ROOT)
     assert result.passed is False
-    assert result.collected_noise_record_ids == ("1004",)
-    assert any("noise overcollection" in error for error in result.errors)
-    assert any("1004" in error for error in result.errors)
-    assert not any("collected fact count" in error for error in result.errors)
+    assert any("missing required record_id: 1004" in error for error in result.errors)
 
 
 def test_gate_fails_noise_above_threshold(tmp_path: Path) -> None:

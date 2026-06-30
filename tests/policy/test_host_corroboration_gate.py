@@ -23,8 +23,10 @@ from praetor.policy.identity import (
 )
 
 
-def _gate(activated, org_snapshot, *, bundle, judgment, **kwargs):
-    snapshot = permissive_org_snapshot(activated, org_snapshot)
+def _gate(
+    activated, org_snapshot, *, bundle, judgment, host_id: str = "ws-01", **kwargs
+):
+    snapshot = permissive_org_snapshot(activated, org_snapshot, host_id)
     return evaluate_policy_gate(
         activated.conn,
         judgment=judgment,
@@ -57,7 +59,13 @@ def test_host_single_cited_provenance_escalates(activated, org_snapshot) -> None
 def test_host_sysmon_security_citations_auto_contain(activated, org_snapshot) -> None:
     bundle = host_bundle(host_id="ws-corrob-ok")
     judgment = auto_contain_judgment(bundle)
-    result = _gate(activated, org_snapshot, bundle=bundle, judgment=judgment)
+    result = _gate(
+        activated,
+        org_snapshot,
+        bundle=bundle,
+        judgment=judgment,
+        host_id="ws-corrob-ok",
+    )
     assert result.final_disposition == Disposition.AUTO_CONTAIN
     assert result.fault_flags == []
     assert result.containment_directive is not None

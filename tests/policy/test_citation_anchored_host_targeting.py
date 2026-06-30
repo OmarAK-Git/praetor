@@ -124,7 +124,7 @@ def test_uncited_cross_host_noise_does_not_capture_target(
         ],
     )
 
-    snapshot = permissive_org_snapshot(activated, org_snapshot)
+    snapshot = permissive_org_snapshot(activated, org_snapshot, INCIDENT_HOST_ID)
     result = evaluate_policy_gate(
         activated.conn,
         judgment=judgment,
@@ -214,7 +214,7 @@ def test_single_host_multi_citation_auto_contain(activated, org_snapshot) -> Non
     assert resolution.target is not None
     assert resolution.target.target_id == "WORKSTATION1"
 
-    snapshot = permissive_org_snapshot(activated, org_snapshot)
+    snapshot = permissive_org_snapshot(activated, org_snapshot, "WORKSTATION1")
     result = evaluate_policy_gate(
         activated.conn,
         judgment=judgment,

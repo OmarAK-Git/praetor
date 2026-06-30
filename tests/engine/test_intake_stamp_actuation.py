@@ -18,8 +18,8 @@ from tests.engine.stamp_fakes import (
     InjectNeverContainOnStampBackend,
 )
 from tests.policy.conftest import (
+    auto_contain_default_policy,
     auto_contain_judgment,
-    host_auto_contain_policy,
     host_bundle,
     persist_snapshot_with_overrides,
 )
@@ -51,7 +51,7 @@ def _permissive_containment(activated) -> None:
     snapshot = fetch_active_snapshot(activated.conn)
     assert snapshot is not None
     persist_snapshot_with_overrides(
-        activated, snapshot, containment_policy=host_auto_contain_policy()
+        activated, snapshot, containment_policy=auto_contain_default_policy()
     )
 
 

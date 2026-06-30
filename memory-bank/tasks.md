@@ -22,8 +22,10 @@ Index of `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints
 | V2-010 | Recovery Policy Pinning | V2-1 | **complete** | V2-003 | M |
 | V2-011 | Host Auto-Contain Corroboration Floor | V2-2 | **complete** | V2-002 | L |
 | V2-012 | Default Action Primitive | V2-2 | **complete** | V2-001, V2-005, V2-006 | L |
+| V2-013 | Default-Deny or Configurable Posture Flip | V2-2 | **complete** | V2-012 | L |
+| V2-014 | Correlator Host Isolation | V2-2 | **complete** | V2-011 | L |
 
-**Next up:** V2-013 (Gate 2); **V2 Gate 1 closed**; Gate 2 in progress.
+**Next up:** V2-015 (Gate 2); **V2 Gate 1 closed**; Gate 2 in progress.
 
 Full task definitions, tests-first criteria, file paths, and done-when gates: **`docs/proposals/v2_implementation_plan.md`**.
 
@@ -93,7 +95,7 @@ Full task definitions, tests-first criteria, file paths, and done-when gates: **
 ## V2 — carry-forward from V1
 
 - `ProviderUnavailableError` intake mapping ratified in V2-004 (DEC-061); V2-007 extends metrics/breaker test coverage.
-- Static fault-flag guard, production-store table init, REVIEW-004 correlator xfail tracked into V2-014/V2-016/V2-017.
+- Static fault-flag guard, production-store table init tracked into V2-016/V2-017.
 - Live Splunk HEC demo remains env-gated (V2-029).
 - Phase 4 gate PASS-WITH-CONDITIONS items close in V2-029.
 
@@ -122,6 +124,8 @@ Full task definitions, tests-first criteria, file paths, and done-when gates: **
 | V2-010 | Recovery Policy Pinning | `.workflow/V2-010/verification.md` — DEC-060 orphan alerts + recovery downgrade pinned; scoped pytest 247 |
 | V2-011 | Host Auto-Contain Corroboration Floor | `.workflow/V2-011/verification.md` — insufficient_corroboration wired; harness 31/31 |
 | V2-012 | Default Action Primitive | `.workflow/V2-012/verification.md` — `default_action` schema + preflight + policy fallback; pytest 834 |
+| V2-013 | Default-Deny or Configurable Posture Flip | `.workflow/V2-013/verification.md` — explicit allowlist posture; eval harness 31/31; pytest 836 |
+| V2-014 | Correlator Host Isolation | `.workflow/V2-014/verification.md` — anchor-host filter; xfail removed; pytest 842 |
 
 ## Done (V1 — recent)
 

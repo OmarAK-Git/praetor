@@ -1,0 +1,15 @@
+{
+  "run": "V2-013",
+  "status": "complete",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-29",
+  "tasks": [
+    {"id": "T-001", "status": "complete", "owner": "agent", "notes": "harness + conftest allowlist"},
+    {"id": "T-002", "status": "complete", "owner": "agent", "notes": "example org + hash"},
+    {"id": "T-003", "status": "complete", "owner": "agent", "notes": "scenarios + phase3"},
+    {"id": "T-004", "status": "complete", "owner": "agent", "notes": "notebook"},
+    {"id": "T-005", "status": "complete", "owner": "agent", "notes": "gate regression test"}
+  ]
+}

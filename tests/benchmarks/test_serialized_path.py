@@ -25,7 +25,7 @@ from benchmarks.serialized_path import (
 from benchmarks.smoke_serialized_path import provisional_targets_from_conn
 from tests.config.shared import EXAMPLE_CONFIG, SOC_LEAD_TOKEN
 from tests.policy.conftest import (
-    host_auto_contain_policy,
+    auto_contain_default_policy,
     persist_snapshot_with_overrides,
 )
 
@@ -61,7 +61,7 @@ def activated_store(
     snapshot = fetch_active_snapshot(store.conn)
     assert snapshot is not None
     persist_snapshot_with_overrides(
-        store, snapshot, containment_policy=host_auto_contain_policy()
+        store, snapshot, containment_policy=auto_contain_default_policy()
     )
     yield store
     store.close()
@@ -222,7 +222,7 @@ def test_serialized_path_module_entry_uses_active_config(
     snapshot = fetch_active_snapshot(store.conn)
     assert snapshot is not None
     persist_snapshot_with_overrides(
-        store, snapshot, containment_policy=host_auto_contain_policy()
+        store, snapshot, containment_policy=auto_contain_default_policy()
     )
     store.close()
 

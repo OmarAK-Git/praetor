@@ -1,0 +1,23 @@
+{
+  "ts": "20260629T100752Z",
+  "slug": "V2-003",
+  "sha": "a5f2a17",
+  "proposal": "20260629T095546Z-V2-003.md",
+  "added_ids": [
+    "GR-0013",
+    "AG-0090",
+    "AG-0091",
+    "PE-0032"
+  ],
+  "superseded_ids": [
+    "AG-0045"
+  ],
+  "id_remap": {
+    "GR-0012": "GR-0013",
+    "AG-0087": "AG-0090",
+    "AG-0088": "AG-0091",
+    "PE-0030": "PE-0032"
+  },
+  "prev_playbook_sha256": "a55b05c19bee5ffe59292f9c55296fc9cc2e68456be7ddaa9e2a460bc98dd336",
+  "new_playbook_sha256": "a1c8d1c6d97fed358d93b0ccd33f56a6f9710169dd13afbccf60f9b7bc35e9bd"
+}

@@ -10,6 +10,7 @@ Usage:
 
 A queue entry is a tiny JSON file: {"slug", "sha", "enqueued_at"}.
 Enqueue is idempotent per (slug, sha): a duplicate is a no-op.
+If a newer commit for the same slug arrives, the old queue entry is replaced.
 """
 
 from __future__ import annotations
@@ -72,17 +73,33 @@ def derive_from_head() -> tuple[str, str] | None:
 
 
 def enqueue(slug: str, sha: str) -> Path | None:
+    """Add (slug, sha) to the queue.
+
+    Idempotent per (slug, sha): a duplicate is a no-op (returns None).
+    If a *different* sha for the same slug is already queued, the old entry
+    is replaced — the latest commit is the one worth consolidating since
+    consolidation reads the current .workflow/<slug>/ files regardless of sha.
+    Returns the new queue-file path, or None if already queued at this sha.
+    """
     short = sha[:7]
     qdir = dl.queue_dir()
     qdir.mkdir(parents=True, exist_ok=True)
-    # Idempotency: skip if a queue entry already exists for this (slug, sha).
+
+    replaced: str | None = None
     for existing in qdir.glob("*.json"):
         try:
             data = json.loads(existing.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
-        if data.get("slug") == slug and str(data.get("sha", "")).startswith(short):
-            return None
+        if data.get("slug") != slug:
+            continue
+        if str(data.get("sha", "")).startswith(short):
+            return None  # exact (slug, sha) already queued — no-op
+        # Same slug, different sha: replace with the newer commit
+        replaced = existing.name
+        existing.unlink()
+        break
+
     payload = {
         "slug": slug,
         "sha": sha,
@@ -90,6 +107,8 @@ def enqueue(slug: str, sha: str) -> Path | None:
     }
     dest = qdir / f"{dl.now_stamp()}-{slug}-{short}.json"
     dl.atomic_write(dest, json.dumps(payload, indent=2) + "\n")
+    if replaced:
+        print(f"replaced {replaced} -> {dest.name}")
     return dest
 
 

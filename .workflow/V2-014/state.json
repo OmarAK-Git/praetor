@@ -1,0 +1,40 @@
+{
+  "run": "V2-014",
+  "status": "complete",
+  "current_task": null,
+  "blocked": false,
+  "blockers": [],
+  "last_updated": "2026-06-30",
+  "tasks": [
+    {
+      "id": "T-001",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "host isolation primitive"
+    },
+    {
+      "id": "T-002",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "wire correlate_telemetry"
+    },
+    {
+      "id": "T-003",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "unit tests"
+    },
+    {
+      "id": "T-004",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "YAML + regression"
+    },
+    {
+      "id": "T-005",
+      "status": "complete",
+      "owner": "agent",
+      "notes": "remove xfail"
+    }
+  ]
+}

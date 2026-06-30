@@ -35,6 +35,12 @@ What to IGNORE:
 - Anything you cannot tie back to evidence in the provided files.
 - Vague advice ("write good tests"). If it is not specific and reusable, drop it.
 
+GR-0006 WARNING: if your `text` includes a test-count claim (e.g. "17 passed",
+"5/749 tests") you MUST have taken that number from the verification ledger or a
+verbatim command run — never project or infer it. Stale projected counts are a
+known failure mode (TASK-034: 5/749 vs 17/778 discrepancy). If you are not certain
+a count is accurate, omit it rather than embed a potentially wrong number.
+
 Bias toward FEWER, higher-signal entries. Returning an empty `candidates` array is correct
 when the task produced nothing durable. You are an untrusted suggester: a human reviews and
 explicitly approves everything you propose before it enters the playbook.

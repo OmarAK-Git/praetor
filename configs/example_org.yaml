@@ -33,7 +33,11 @@ business_context:
 
 containment_policy:
   default_action: escalate
-  rules: []
+  rules:
+    - name: progressive_allow_eng_pool
+      action: allow
+      scope:
+        asset_id: eng-workstation-pool
 
 account_auto_contain_enabled: false
 

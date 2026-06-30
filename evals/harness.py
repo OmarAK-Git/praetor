@@ -506,18 +506,54 @@ def _persist_snapshot_with_overrides(
     return updated
 
 
-def _permissive_containment_policy() -> ContainmentPolicy:
-    return ContainmentPolicy(
-        default_action="auto_contain",
-        rules=[],
-    )
+def allowlist_containment_policy(
+    *,
+    host_ids: Sequence[str] = (),
+    asset_ids: Sequence[str] = (),
+) -> ContainmentPolicy:
+    """Escalate-by-default posture with explicit scoped permits (DEC-058)."""
+    rules: list[ContainmentRule] = []
+    for host_id in host_ids:
+        rules.append(
+            ContainmentRule(
+                name=f"allow_host_{host_id}",
+                action="allow",
+                scope={"target_type": "host", "target_id": host_id},
+            )
+        )
+    for asset_id in asset_ids:
+        rules.append(
+            ContainmentRule(
+                name=f"allow_asset_{asset_id}",
+                action="allow",
+                scope={"asset_id": asset_id},
+            )
+        )
+    return ContainmentPolicy(default_action="escalate", rules=rules)
 
 
-def _maybe_apply_permissive_containment(
+def _containment_allow_from_setup(setup: Mapping[str, Any]) -> tuple[list[str], list[str]]:
+    host_ids: list[str] = []
+    asset_ids: list[str] = []
+    raw = setup.get("containment_allow")
+    if isinstance(raw, Mapping):
+        hosts = raw.get("hosts", [])
+        if isinstance(hosts, Sequence) and not isinstance(hosts, (str, bytes)):
+            host_ids.extend(str(item) for item in hosts)
+        assets = raw.get("asset_ids", [])
+        if isinstance(assets, Sequence) and not isinstance(assets, (str, bytes)):
+            asset_ids.extend(str(item) for item in assets)
+    if not host_ids and setup.get("host_id"):
+        host_ids.append(str(setup["host_id"]))
+    return host_ids, asset_ids
+
+
+def _maybe_apply_explicit_containment_allow(
     store: StateStore,
     base: OrgConfigSnapshot,
     *,
     proposed_disposition: str,
+    setup: Mapping[str, Any],
     preconditions: Mapping[str, Any] | None,
 ) -> OrgConfigSnapshot | None:
     if proposed_disposition != Disposition.AUTO_CONTAIN.value:
@@ -527,10 +563,16 @@ def _maybe_apply_permissive_containment(
             return None
         if preconditions.get("containment_policy_blocks"):
             return None
+    host_ids, asset_ids = _containment_allow_from_setup(setup)
+    if not host_ids and not asset_ids:
+        return None
     return _persist_snapshot_with_overrides(
         store,
         base,
-        containment_policy=_permissive_containment_policy(),
+        containment_policy=allowlist_containment_policy(
+            host_ids=host_ids,
+            asset_ids=asset_ids,
+        ),
     )
 
 
@@ -639,10 +681,11 @@ def _run_engine_intake(
         )
         if wants_auto_contain:
             preconditions = setup.get("policy_preconditions", {})
-            _maybe_apply_permissive_containment(
+            _maybe_apply_explicit_containment_allow(
                 store,
                 base,
                 proposed_disposition=Disposition.AUTO_CONTAIN.value,
+                setup=setup,
                 preconditions=preconditions if isinstance(preconditions, Mapping) else None,
             )
     _apply_emergency_never_contain_setup(store, setup, verifier)
@@ -854,14 +897,15 @@ def _apply_policy_setup(store: StateStore, setup: Mapping[str, Any], verifier: T
             store.conn.commit()
 
     proposed = str(setup.get("proposed_disposition", ""))
-    permissive = _maybe_apply_permissive_containment(
+    allowlist = _maybe_apply_explicit_containment_allow(
         store,
         base,
         proposed_disposition=proposed,
+        setup=setup,
         preconditions=preconditions if isinstance(preconditions, Mapping) else None,
     )
-    if permissive is not None:
-        snapshot_override = permissive
+    if allowlist is not None:
+        snapshot_override = allowlist
 
     return snapshot_override
 
@@ -1117,10 +1161,11 @@ def _run_revocation_feed_degraded_mode(
     auto_expect = expectations.get("auto_contain")
     if isinstance(auto_expect, dict):
         base = snapshot
+        host_id = str(setup.get("host_id", "ws-01"))
         snapshot = _persist_snapshot_with_overrides(
             store,
             base,
-            containment_policy=_permissive_containment_policy(),
+            containment_policy=allowlist_containment_policy(host_ids=[host_id]),
         )
         bundle = _host_bundle(host_id=str(setup.get("host_id", "ws-01")))
         judgment = _judgment_for_bundle(bundle, proposed=Disposition.AUTO_CONTAIN)

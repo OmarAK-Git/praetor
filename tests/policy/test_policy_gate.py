@@ -9,8 +9,8 @@ import pytest
 from tests.policy.conftest import (
     NOW,
     account_bundle,
+    auto_contain_default_policy,
     auto_contain_judgment,
-    host_auto_contain_policy,
     host_bundle,
     permissive_org_snapshot,
     persist_snapshot_with_overrides,
@@ -138,7 +138,7 @@ def test_emergency_entry_embedded_in_directive(
         audit_reason="hold",
     )
     bundle = host_bundle(host_id="ws-02")
-    snapshot = permissive_org_snapshot(activated, org_snapshot)
+    snapshot = permissive_org_snapshot(activated, org_snapshot, "ws-02")
     result = _gate(
         activated, snapshot, bundle=bundle, alert_identity="ALERT-EMBED"
     )
@@ -221,7 +221,7 @@ def test_account_auto_contain_when_feature_gate_enabled(
         activated,
         org_snapshot,
         account_auto_contain_enabled=True,
-        containment_policy=host_auto_contain_policy(),
+        containment_policy=auto_contain_default_policy(),
     )
     result = _gate(
         activated,
@@ -239,6 +239,15 @@ def test_sole_escalate_rule_blocks_auto_contain(activated, org_snapshot) -> None
     assert result.final_disposition == Disposition.ESCALATE
     assert result.fault_flags == [CONTAINMENT_POLICY_ESCALATION_REQUIRED]
     assert result.system_fault_escalation is False
+
+
+def test_no_matching_rule_escalates_at_gate(activated, org_snapshot) -> None:
+    """No scoped allow rule + escalate default — containment not granted by omission."""
+    result = _gate(activated, org_snapshot, alert_identity="ALERT-NO-RULE")
+    assert result.final_disposition == Disposition.ESCALATE
+    assert result.fault_flags == [CONTAINMENT_POLICY_ESCALATION_REQUIRED]
+    assert result.system_fault_escalation is False
+    assert result.containment_directive is None
 
 
 def test_sole_deny_rule_blocks_auto_contain(activated, org_snapshot) -> None:
@@ -308,7 +317,7 @@ def test_rate_limit_exceeded_escalates(activated, org_snapshot) -> None:
 
 
 def test_duplicate_idempotency_key_suppresses_emission(activated, org_snapshot) -> None:
-    snapshot = permissive_org_snapshot(activated, org_snapshot)
+    snapshot = permissive_org_snapshot(activated, org_snapshot, "ws-03")
     bundle = host_bundle(host_id="ws-03")
     first = _gate(activated, snapshot, bundle=bundle, alert_identity="ALERT-DUP")
     assert first.containment_directive is not None
@@ -374,7 +383,7 @@ def test_expired_directive_allows_fresh_reissue(activated, org_snapshot) -> None
     )
     activated.conn.commit()
 
-    snapshot = permissive_org_snapshot(activated, org_snapshot)
+    snapshot = permissive_org_snapshot(activated, org_snapshot, "ws-04")
     result = _gate(
         activated,
         snapshot,

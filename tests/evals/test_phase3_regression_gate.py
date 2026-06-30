@@ -6,7 +6,6 @@ import subprocess
 import sys
 from pathlib import Path
 
-import pytest
 import yaml
 from evals.correlation_gate import (
     REPO_ROOT,
@@ -48,18 +47,18 @@ def test_noisy_correlation_expected_yaml_has_binding_bounds() -> None:
     expectations = scenario.expectations
     excluded = expectations.get("excluded_record_ids", [])
     assert "9999" in excluded
-    assert "1004" not in excluded
-    assert expectations.get("max_noise_overcollection") == 2
-    assert expectations.get("max_collected_facts") == 5
+    assert "1004" in excluded
+    assert expectations.get("max_noise_overcollection") == 1
+    assert expectations.get("max_collected_facts") == 4
 
 
 def test_noisy_correlation_gate_passes_on_healthy_tree() -> None:
     gate = run_correlation_gate(REQUIRED_EXPECTED_PATH, repo_root=REPO_ROOT)
     assert gate.scenario_id == REQUIRED_EXPECTED_SCENARIO_ID
     assert gate.passed is True, gate.errors
-    assert set(gate.collected_record_ids) == {"1001", "1002", "1003", "1004", "2001"}
-    assert set(gate.collected_noise_record_ids) == {"1003", "1004"}
-    assert gate.noise_overcollection == 2
+    assert set(gate.collected_record_ids) == {"1001", "1002", "1003", "2001"}
+    assert set(gate.collected_noise_record_ids) == {"1003"}
+    assert gate.noise_overcollection == 1
 
 
 def test_window_excludes_out_of_window_record_9999() -> None:
@@ -85,10 +84,6 @@ def test_noisy_correlation_gate_fails_on_zero_noise_threshold(tmp_path: Path) ->
     assert any("1003" in error for error in result.errors)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="correlator should drop cross-host in-window noise — REVIEW-004",
-)
 def test_correlator_should_drop_cross_host_in_window_noise() -> None:
     gate = run_correlation_gate(REQUIRED_EXPECTED_PATH, repo_root=REPO_ROOT)
     assert "1004" not in gate.collected_record_ids
@@ -109,8 +104,6 @@ def test_phase2_safety_on_noisy_correlated_bundle() -> None:
 def test_phase2_safety_targets_incident_host_not_noise_host() -> None:
     result = check_phase2_safety_on_noisy_bundle()
     assert result.passed is True, result.errors
-    joined = " ".join(result.errors)
-    assert NOISE_HOST_ID not in joined or "must not target" in joined
     bundle = correlate_bundle_from_expected(REQUIRED_EXPECTED_PATH, repo_root=REPO_ROOT)
     host_ids = {
         fact.normalized_fields.get("host_id")
@@ -118,7 +111,7 @@ def test_phase2_safety_targets_incident_host_not_noise_host() -> None:
         if fact.normalized_fields.get("host_id")
     }
     assert INCIDENT_HOST_ID in host_ids
-    assert NOISE_HOST_ID in host_ids
+    assert NOISE_HOST_ID not in host_ids
 
 
 def test_account_containment_requires_identity_compliance() -> None:

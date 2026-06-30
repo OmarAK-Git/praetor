@@ -24,8 +24,8 @@ from evals.correlation_gate import (
     run_correlation_gate,
 )
 from evals.harness import (
-    _permissive_containment_policy,
     _persist_snapshot_with_overrides,
+    allowlist_containment_policy,
     run_all_scenarios,
 )
 from praetor.auth.principal import Principal
@@ -350,7 +350,9 @@ def check_phase2_safety_on_noisy_bundle(
                 host_snapshot = _persist_snapshot_with_overrides(
                     store,
                     snapshot,
-                    containment_policy=_permissive_containment_policy(),
+                    containment_policy=allowlist_containment_policy(
+                        host_ids=[INCIDENT_HOST_ID],
+                    ),
                 )
                 corroboration_security = EvidenceFact(
                     evidence_id="phase3-host-security-corroboration",

@@ -1,0 +1,15 @@
+{
+  "ts": "20260629T100751Z",
+  "slug": "V2-003",
+  "sha": "dce6a2fc0d158c948e17017866016e9ce994e36a",
+  "proposal": "20260629T095407Z-V2-003.md",
+  "added_ids": [
+    "AG-0087",
+    "AG-0088",
+    "AG-0089"
+  ],
+  "superseded_ids": [],
+  "id_remap": {},
+  "prev_playbook_sha256": "967a1aee6782d92032380162060e83031f85aba561c7aaaa49125f7cd17ee978",
+  "new_playbook_sha256": "a55b05c19bee5ffe59292f9c55296fc9cc2e68456be7ddaa9e2a460bc98dd336"
+}

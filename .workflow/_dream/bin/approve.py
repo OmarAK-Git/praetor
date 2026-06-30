@@ -35,6 +35,24 @@ import dream_lib as dl
 PROMOTE_MARKER = "[dream-promote]"
 COMPLETION_RE = re.compile(r"^<!-- dream:proposal-complete\s+(?P<attrs>.*?)\s*-->\s*$")
 
+# Patterns that look like test-count claims; GR-0006 requires these be run verbatim.
+_COUNT_RE = re.compile(
+    r"\b(\d+)\s+(passed|failed|error|warning|test|tests)\b"
+    r"|(\d+)\s*/\s*(\d+)\b",
+    re.IGNORECASE,
+)
+
+
+def _warn_stale_counts(proposal_text: str) -> None:
+    """Emit a GR-0006 reminder if the proposal appears to contain test count claims."""
+    matches = _COUNT_RE.findall(proposal_text)
+    if matches:
+        print(
+            "  GR-0006 reminder: this proposal contains test count patterns "
+            f"({len(matches)} match(es)). Ensure counts were produced by running "
+            "the listed command verbatim — never projected from collect-only output."
+        )
+
 
 def newest_pending_proposal() -> Path:
     pending = sorted(
@@ -111,6 +129,10 @@ def main(argv: list[str] | None = None) -> int:
     new_body, attrs = split_proposal(proposal_text)
     slug = attrs.get("slug", "unknown")
     sha = attrs.get("sha", "unknown")
+
+    # GR-0006 reminder: warn if the proposal contains verification count patterns
+    # (e.g. "N passed", "N/N tests") that may not have been run verbatim.
+    _warn_stale_counts(proposal_text)
 
     prev_hash = sha256(playbook_text)
     # (2) Atomic promotion of the input store.

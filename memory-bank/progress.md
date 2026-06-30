@@ -1,12 +1,29 @@
 # Progress Log
 
+## 2026-06-30 — V2-014 complete (Gate 2 continued)
+
+- **Correlator host isolation (AG-0080):** `correlate_telemetry` filters in-window events to anchor host (Security-first, then Sysmon plurality); cross-host record 1004 dropped; same-host noise 1003 retained.
+- REVIEW-004 strict xfail removed; correlation expected YAML updated.
+- Flight Recorder: `.workflow/V2-014/`.
+- Verification: pytest **842** passed; eval harness **31/31**; phase3 gate PASS.
+- Follow-on: V2-015 gate target ownership.
+
+## 2026-06-29 — V2-013 complete (Gate 2 continued)
+
+- **Posture flip (DEC-058 2b):** eval harness uses `allowlist_containment_policy` (escalate default + scoped `allow`); `confirmed_malicious_sequence` declares `containment_allow`; walkthrough binds explicit host allows.
+- Example org: `progressive_allow_eng_pool` rule under `default_action: escalate`; hash `3bf840a8…`.
+- Gate regression: `test_no_matching_rule_escalates_at_gate`.
+- Flight Recorder: `.workflow/V2-013/`.
+- Verification: pytest **836** passed; eval harness **31/31**; phase3 gate PASS; walkthrough OK.
+- Follow-on: V2-014 correlator host isolation.
+
 ## 2026-06-29 — V2-012 complete (Gate 2 continued)
 
 - **DEC-058 default_action primitive:** required typed field on `ContainmentPolicy`; preflight `missing_default_action` / invalid action; policy layer applies `default_action` when no scoped rule matches.
 - Example org: `default_action: escalate`, empty `rules`; snapshot hash re-pinned (`fe7421df…`).
 - Flight Recorder: `.workflow/V2-012/`.
 - Verification: pytest **834** passed, 2 deselected, 1 xfailed; mypy **118** clean; ruff clean.
-- Follow-on: V2-013 eval/walkthrough posture flip.
+- Follow-on: ~~V2-013 eval/walkthrough posture flip~~ (done V2-013).
 
 ## 2026-06-29 — V2-010 complete (Gate 1 closed)
 
