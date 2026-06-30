@@ -1,0 +1,16 @@
+{
+  "ts": "20260630T082931Z",
+  "slug": "V2-013",
+  "sha": "d00b88e",
+  "proposal": "20260630T082136Z-V2-013.md",
+  "added_ids": [
+    "AG-0097",
+    "PE-0038",
+    "VS-0006"
+  ],
+  "superseded_ids": [
+    "PE-0037"
+  ],
+  "prev_playbook_sha256": "72c066e1f985acf64a1cc169946d2cc52516084bc60a431f50789d438e7cd4bb",
+  "new_playbook_sha256": "14538c3fadc2aea9d4ee400abbda7ae4229679cee9bbf22a00eef5842846a6d0"
+}
