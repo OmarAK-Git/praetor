@@ -7,11 +7,10 @@
 
 > **Elevator pitch:** Detection tells you something fired. Praetor decides what happens next — with LLM judgment you can actually trust, because every action passes deterministic policy gates and lands in a tamper-evident audit trail.
 
-**▶ See it decide:** [`notebooks/praetor_walkthrough.ipynb`](notebooks/praetor_walkthrough.ipynb) drives the real engine through three alerts:
+**▶ See it decide:** [`notebooks/praetor_walkthrough.ipynb`](notebooks/praetor_walkthrough.ipynb) — two-act tour of the real engine:
 
-- a malicious chain → `auto_contain` + containment directive,  
-- a benign logon → `standard_review`,  
-- an `auto_contain` proposed on a never-contain domain controller that the gate **refuses**.  
+- **Act I:** malicious → `auto_contain` · benign → `standard_review` · never-contain DC **refused**
+- **Act II (V2):** corroboration floor · escalate-by-default · progressive report · exemplars · statute curation
 
 ---
 
@@ -236,7 +235,7 @@ python notebooks/check_walkthrough.py notebooks/praetor_walkthrough.ipynb
 | Phase 3 regression | `python -m evals.run_phase3_gate` | Correlated telemetry, identity compliance, citation-anchored containment on noisy bundles |
 | Correlation accuracy | `python -m evals.correlation_gate` | Manifest checksums, corroboration, noise attribution, window boundaries |
 | Production throughput | `python -m evals.run_phase5_benchmark` | DEC-053 serialized path vs org-config rate targets (self-contained, no pre-existing DB) |
-| Walkthrough invariants | `python notebooks/check_walkthrough.py …` | Notebook still produces AUTO_CONTAIN / STANDARD_REVIEW / never-contain refuse |
+| Walkthrough invariants | `python notebooks/check_walkthrough.py …` | Act I + Act II pins (contain / review / refuse / corroboration / posture / report / exemplars / statute) |
 
 ### Try it — see it in action
 
@@ -289,4 +288,4 @@ This README is the **showcase**. For depth, use the layered docs — each has a 
 | [`docs/operator_runbook.md`](docs/operator_runbook.md) | **Operate** — SQLite requirements, startup order, throughput ceiling, failure handling |
 | [`docs/architecture.md`](docs/architecture.md) | **Structure** — component boundaries and data flow |
 | [`docs/eval_gates.md`](docs/eval_gates.md) | **Verify** — phase gate commands and pass criteria |
-| [`docs/demo_run_of_show.md`](docs/demo_run_of_show.md) | **Demo** — 4-minute walkthrough script |
+| [`docs/demo_run_of_show.md`](docs/demo_run_of_show.md) | **Demo** — Act I thesis + optional Act II V2 beats |

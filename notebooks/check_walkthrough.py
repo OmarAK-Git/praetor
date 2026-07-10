@@ -1,7 +1,7 @@
 """CI guard for the Praetor walkthrough notebook.
 
 Reads an *executed* copy of ``notebooks/praetor_walkthrough.ipynb`` and fails if
-either the notebook raised in any cell or the engine no longer produces the three
+either the notebook raised in any cell or the engine no longer produces the
 decisions the notebook documents. This turns the committed walkthrough into a
 self-verifying doc: an API break or a change in gate behavior fails CI.
 
@@ -15,17 +15,20 @@ import sys
 import nbformat
 
 # Substrings that must appear in the executed stdout. Chosen to be insensitive to
-# label spacing while still pinning the actual decisions:
-#   - uppercase AUTO_CONTAIN appears only in Case 1's final decision line
-#   - the directive banner proves a containment directive was emitted
-#   - STANDARD_REVIEW / ESCALATE pin Cases 2 and 3
-#   - never_contain_live_conflict proves the gate refused to contain the DC
+# label spacing while still pinning Act I + Act II decisions.
 REQUIRED = (
+    # Act I — thesis
     "AUTO_CONTAIN",
     "CONTAINMENT DIRECTIVE EMITTED",
     "STANDARD_REVIEW",
     "ESCALATE",
     "never_contain_live_conflict",
+    # Act II — V2 hardening
+    "insufficient_corroboration",
+    "containment not granted by omission",
+    "PROGRESSIVE AUTHORIZATION REPORT",
+    "prompt_exemplar_block",
+    "proposed_for_review_only",
 )
 
 

@@ -23,7 +23,7 @@ front-to-back.
 | [`architecture.md`](architecture.md) | Structure — component boundaries, durable boundaries, data flow | Reference (v1 + V2 packages) |
 | [`operator_runbook.md`](operator_runbook.md) | Operate — SQLite requirements, startup/recovery order, throughput ceiling, failure handling | Reference |
 | [`eval_gates.md`](eval_gates.md) | Verify — deterministic vs probabilistic evals, per-phase gate commands | Reference |
-| [`demo_run_of_show.md`](demo_run_of_show.md) | Demo — 4-minute walkthrough script for `notebooks/praetor_walkthrough.ipynb` | Working aid |
+| [`demo_run_of_show.md`](demo_run_of_show.md) | Demo — Act I thesis + optional Act II V2 beats for `notebooks/praetor_walkthrough.ipynb` | Working aid |
 | [`proposals/`](proposals/) | V2 planning artifacts — **Gates 0–5 complete** | Complete + backlog reconcile |
 
 ## How these relate (so nothing looks redundant)
