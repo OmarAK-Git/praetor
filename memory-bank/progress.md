@@ -1,5 +1,20 @@
 # Progress Log
 
+## 2026-07-10 — Spec + V2 plan status updates (owner-approved)
+
+- `docs/spec.md`: V2 mirrors — Outcome Matrix rows (`provider_unavailable`, `insufficient_corroboration`, `ambiguous_containment_target`), DEC-058 posture, DEC-059 host corroboration, DEC-062 SID waiver note, account feature-gate wording.
+- `docs/proposals/v2_implementation_plan.md`: Status **COMPLETE** with Gate 0–5 exit pointers.
+- `docs/contracts.md` §13: deferred-mirror note removed (spec now aligned).
+
+## 2026-07-10 — V2 correctness audit COMPLETE
+
+- Fresh verify: pytest **1029** passed / 2 deselected; ruff clean; mypy clean (134 files); walkthrough OK; 32 eval scenarios.
+- Verdict: V2 substantively correct and homogeneous; dominant gap was documentation debt (not code drift).
+- Gate 5 library follow-ups confirmed: progressive evaluation recording + similar-case intake wiring not yet on production path (accepted at gate).
+- DEC-062/063 promoted into `docs/decisions.md`; README / architecture / demo / hardening / backlog / runbook refreshed.
+- Permission still needed to edit `docs/spec.md` and `docs/proposals/v2_implementation_plan.md` status banners.
+- Flight Recorder: `.workflow/v2-correctness-audit/final-report.md`.
+
 ## 2026-07-10 — V2 Gate 5 exit CLOSED (Feedback and Progressive Authorization)
 
 - **PASS-only phase gate** (`v2-gate-5-exit`, attempt 2, in-chat Chat B): full-suite verification of V2-032–V2-036.

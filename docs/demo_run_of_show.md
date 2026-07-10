@@ -55,8 +55,10 @@ _Action: switch to the notebook, scrolled to the top markdown cell (the disposit
 _Action: run the Case 1 cell. Point at the output as you talk._
 
 > "Case one. `winword.exe` spawned an encoded PowerShell child on a workstation — that's a
-> textbook macro-intrusion chain. The model proposes `auto_contain`. Now watch the gates: citations
-> resolve to real telemetry, the host isn't on the never-contain list, rate limits are fine,
+> textbook macro-intrusion chain. The model proposes `auto_contain`. Org config defaults to
+> escalate, so the notebook grants an explicit per-host allow for this demo host — containment
+> is earned, not granted by omission. Now watch the gates: citations resolve to real telemetry,
+> corroboration passes, the host isn't on the never-contain list, rate limits are fine,
 > breakers are closed, the ticket stamp succeeds — so Praetor decides `AUTO_CONTAIN` and emits a
 > **containment directive**."
 
@@ -118,9 +120,9 @@ _Action: switch back to the notebook, point at any `ledger_current_hash` line._
 
 > "Everything you saw ran through the real intake path — the only mocks are the LLM and the ticket
 > system. Beyond these three, there's an eval harness — `python -m evals.harness` — that adjudicates
-> **26 Outcome-Matrix scenarios**: malformed model JSON, provider timeouts, breaker-open,
-> stale feed, every failure mode, each with a pinned expected disposition. 778 tests, mypy strict,
-> five build phases done."
+> **32 Outcome-Matrix scenarios**: malformed model JSON, provider timeouts, breaker-open,
+> stale feed, host corroboration, every failure mode, each with a pinned expected disposition.
+> 1000+ tests, mypy strict, v1 phases plus V2 hardening complete."
 
 > "Detection tells you something fired. Praetor decides what happens next — with judgment you can
 > actually trust, because the authority to act is deterministic, bounded, and on the record."

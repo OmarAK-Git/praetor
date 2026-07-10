@@ -1,5 +1,10 @@
 # DOCUMENT 1 - Praetor Specification
 
+**Status:** Behavioral source of truth. v1 baseline plus **V2 mirrors** (DEC-058–063,
+Gates 0–5 closed 2026-07-10). Hash/ID pins and the authoritative Outcome Matrix table
+also live in `docs/contracts.md`; when both are present they must agree. Implementation
+task index: `docs/plan.md` (v1) and `docs/proposals/v2_implementation_plan.md` (V2).
+
 ## Goal
 
 Praetor is a post-detection disposition-policy engine for a SOC. A deterministic detection layer has already fired an alert; Praetor decides what should happen next.
@@ -54,9 +59,12 @@ Every failure class produces a specified disposition and a specific fault flag. 
 | Provider returned malformed JSON | `escalate` | `provider_malformed_json` | `true` |
 | Provider timed out past bounded retry | `escalate` | `provider_timeout` | `true` |
 | Provider refused | `escalate` | `provider_refusal` | `true` |
+| Provider unavailable (integration/transport/upstream failure before judgment) | `escalate` | `provider_unavailable` | `true` |
 | Target on snapshot never-contain list | `escalate` | `never_contain_snapshot` | `false` |
 | Target on live never-contain list at emission time | `escalate` | `never_contain_live_conflict` | `false` |
 | Account target with insufficient identity corroboration | `escalate` | `ambiguous_target_identity` | `false` |
+| Containment target spans multiple cited hosts | `escalate` | `ambiguous_containment_target` | `false` |
+| Host target with insufficient cited-evidence corroboration | `escalate` | `insufficient_corroboration` | `false` |
 | Account containment production feature gate disabled | `escalate` | `account_containment_disabled` | `false` |
 | Target-scoped containment rules conflict with no precedence | `escalate` | `policy_ambiguity` | `false` |
 | Containment rate limit exceeded | `escalate` | `rate_limit_exceeded` | `false` |
@@ -172,9 +180,11 @@ Citation validation is structural, not a reasoning-quality gate. It confirms ref
 
 ## PolicyGate
 
-PolicyGate deterministically converts `ModelJudgment` into final disposition. It validates schema, citations, org-config refs, containment policy, snapshot and live never-contain state, active emergency entries, account identity, account production feature gate, rate limits, breakers, revocation-feed health, latency, queue age, expiry, idempotency, and provider faults.
+PolicyGate deterministically converts `ModelJudgment` into final disposition. It validates schema, citations, org-config refs, containment policy (including required `default_action` and rule precedence), host and account corroboration floors, snapshot and live never-contain state, active emergency entries, account identity, account production feature gate, rate limits, breakers, revocation-feed health, latency, queue age, expiry, idempotency, and provider faults.
 
 Policy ambiguity is target-scoped. Preflight detects statically resolvable conflicts: rules that oppose for any target regardless of asset registry membership. Target-specific conflicts arise when a target's membership in multiple asset categories causes two rules to oppose with no precedence; these can survive preflight and are caught at gate time with `escalate(policy_ambiguity)`. Preflight and gate-time checks are complementary.
+
+**Authorization posture (DEC-058).** `ContainmentPolicy.default_action` is required (`allow`, `deny`, or `escalate`; recommended new-deployment default: `escalate`). When no rule matches the target, PolicyGate applies `default_action` — containment is never granted by omission. A sole matching rule with `action: escalate` blocks `auto_contain` (escalate is not hint-only). Implicit v1 default-allow is retired drift.
 
 PolicyGate records both `proposed_disposition` and `final_disposition` separately in `PolicyGateResult`. `auto_contain` is impossible unless every deterministic check passes.
 
@@ -198,7 +208,7 @@ Breaker trips emit durable SOC-lead `SystemHealthAlert`s through the outbox.
 
 **`target_id` format.** When `target_type = host`, `target_id` is the host identifier from the asset registry or evidence. When `target_type = account`, `target_id` is the SID from the corroborated `CanonicalAccountIdentity`. Name-based account identifiers are not used as `target_id` for account directives.
 
-v1 target types are `host` and strictly corroborated `account`. Production account `auto_contain` remains disabled behind `account_auto_contain_enabled=false` until Phase 3 real telemetry identity compliance gates pass. Host containment can ship when its own gates pass.
+v1 target types are `host` and strictly corroborated `account`. Production account `auto_contain` remains disabled behind `account_auto_contain_enabled=false` by default. Preflight permits enabling the flag only when identity-compliance evidence is present (V2-024); the example org keeps the gate off. Host containment ships with citation-anchored targeting (DEC-052) and the host corroboration floor (DEC-059).
 
 `expires_at` must be no more than 5 minutes after `issued_at`. Org config may choose a shorter lifetime but not a longer one. Idempotency is keyed on alert-target-scope.
 
@@ -308,7 +318,19 @@ Normalizers produce `CanonicalAccountIdentity` with fields: SID, domain, account
 
 Account containment requires at least two normalized facts from distinct telemetry collection paths (`provenance_path` values), at least one of which is not an attacker-controlled command line or raw log string. For Windows/Sysmon v1, acceptable corroboration is one `sysmon_event_log` fact plus one `windows_security_log` fact. Two `sysmon_event_log` facts do not corroborate even if they differ in event type or field values. A target with `ambiguity_flag = true` and insufficient distinct-provenance corroboration produces `escalate(ambiguous_target_identity)`.
 
-Production account `auto_contain` remains blocked with `escalate(account_containment_disabled)` until Phase 3 real telemetry identity compliance tests pass and a SOC lead explicitly enables `account_auto_contain_enabled` in org config. Synthetic Phase 2 tests still build and validate the account containment path.
+**SID eligibility (DEC-062).** `is_sid_backed` treats any non-empty, non-whitespace SID as sufficient for identity eligibility (v1 waiver). Strict Windows SID form is available via `is_valid_sid_format` (contracts §11) for directive emission and future gates; it does not yet gate eligibility.
+
+Production account `auto_contain` remains blocked with `escalate(account_containment_disabled)` until a SOC lead explicitly enables `account_auto_contain_enabled` after identity-compliance preflight succeeds. The example org keeps the flag `false`.
+
+## Host Corroboration Floor (DEC-059)
+
+Corroboration is a first-class authorization concept for both host and account `auto_contain`. Before authorizing **host** `auto_contain`, the cited facts anchoring the host target (DEC-052) must satisfy:
+
+1. **Distinct provenance** — cited facts span ≥2 distinct `provenance_path` values.
+2. **Independent source** — at least one cited fact comes from a non-attacker-controllable `provenance_path` (contracts §12a table).
+3. **No sole ambiguous basis** — host containment must not rest on a single cited fact when that fact has `ambiguity_flag = true`.
+
+When any check fails, PolicyGate escalates with `insufficient_corroboration` (`system_fault_escalation = false`). Provenance trust classifications and the full pin live in `docs/contracts.md` §12a.
 
 ## Human Governance Loop
 
@@ -326,7 +348,7 @@ Required v1 sections:
 - Normal admin patterns.
 - Containment exclusions and never-contain lists, globally present.
 - Business context.
-- Containment policy with explicit rule precedence.
+- Containment policy with explicit rule precedence and required `default_action` (`allow` | `deny` | `escalate`; DEC-058).
 - Account containment feature gate: `account_auto_contain_enabled`, default `false`.
 - Directive lifetime policy: maximum 300 seconds, optionally shorter.
 - Emergency never-contain policy: maximum 48 hours, optionally shorter.
@@ -338,7 +360,7 @@ Required v1 sections:
 - Latency and queue-aging policy.
 - Provisional sustained and burst alert-rate targets, defined before Sprint 1 ends.
 
-Activation preflight validates character budget, containment-rule precedence, both circuit-breaker sections, `probe_rate_limit_per_minute`, asset registry schema, global never-contain presence, rate-limit scopes, directive lifetime bound, emergency lifetime bound, feed propagation bound below directive lifetime, and clock-skew policy. Activation reconciliation runs within the activation transaction before the new config becomes active and acquires the same SQLite lock used for live never-contain evaluation.
+Activation preflight validates character budget, containment-rule scope/schema (`extra="forbid"`), required `default_action`, containment-rule precedence, both circuit-breaker sections, `probe_rate_limit_per_minute`, asset registry schema, global never-contain presence, rate-limit scopes, directive lifetime bound, emergency lifetime bound, feed propagation bound below directive lifetime, and clock-skew policy. Activation reconciliation runs within the activation transaction before the new config becomes active and acquires the same SQLite lock used for live never-contain evaluation.
 
 ## SystemHealthAlert Delivery
 
@@ -370,7 +392,9 @@ Sigma is the portable detection format; pysigma compiles Sigma to Splunk SPL; OT
 - Evidence citations are structural checks, not reasoning-quality gates.
 - `raw_source` is excluded from the prompt structurally, not by operator switch.
 - Org config included in full; selective omission can hide global safety exclusions.
-- Containment scope is host by default; account requires SID-backed distinct-provenance corroboration and remains production-disabled until Phase 3 identity gates pass.
+- Containment is earned by configuration: required `default_action`; no-rule targets do not reach `auto_contain` by omission; sole matching `escalate` rules block containment (DEC-058).
+- Host `auto_contain` requires corroborated cited evidence (`insufficient_corroboration` otherwise; DEC-059).
+- Containment scope is host by default; account requires SID-backed distinct-provenance corroboration and remains production feature-gated (`account_auto_contain_enabled`, default `false`).
 - `system_fault_escalation = true` indicates infra/model/feed failure. Policy/safety-gate fault flags carry `false`.
 - Half-open probe payloads are synthetic canary content specified in the provider Protocol; no real alert data transits the provider during probing.
 - `NeverContainSnapshotRecord` is interleaved in the ledger chain so `live_never_contain_hash` is retrospectively verifiable without calling Praetor.
@@ -385,7 +409,7 @@ Sigma is the portable detection format; pysigma compiles Sigma to Splunk SPL; OT
 Praetor v1 is acceptable when:
 
 - All named contracts are versioned Pydantic models with exported JSON Schema, including `NeverContainSnapshotRecord`, `EmergencyNeverContainRecord`, `DirectiveRevocationRecord`, and `RevocationFeedRecord`.
-- The full Outcome Matrix is enforced by the eval harness with correct `system_fault_escalation` values, including `revocation_feed_unhealthy` and `account_containment_disabled`.
+- The full Outcome Matrix is enforced by the eval harness with correct `system_fault_escalation` values, including `provider_unavailable`, `insufficient_corroboration`, `ambiguous_containment_target`, `revocation_feed_unhealthy`, and `account_containment_disabled`.
 - One completed edict exists per alert/bundle/config tuple; duplicate intake races cannot produce duplicate edicts.
 - `decision_id`, idempotency key, `stamp_id`, and feed checksum formulas are fixed in `docs/contracts.md` before hashing code ships.
 - Durable attempt lifecycle, stamp outbox, health-alert outbox, revocation-feed outbox, and startup reconciliation pass crash-recovery tests.
@@ -399,7 +423,9 @@ Praetor v1 is acceptable when:
 - Emergency never-contain entries are written as `EmergencyNeverContainRecord` with required fields; race responsibility boundary is documented in the operator runbook.
 - Half-open probe calls use synthetic canary payloads; probe outcome metrics are independent from production call metrics.
 - `raw_source` is stored and hashed but absent from prompts; excerpts use Unicode-boundary-safe, omission-marked truncation.
-- Account containment requires SID-backed `CanonicalAccountIdentity` and distinct-provenance corroboration; production account auto-containment remains feature-gated until Phase 3 passes.
+- Account containment requires SID-backed `CanonicalAccountIdentity` and distinct-provenance corroboration; production account auto-containment remains feature-gated (`account_auto_contain_enabled`).
+- Host containment requires citation-anchored targeting plus the host corroboration floor (DEC-052/059).
+- Org config requires `containment_policy.default_action`; malformed rule scopes fail preflight (DEC-058 / V2-005).
 - Three external write surfaces are authenticated and role-tagged: config activation, emergency never-contain, annotation.
 - SQLite WAL journal mode, singleton enforcement, provisional Sprint 1 alert-rate targets, Task 11 smoke benchmark, and Task 33 production benchmark are documented.
 - Metrics cover: dispositions, PolicyGate override rate, LLM failures per fault flag, containment directives, queue aging, both circuit-breaker domains, probe outcomes, stamp statuses, health-alert delivery, feed export lag per record, p99 feed lag, and feed unhealthy transitions.

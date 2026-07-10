@@ -1,9 +1,9 @@
 # Praetor
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-780%20passed-brightgreen.svg)](#testing-and-verification)
-[![Phase](https://img.shields.io/badge/phase-5%20complete-brightgreen.svg)](#where-we-are-today)
-[![Plan](https://img.shields.io/badge/tasks-35%2F35%20complete-brightgreen.svg)](docs/plan.md)
+[![Tests](https://img.shields.io/badge/tests-1029%20passed-brightgreen.svg)](#testing-and-verification)
+[![Phase](https://img.shields.io/badge/v1%20%2B%20V2%20complete-brightgreen.svg)](#where-we-are-today)
+[![Plan](https://img.shields.io/badge/V2%20Gates%200%E2%80%935%20closed-brightgreen.svg)](docs/proposals/v2_implementation_plan.md)
 
 > **Elevator pitch:** Detection tells you something fired. Praetor decides what happens next — with LLM judgment you can actually trust, because every action passes deterministic policy gates and lands in a tamper-evident audit trail.
 
@@ -33,28 +33,31 @@ Praetor is a **post-detection disposition engine** — an add-on, not a platform
 |---|---|
 | **Three dispositions, no hiding** | `standard_review`, `escalate`, `auto_contain` — no `auto_close`. Uncertainty always routes to human review; the product cannot silently make threats disappear. |
 | **Machine-checkable citations** | Model rationale must cite evidence that resolves in the alert bundle. Bad citations downgrade to escalate — fluent prose alone is not enough. |
-| **Deterministic containment gates** | `auto_contain` only after citations, never-contain checks, rate limits, circuit breakers, feed health, and idempotency all pass. Wrong containment is asymmetric and fast; the bar to *act* is inspectable. |
+| **Deterministic containment gates** | `auto_contain` only after citations, corroboration, never-contain checks, rate limits, circuit breakers, feed health, and idempotency all pass. Wrong containment is asymmetric and fast; the bar to *act* is inspectable. |
+| **Earned authority** | Org config requires an explicit `default_action` (recommended: `escalate`). Containment is allowlisted, not granted by omission. |
 | **Org config as statute** | Human-authored, versioned policy is rendered in full into judgment context — safety sections are never silently omitted. |
 | **Honest audit semantics** | Hash-chained ledger detects tampering; cases are human-reconstructable. We do not overclaim immutability or LLM replay. |
 | **Portable by design** | Versioned contracts, exported JSON Schema, canonical hashing — built to hand decisions to another SOC's stack. |
 
 ### Where we are today
 
-**All five phases of the v1 plan are complete** — 35 tasks from durable core through operator readiness. In plain terms:
+**v1 (35 tasks, five phases) and V2 (36 tasks, Gates 0–5) are complete.** In plain terms:
 
 - The foundation is poured: durable state, hash-chained audit log, crash recovery, revocation feed.
 - Safety rails are installed: PolicyGate, rate limits, circuit breakers, citation enforcement, provider-health breakers.
+- **V2 authorization rewire:** required `default_action`, host corroboration floor, escalate-blocks-containment, correlator host isolation, all containment through PolicyGate.
+- **V2 operator features:** progressive authorization reporting (read-only), bounded prompt exemplars + similar-case retrieval (library), statute curation workflow, eval regression locking.
 - Real telemetry correlation feeds judgment on the production intake path.
 - Detection rules are portable: Sigma rules compile to SPL with a Splunk Free demo path.
-- Operators have runbooks, architecture docs, an org-config codification sweep, and a production throughput benchmark.
+- Operators have runbooks, architecture docs, an org-config codification sweep CLI, and a production throughput benchmark.
 
-**Quality bar:** 778 automated tests, mypy strict (118 files), ruff clean, 26 mandatory eval scenarios, phase gates green. See [`.workflow/phase-5-gate-punchlist.md`](.workflow/phase-5-gate-punchlist.md) for the latest gate evidence.
+**Quality bar:** 1029 automated tests, mypy strict (134 files), ruff clean, 32 mandatory eval scenarios, V2 Gates 0–5 green. See [`.workflow/v2-gate-5-exit/`](.workflow/v2-gate-5-exit/) and [`.workflow/v2-correctness-audit/final-report.md`](.workflow/v2-correctness-audit/final-report.md).
 
 There is no product UI yet. Praetor is a library and contract surface today — inspectable through tests, schemas, example config, and operator docs.
 
-### What it is not (v1)
+### What it is not
 
-Praetor is **not** a detection engine, severity scorer, live enforcer, external enrichment service, self-learning system, alert suppressor, or computational LLM replay engine. See [`docs/spec.md`](docs/spec.md) for the full fence list.
+Praetor is **not** a detection engine, severity scorer, live enforcer, external enrichment service, self-learning system, alert suppressor, or computational LLM replay engine. See [`docs/spec.md`](docs/spec.md) for the v1 fence list; V2 preserves those non-goals (no self-tuning authority).
 
 ---
 
@@ -80,6 +83,7 @@ flowchart TB
         LIFE["Attempt lifecycle<br/>+ durable outboxes"]
         LED["Hash-chained audit log<br/>DecisionEdict · revocations · snapshots"]
         FEED["Revocation feed<br/>(JSONL projection)"]
+        OPS["Operator surfaces<br/>reporting · retrieval · statute curation"]
     end
 
     subgraph downstream["Downstream"]
@@ -92,6 +96,8 @@ flowchart TB
     LED --> FEED
     FEED --> CON
     GOV -.-> INT
+    GOV -.-> OPS
+    OPS -.-> GOV
 ```
 
 **Boundary:** Praetor owns honest directive emission and safety signals (expiry, never-contain snapshot, revocation feed). The **consumer** owns receipt-to-actuation — feed freshness, expiry, local final checks, failing closed when its contract cannot be satisfied. A reference verifier lives in `consumer_sdk/reference_verifier.py`.
@@ -100,14 +106,15 @@ flowchart TB
 
 ### Design principles
 
-Full rationale in [`docs/prd.md`](docs/prd.md); behavioral detail in [`docs/spec.md`](docs/spec.md).
+Full rationale in [`docs/prd.md`](docs/prd.md); behavioral detail in [`docs/spec.md`](docs/spec.md) (frozen v1) refined by [`docs/contracts.md`](docs/contracts.md) and [`docs/decisions.md`](docs/decisions.md) (DEC-058+).
 
 1. **Recommendation ≠ authorization** — `ModelJudgment` is a proposal; `PolicyGate` decides the final disposition.
 2. **Fail safe, fail loud** — `standard_review` and `escalate` route to humans. The only automated action is `auto_contain`, and it is gated, bounded, and reviewable.
 3. **Citations are enforced, not decorative** — prose without resolvable citations is a hallucination failure mode; the Outcome Matrix treats it as escalate.
-4. **Safety config is complete, not curated** — token budgets may shrink config, but never by dropping safety-critical sections.
-5. **Feedback is human-gated** — analyst annotations inform a SOC lead who deliberately edits config. No self-tuning containment authority.
-6. **Contracts before code** — hash domains, ID derivations, and the Outcome Matrix are ratified in [`docs/contracts.md`](docs/contracts.md) before implementation.
+4. **Containment is earned** — required `default_action`; host `auto_contain` needs corroborated cited evidence (DEC-058/059).
+5. **Safety config is complete, not curated** — token budgets may shrink config, but never by dropping safety-critical sections.
+6. **Feedback is human-gated** — analyst annotations inform a SOC lead who deliberately edits config. No self-tuning containment authority.
+7. **Contracts before code** — hash domains, ID derivations, and the Outcome Matrix are ratified in [`docs/contracts.md`](docs/contracts.md) before implementation.
 
 ### Phase structure
 
@@ -118,6 +125,7 @@ Full rationale in [`docs/prd.md`](docs/prd.md); behavioral detail in [`docs/spec
 | Phase 3 — Correlation | 28–31 (incl. 28a) | PolicyGate on intake; real telemetry correlation and identity gates | **Complete** |
 | Phase 4 — Detection portability | 32–33 | Sigma/SPL/Splunk demo flow | **Complete** |
 | Phase 5 — Operator readiness | 34–35 | Org-config sweep, production benchmark, runbooks | **Complete** |
+| **V2 Gates 0–5** | V2-001–036 | Authorization rewire, hardening, progressive auth / feedback loop | **Complete** |
 
 ### What's built
 
@@ -131,18 +139,21 @@ Full rationale in [`docs/prd.md`](docs/prd.md); behavioral detail in [`docs/spec
 | Ticket stamp outbox with idempotent retry | `src/praetor/tickets/` |
 | SystemHealthAlert outbox | `src/praetor/alerts/` |
 | Org config load/preflight/activation/emergency never-contain | `src/praetor/config/`, `configs/example_org.yaml` |
-| Empirical org-config codification sweep | `src/praetor/codification/` |
+| Empirical org-config codification sweep + CLI + statute curation | `src/praetor/codification/` |
 | Hash-chained audit ledger + tamper-detection startup | `src/praetor/ledger/` |
 | Revocation feed exporter + startup feed recovery | `src/praetor/revocation/` |
 | Intake orchestrator, edict building, crash recovery | `src/praetor/engine/` |
-| Real telemetry correlation (Sysmon + Security) | `src/praetor/correlation/` |
+| Real telemetry correlation (Sysmon + Security) + host isolation | `src/praetor/correlation/` |
 | Provider abstraction, prompt construction, citation validation | `src/praetor/judgment/`, `src/praetor/evidence/` |
 | PolicyGate, rate limits, circuit breakers, directive lifecycle | `src/praetor/policy/`, `src/praetor/containment/` |
 | Provider-health breaker + half-open probes | `src/praetor/judgment/provider_health_breaker.py` |
+| Vertex provider (real HTTP; CI stays fixture-backed) | `src/praetor/judgment/vertex_provider.py` |
 | Metrics collector + Outcome Matrix enums | `src/praetor/metrics/` |
+| Progressive authorization reporting (read-only) | `src/praetor/reporting/` |
+| Similar-case retrieval (human-confirmed precedents) | `src/praetor/retrieval/` |
 | Analyst annotation storage | `src/praetor/annotations/` |
 | Reference consumer verifier | `consumer_sdk/reference_verifier.py` |
-| Mandatory eval harness (26 scenarios) | `evals/harness.py`, `evals/scenarios/` |
+| Mandatory eval harness (32 scenarios) | `evals/harness.py`, `evals/scenarios/` |
 | Phase 3/4/5 regression gates | `evals/run_phase3_gate.py`, `evals/correlation_gate.py`, `evals/run_phase5_benchmark.py` |
 | Sigma rule repository + SPL compile | `detections/sigma/`, `tools/compile_sigma.py`, `detections/spl/` |
 | Splunk Free demo config + ingest script | `splunk/`, `tools/splunk_ingest_demo.ps1` |
@@ -157,15 +168,17 @@ src/praetor/
 ├── hashing/       # Canonical serialization, decision_id, stamp_id, feed checksum
 ├── auth/          # Principal, TokenVerifier, role-guarded surfaces
 ├── config/        # Org config load/preflight, activation, emergency never-contain
-├── codification/  # Empirical org-config sweep → proposed artifacts + risk report
+├── codification/  # Org-config sweep, CLI, statute curation (review-only → promote)
 ├── correlation/   # Real telemetry normalization → EvidenceBundle
 ├── engine/        # Intake orchestrator, edict building, startup recovery
-├── judgment/      # Provider abstraction, prompt/excerpt hygiene
-├── evidence/      # Citation validation, account corroboration
+├── judgment/      # Provider abstraction, prompt/excerpt hygiene, exemplars
+├── evidence/      # Citation validation, host/account corroboration
 ├── policy/        # PolicyGate, rate limits, containment policy
 ├── containment/   # Directive lifecycle, revocation triggers
 ├── metrics/       # In-process disposition and breaker counters
-├── annotations/   # Analyst annotation storage
+├── reporting/     # Progressive authorization reporting (read-only)
+├── retrieval/     # Similar-case ranking for prompt exemplars
+├── annotations/   # Analyst annotation + precedent storage
 ├── ledger/        # Hash-chained audit log and startup integrity checks
 ├── revocation/    # Sequential revocation-feed JSONL exporter
 ├── runtime/       # OS singleton lock, production startup
@@ -198,8 +211,8 @@ python -m praetor.contracts.schema_export   # regenerate schemas/
 Type-check and lint:
 
 ```bash
-mypy src evals consumer_sdk
-ruff check src tests evals consumer_sdk benchmarks
+mypy .
+ruff check .
 ```
 
 ### Testing and verification
@@ -208,20 +221,22 @@ ruff check src tests evals consumer_sdk benchmarks
 
 ```bash
 pytest -q
-mypy src evals consumer_sdk
-ruff check src tests evals consumer_sdk benchmarks
+mypy .
+ruff check .
 python -m evals.harness
 python -m evals.run_phase3_gate
 python -m evals.correlation_gate
 python -m evals.run_phase5_benchmark
+python notebooks/check_walkthrough.py notebooks/praetor_walkthrough.ipynb
 ```
 
 | Gate | Command | What it proves |
 |---|---|---|
-| Mandatory safety scenarios | `python -m evals.harness` | 26 scenarios — disposition invariants, citation failures, breakers, stamp failures |
+| Mandatory safety scenarios | `python -m evals.harness` | 32 scenarios — disposition invariants, citation failures, corroboration, breakers, stamp failures |
 | Phase 3 regression | `python -m evals.run_phase3_gate` | Correlated telemetry, identity compliance, citation-anchored containment on noisy bundles |
 | Correlation accuracy | `python -m evals.correlation_gate` | Manifest checksums, corroboration, noise attribution, window boundaries |
 | Production throughput | `python -m evals.run_phase5_benchmark` | DEC-053 serialized path vs org-config rate targets (self-contained, no pre-existing DB) |
+| Walkthrough invariants | `python notebooks/check_walkthrough.py …` | Notebook still produces AUTO_CONTAIN / STANDARD_REVIEW / never-contain refuse |
 
 ### Try it — see it in action
 
@@ -229,15 +244,18 @@ There is no product UI. The best way to inspect Praetor is through tests, exampl
 
 | What you want to see | Where to look or what to run |
 |---|---|
-| Current org policy shape | `configs/example_org.yaml` |
+| Current org policy shape (`default_action: escalate`) | `configs/example_org.yaml` |
 | Public contracts Praetor emits/consumes | `schemas/` and `src/praetor/contracts/` |
 | PolicyGate on intake (`auto_contain`) | `pytest -q tests/engine/test_policygate_integration_tripwire.py` |
+| Host corroboration floor | `pytest -q tests/policy/test_host_corroboration_gate.py` |
 | Intake → stamp → actuation sequencing | `pytest -q tests/engine/test_intake_stamp_actuation.py` |
 | Real telemetry correlation | `pytest -q tests/correlation/` |
 | Crash recovery never auto-contains | `pytest -q tests/engine/test_crash_recovery.py::test_crash_at_lifecycle_state_recovery_never_autocontains` |
 | Revocation feed startup recovery | `pytest -q tests/runtime/test_feed_startup_recovery.py` |
 | Ledger tamper detection | `pytest -q tests/ledger/test_startup_verification.py` |
 | Org-config codification sweep | `pytest -q tests/codification/test_sweep.py` |
+| Progressive authorization report | `pytest -q tests/metrics/test_progressive_authorization_reporting.py` |
+| Similar-case retrieval | `pytest -q tests/judgment/test_similar_case_retrieval.py` |
 | Consumer pre-actuation checks | `pytest -q tests/consumer_sdk/` |
 | Deploy and operate | [`docs/operator_runbook.md`](docs/operator_runbook.md) |
 
@@ -263,9 +281,12 @@ This README is the **showcase**. For depth, use the layered docs — each has a 
 | Document | Read this for… |
 |---|---|
 | [`docs/prd.md`](docs/prd.md) | **Why** — problem, thesis, product decisions, success criteria |
-| [`docs/spec.md`](docs/spec.md) | **What** — architecture, Outcome Matrix, acceptance criteria, non-goals |
-| [`docs/plan.md`](docs/plan.md) | **How** — 35 tasks, sprint groupings, phase gates |
-| [`docs/contracts.md`](docs/contracts.md) | **Pins** — hash domains, ID constructions, consumer pre-actuation |
+| [`docs/spec.md`](docs/spec.md) | **What** — architecture, Outcome Matrix (v1 + V2 mirrors), acceptance criteria, non-goals |
+| [`docs/contracts.md`](docs/contracts.md) | **Pins** — hash domains, ID constructions, V2 Outcome Matrix rows, corroboration |
+| [`docs/decisions.md`](docs/decisions.md) | **DEC-xxx** — including V2 DEC-058–063 |
+| [`docs/plan.md`](docs/plan.md) | **How (v1)** — 35 tasks, sprint groupings, phase gates |
+| [`docs/proposals/v2_implementation_plan.md`](docs/proposals/v2_implementation_plan.md) | **How (V2)** — 36 tasks, Gates 0–5 (**COMPLETE**) |
 | [`docs/operator_runbook.md`](docs/operator_runbook.md) | **Operate** — SQLite requirements, startup order, throughput ceiling, failure handling |
 | [`docs/architecture.md`](docs/architecture.md) | **Structure** — component boundaries and data flow |
 | [`docs/eval_gates.md`](docs/eval_gates.md) | **Verify** — phase gate commands and pass criteria |
+| [`docs/demo_run_of_show.md`](docs/demo_run_of_show.md) | **Demo** — 4-minute walkthrough script |

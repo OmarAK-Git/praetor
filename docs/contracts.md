@@ -559,7 +559,7 @@ Before authorizing host `auto_contain`, the **cited facts** anchoring the host t
 2. **Independent source** — at least **one** cited fact comes from a **non-attacker-controllable** `provenance_path` per the table above.
 3. **No sole ambiguous basis** — host containment must not rest on a **single** cited fact when that fact has `ambiguity_flag = true`.
 
-When any check fails, PolicyGate escalates with fault flag **`insufficient_corroboration`** (`system_fault_escalation = false`, policy/safety-gate class). Implementation: V2-011.
+When any check fails, PolicyGate escalates with fault flag **`insufficient_corroboration`** (`system_fault_escalation = false`, policy/safety-gate class). **Implemented** (V2-011) in PolicyGate + `evidence/provenance.py`; harness scenario `insufficient_corroboration`.
 
 **Scope note.** Host corroboration applies to **host** containment targets after citation-anchored target resolution. It does not replace account identity corroboration or multi-host ambiguity (`ambiguous_containment_target`).
 
@@ -567,7 +567,7 @@ When any check fails, PolicyGate escalates with fault flag **`insufficient_corro
 
 ## 13. Outcome Matrix (behavioral contract)
 
-The eval harness asserts, for every failure class, the disposition, the fault flag, and the `system_fault_escalation` value. `true` = infrastructure / model-quality / feed / latency-queue fault requiring operational triage. `false` = deliberate policy or safety-gate enforcement (the engine working as designed). This table is the authoritative contract. The frozen `docs/spec.md` §Outcome Matrix mirror is deferred until spec unfreeze (DEC-052); until then, this section carries rows not yet mirrored in the spec — `ambiguous_containment_target`, `insufficient_corroboration` — to be reconciled when the spec unfreezes.
+The eval harness asserts, for every failure class, the disposition, the fault flag, and the `system_fault_escalation` value. `true` = infrastructure / model-quality / feed / latency-queue fault requiring operational triage. `false` = deliberate policy or safety-gate enforcement (the engine working as designed). This table is the authoritative contract and is mirrored in `docs/spec.md` §Outcome Matrix (V2 unfreeze 2026-07-10). When both are present they must agree; prefer this section for hash/ID-adjacent pins and metrics coupling notes.
 
 | Failure class | Disposition | Fault flag | system_fault_escalation |
 |---|---|---|---|

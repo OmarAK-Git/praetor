@@ -1,6 +1,6 @@
 # Praetor operator runbook
 
-Operational guide for deploying and running Praetor v1. Field-level contract shapes live in generated JSON Schema under `schemas/` (see `docs/contracts.md` §14). This runbook describes behavior, responsibility boundaries, and failure handling — not duplicate schema fields.
+Operational guide for deploying and running Praetor (v1 durable core + V2 hardening). Field-level contract shapes live in generated JSON Schema under `schemas/` (see `docs/contracts.md` §14). This runbook describes behavior, responsibility boundaries, and failure handling — not duplicate schema fields.
 
 ## Disposition vocabulary
 
@@ -68,7 +68,7 @@ Example org config defaults: sustained **30**/min, burst **60**/min (`configs/ex
 Provider failures map to Outcome Matrix dispositions via intake (`process_alert_intake`):
 
 - Malformed JSON, timeout, refusal → `escalate` with appropriate fault flags and `system_fault_escalation` where specified.
-- Provider unavailable may trip the provider-health breaker when wired; intake catch for `ProviderUnavailableError` remains environment-specific.
+- `ProviderUnavailableError` maps to `escalate` with fault flag `provider_unavailable` (`system_fault_escalation=true`, DEC-061) and may also trip the provider-health breaker.
 
 Recovery: fix provider connectivity or configuration; SOC lead may trigger half-open probes (below). Failed judgments do not emit containment.
 

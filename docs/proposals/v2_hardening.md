@@ -1,10 +1,9 @@
 # Praetor v2 — Hardening Proposal
 
-**Status: DRAFT — pre-independent-review. Nothing here is ratified.**
-`docs/spec.md` (v1) is frozen; this document does **not** modify it. These are candidate
-v2 changes to be independently reviewed before any implementation. Items are tagged
-**[BUILD]** (new work), **[FORMALIZE]** (exists, needs to be made a first-class workflow),
-or **[HOLD]** (parked pending a decision/counter-argument).
+**Status: IMPLEMENTED (V2 Gates 0–5 closed 2026-07-10).** Design rationale retained for
+provenance. `docs/spec.md` (v1) remains frozen; accepted items landed via `docs/contracts.md`
+and `docs/decisions.md` (DEC-058–063). Behavioral authority is contracts/decisions, not this
+proposal. Historical “how v1 behaved” grounding below describes **pre-V2** behavior.
 
 ## Why a v2
 
@@ -26,7 +25,7 @@ Threat-modeling v1 surfaced one architectural truth and three improvement levers
 - **Lever 3 — the feedback loop:** analyst corrections are *captured* but never *applied*, and
   the model has no mechanism to improve in-context over time.
 
-## How v1 behaves today (grounding for reviewers)
+## How v1 behaved before V2 (historical grounding)
 
 - The gate reads only `judgment.proposed_disposition` and `judgment.cited_evidence_refs`
   (`src/praetor/policy/gate.py:277,294,301`). It **never reads** `key_tells`,
@@ -46,9 +45,9 @@ Threat-modeling v1 surfaced one architectural truth and three improvement levers
 
 ---
 
-## Item 1 — Evidence corroboration floor for host `auto_contain`  **[v2 — documented, not implemented]**
+## Item 1 — Evidence corroboration floor for host `auto_contain`  **[IMPLEMENTED — V2-011]**
 
-**Status:** **ratified (DEC-059, V2-002)** — corroboration promoted to first-class host + account concept; `insufficient_corroboration` Outcome Matrix row in `docs/contracts.md` §13; provenance trust table in §12a. PolicyGate wiring deferred to **V2-011**.
+**Status:** **ratified (DEC-059, V2-002) and implemented (V2-011)** — corroboration is a first-class host + account concept; `insufficient_corroboration` Outcome Matrix row in `docs/contracts.md` §13; provenance trust table in §12a; PolicyGate enforces the host floor.
 
 **Problem.** Host containment can be authorized on a single cited fact. An attacker who can
 author telemetry (or an honest-but-fallible model on an ambiguous single signal) can therefore
@@ -82,7 +81,7 @@ wire in V2-011 per completeness contract.
 
 ---
 
-## Item 2 — Containment-rule `scope` validation + authorization posture  **[v2 — documented, not implemented]**
+## Item 2 — Containment-rule `scope` validation + authorization posture  **[IMPLEMENTED — V2-005–013]**
 
 This began as the "default-deny vs denylist" posture question (was on HOLD pending an owner
 counter-argument). Cross-review with the original spec author **resolved it: v1's default-allow is
@@ -147,49 +146,36 @@ rule-action and precedence semantics.
 
 ---
 
-## Item 3 — Progressive Authorization ("probationary autonomy")  **[FORMALIZE/BUILD]**
+## Item 3 — Progressive Authorization ("probationary autonomy")  **[IMPLEMENTED — V2-032]**
 
 **Concept.** Treat the agent like a new employee: it starts on a narrow mandate and **earns**
 authority as trust is demonstrated, with the SOC lead, analysts, and the model all learning
 together against the statute and the eval scenarios.
 
-**Mechanism (mostly already present, needs to be made first-class):**
-- **Start narrow.** Auto-contain allow-list empty or tiny; the model operates as a **triage
-  classifier** (`standard_review` vs `escalate`) — both human-safe outcomes regardless of model
-  correctness.
-- **Measure.** PolicyGate **override-rate** metric (built, Task 24) + analyst annotations
-  (`disposition_correct`, `corrected_disposition`; built, Task 25) quantify, per asset class,
-  how often the model's `auto_contain` proposals are human-confirmed correct.
-- **Promote deliberately.** When an asset class shows a sustained low override / high-confirm
-  rate, a SOC lead **widens** the auto-contain scope for that class — an audited, reversible,
-  human-gated config change, justified by the ledger.
+**Mechanism (shipped):**
+- **Start narrow.** Example org uses `default_action: escalate` with scoped `allow` rules.
+- **Measure.** `praetor.reporting.build_progressive_authorization_report` aggregates PolicyGate
+  override rate + annotation outcomes per `(target_type, asset_class)` over a window.
+- **Promote deliberately.** SOC-led audited config change only — documented in
+  `docs/operator_runbook.md`. No self-tuning.
 
-This makes the override-rate metric a **promotion signal**, not a self-tuning knob. Authority
-grows by deliberate human decision backed by evidence — never silently.
-
-**To build:** a reporting view that aggregates annotations + override-rate **per asset class /
-target type** to drive promotion decisions (the raw signals exist; the decision-support view
-does not).
+**Follow-up:** production intake does not yet call `record_policy_gate_evaluation` / schema init
+(library-complete; operational feed deferred — see V2 correctness audit).
 
 ---
 
-## Item 4 — Feedback maturation (safe, human-in-the-middle)  **[mixed]**
+## Item 4 — Feedback maturation (safe, human-in-the-middle)  **[IMPLEMENTED — V2-033–036]**
 
 Auto-retraining stays **out** (spec non-goal; PRD DEC-006 "no self-tuning containment
 authority"): feedback poisoning + loss of auditability. The sanctioned loop:
 
-1. **Similar-case in-context exemplars — [BUILD].** Retrieve human-confirmed past cases and
-   inject them into the judgment prompt as few-shot examples. Genuine learning-over-time
-   *without retraining* — bounded, reversible, auditable. This is the deferred
-   "RAG-backed similar-case retrieval." **Not built today** — the prompt has no exemplar slot
-   (`prompt.py:55`). Highest-leverage feedback build.
-2. **Statute curation — [FORMALIZE].** Editing `normal_admin_patterns` / never-contain / policy
-   and re-activating already changes what the model sees (`org_config_verbatim` is in the
-   prompt). Make "annotation → proposed statute edit → review → re-activate" an explicit,
-   tracked workflow rather than ad-hoc.
-3. **Eval-scenario regression locking — [FORMALIZE].** Every confirmed model error becomes a
-   harness scenario so the corrected behavior is pinned and regressions fail CI. The harness
-   exists; the "every correction becomes a scenario" discipline should be procedural.
+1. **Similar-case in-context exemplars — [DONE V2-033/034].** Bounded `PromptExemplarBlock` +
+   human-confirmed retrieval (`praetor.retrieval`). Exemplars stay outside the evidence hash path.
+   **Follow-up:** orchestrator still uses the non-retrieval prompt builder by default.
+2. **Statute curation — [DONE V2-035].** Annotation → `proposed_statute` → review →
+   `promote_statute_curation` with preflight + activation audit.
+3. **Eval-scenario regression locking — [DONE V2-036].** Workflow template + expectation-key CI
+   guard; documented in `docs/eval_gates.md`.
 
 ---
 
@@ -205,13 +191,11 @@ authority"): feedback poisoning + loss of auditability. The sanctioned loop:
 
 - [x] Item 1: accept corroboration floor for hosts? Promote corroboration to a first-class spec
       concept? Confirm the `insufficient_corroboration` flag + Outcome Matrix wiring.
-      **Ratified DEC-059 (V2-002)** — `docs/contracts.md` §12a/§13; implementation V2-011.
+      **Ratified DEC-059 (V2-002); implemented V2-011.**
 - [x] Item 2: posture **ratified (DEC-058, V2-001)** — default-allow retired as drift;
       deployment-configurable required `default_action`; `escalate` blocks containment.
-      **2a (near-term):** typed `scope` + `extra="forbid"` + preflight rejects malformed scope (V2-005).
-      **2b (deferred):** `default_action` catch-all primitive + flip implicit allow + rewrite example
-      config / notebook / scenarios + the no-rule-target regression test (V2-012, V2-013).
-- [ ] Item 3: approve progressive-authorization model; specify promotion thresholds + the
-      per-asset-class reporting view.
-- [ ] Item 4: prioritize similar-case exemplar retrieval; define the retrieval/ranking contract
-      and how exemplars are kept out of the hashed evidence path.
+      **2a:** typed `scope` + `extra="forbid"` + preflight (V2-005). **2b:** `default_action` +
+      no-rule fallthrough + example config / notebook / scenarios (V2-012, V2-013).
+- [x] Item 3: progressive-authorization reporting view (V2-032); SOC-led promotion in runbook.
+- [x] Item 4: similar-case retrieval + exemplar slot (V2-033/034); statute curation (V2-035);
+      eval regression locking (V2-036).

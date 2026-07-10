@@ -1,14 +1,24 @@
 # Praetor V2 Implementation Plan
 
-**Status:** DRAFT - proposed build plan for the V2 backlog.
+**Status:** COMPLETE — V2 Gates 0–5 closed 2026-07-10 (tasks V2-001 through V2-036).
+
+**Gate exit evidence:**
+- Gate 0–1: `.workflow/V2-001/` … `.workflow/V2-010/` (decision + safety closure)
+- Gate 2: `.workflow/v2-gate-2-exit/`
+- Gate 3: `.workflow/v2-gate-3-exit/`
+- Gate 4: `.workflow/v2-gate-4-exit/`
+- Gate 5: `.workflow/v2-gate-5-exit/` (pytest 1029 / ruff / mypy green)
+- Correctness audit: `.workflow/v2-correctness-audit/final-report.md`
 
 **Inputs:** `docs/proposals/delivery_backlog.md`, `docs/proposals/v2_hardening.md`,
 `docs/plan.md`, `docs/decisions.md`, `memory-bank/`, and selected `.workflow/`
 artifacts through TASK-035.
 
-**Purpose:** Convert the delivery backlog into an executable V2 plan with task
+**Purpose:** Converted the delivery backlog into an executable V2 plan with task
 ordering, sprint groupings, dependencies, verification gates, and handoff-ready
-implementation boundaries. This document does not modify the frozen v1 spec.
+implementation boundaries. V2 behavioral mirrors now land in `docs/spec.md` and
+`docs/contracts.md` / `docs/decisions.md` (DEC-058–063). Deferred Work below
+remains out of scope.
 
 ## Build Order
 

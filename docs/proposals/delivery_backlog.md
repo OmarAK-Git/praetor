@@ -1,11 +1,13 @@
 # Praetor Delivery Backlog
 
-**Status:** DRAFT — harvested from `docs/proposals/v2_hardening.md`, `docs/plan.md` §Deferred Work,
-`memory-bank/decisions.md`, `.workflow/` (phase punchlists, task reviews/final-reports), and
-`.workflow/_dream/playbook.md`.
+**Status:** PARTIALLY SUPERSEDED — V2 Gates 0–5 closed 2026-07-10 (tasks V2-001–036).
+Many rows below still say `Open` from the pre-build harvest; treat them as **stale until
+reconciled**. Prefer `docs/proposals/v2_implementation_plan.md` + `.workflow/v2-*-exit/` for
+completion evidence. Residual true follow-ups: Gate 5 intake wiring (progressive evaluation
+recording + similar-case prompt injection), live Splunk HEC demo, and deferred roadmap items.
 
-**Purpose:** Single taxonomy-sorted backlog for V1 gap closure, V2 rewire planning, and sprint
-prioritization. Not ratified; does not modify `docs/spec.md` v1.
+**Purpose:** Single taxonomy-sorted backlog harvested for V1 gap closure and V2 planning.
+Does not modify `docs/spec.md` v1. Correctness audit: `.workflow/v2-correctness-audit/final-report.md`.
 
 ## How to read this document
 
@@ -53,15 +55,15 @@ prioritization. Not ratified; does not modify `docs/spec.md` v1.
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P0 | V1 Gap Closure | PolicyGate | **Silent skip of non-dict containment-rule `scope`** — `scope: global` and other non-dict shapes are dropped at gate time; operator `default_escalate` is a no-op while fallthrough is `ALLOW`. | Engine/Policy | — | `containment_policy.py`, `org_config_sections.py`, `preflight.py`, `configs/example_org.yaml`, `codification/sweep.py` | Preflight rejects malformed/unknown rule `scope` at activation; gate never silently ignores a declared rule; regression test for `scope: global` string. | Open |
-| P0 | V1 Gap Closure | PolicyGate | **`action: escalate` does not block containment** when it is the sole matching rule; only `deny` and unresolved `auto_contain`+`escalate`/`deny` conflict block. | Engine/Policy | — | `containment_policy.py`, `gate.py`, `tests/policy/` | Target with only a matching `escalate` rule does not reach `auto_contain`; or explicit spec/decision documents escalate-as-hint-only semantics. | **Decision: escalate blocks (DEC-058); implement V2-006** |
-| P1 | V1 Gap Closure | PolicyGate | **Compound-fault audit-flag drop** — stamp `FAILED` + deferred-persist conflict rebuild carries only conflict flag, drops `ticket_stamp_failed` (DEC-053 fidelity gap). | Engine | — | `engine/orchestrator.py`, `engine/edict.py`, `tests/engine/` | Rebuilt edict includes both fault flags when both conditions apply; fail-closed outcome unchanged. | Open |
+| P0 | V1 Gap Closure | PolicyGate | **Silent skip of non-dict containment-rule `scope`** — `scope: global` and other non-dict shapes are dropped at gate time; operator `default_escalate` is a no-op while fallthrough is `ALLOW`. | Engine/Policy | — | `containment_policy.py`, `org_config_sections.py`, `preflight.py`, `configs/example_org.yaml`, `codification/sweep.py` | Preflight rejects malformed/unknown rule `scope` at activation; gate never silently ignores a declared rule; regression test for `scope: global` string. | **Closed (V2-005)** |
+| P0 | V1 Gap Closure | PolicyGate | **`action: escalate` does not block containment** when it is the sole matching rule; only `deny` and unresolved `auto_contain`+`escalate`/`deny` conflict block. | Engine/Policy | — | `containment_policy.py`, `gate.py`, `tests/policy/` | Target with only a matching `escalate` rule does not reach `auto_contain`; or explicit spec/decision documents escalate-as-hint-only semantics. | **Closed (DEC-058, V2-006)** |
+| P1 | V1 Gap Closure | PolicyGate | **Compound-fault audit-flag drop** — stamp `FAILED` + deferred-persist conflict rebuild carries only conflict flag, drops `ticket_stamp_failed` (DEC-053 fidelity gap). | Engine | — | `engine/orchestrator.py`, `engine/edict.py`, `tests/engine/` | Rebuilt edict includes both fault flags when both conditions apply; fail-closed outcome unchanged. | **Closed (V2-008)** |
 | P1 | V1 Gap Closure | PolicyGate | **`ProviderUnavailableError` not caught in intake** — no Outcome Matrix row; provider fault path undefined at intake. | Engine/Judgment | Outcome Matrix row + enum | `engine/orchestrator.py`, `contracts/`, `evals/outcome_matrix.py`, `tests/engine/` | Intake maps `ProviderUnavailableError` to documented disposition + fault flag; harness scenario passes. | **Resolved (DEC-061, V2-004)** — `provider_unavailable` row; enum + harness; minimal intake catch |
 | P2 | V1 Gap Closure | PolicyGate | **Recovery path bypasses PolicyGate** — `engine/recovery.py` hard-downgrades `auto_contain` on stamp recovery (DEC-009); intentional but not re-evaluated through gate. | Engine | Owner decision on recovery semantics | `engine/recovery.py`, `tests/engine/` | Documented acceptance test pins behavior; or recovery re-invokes gate with pinned scenarios. | Accepted Deferral |
 | P2 | V1 Gap Closure | PolicyGate | **Orphan outstanding directives** without ledger edicts skipped by startup step 6 — documented duplicate-emission risk. | Engine/Policy | — | `policy/state.py`, `tests/policy/`, `docs/contracts.md` | Reconciliation policy documented; test `test_reconcile_skips_idempotency_when_ledger_edict_missing` retained; optional purge/repair path specified. | **Resolved (DEC-060, V2-003)** — skip at step 6; health surfacing in V2-010 |
 | P2 | V1 Gap Closure | PolicyGate | **v1 rate-limit scope key** uses `per_host` for all target types; org-config sliding windows / real subnet membership incomplete (DEC-030). | Engine/Policy | DEC-030 design | `policy/rate_limit.py`, `policy/containment_policy.py`, `org_config_sections.py` | Per-scope keys match DEC-030 semantics or explicit v1 limitation documented in runbook. | Partial |
-| P2 | V1 Gap Closure | PolicyGate | **Emergency never-contain not evaluated in PolicyGate** — spec lists it; `gate.py` has no emergency check. | Engine/Policy | Owner: in-gate vs engine path | `policy/gate.py`, `config/emergency.py`, `tests/policy/` | Emergency entries block `auto_contain` at documented layer with harness scenario. | Open |
-| P2 | V1 Gap Closure | PolicyGate | **Activation/emergency revocation paths omit ledger append** — feed + SQLite only; ledger append on startup scan / recovery edict path only. | Engine/Ledger | — | `config/activation.py`, `config/emergency.py`, `engine/recovery.py` | Revocation ledger append policy unified or explicitly documented per path. | Open |
+| P2 | V1 Gap Closure | PolicyGate | **Emergency never-contain not evaluated in PolicyGate** — spec lists it; `gate.py` has no emergency check. | Engine/Policy | Owner: in-gate vs engine path | `policy/gate.py`, `config/emergency.py`, `tests/policy/` | Emergency entries block `auto_contain` at documented layer with harness scenario. | **Closed (V2-009)** |
+| P2 | V1 Gap Closure | PolicyGate | **Activation/emergency revocation paths omit ledger append** — feed + SQLite only; ledger append on startup scan / recovery edict path only. | Engine/Ledger | — | `config/activation.py`, `config/emergency.py`, `engine/recovery.py` | Revocation ledger append policy unified or explicitly documented per path. | **Closed (V2-009/V2-010)** |
 
 ### Containment directives & revocation
 
@@ -81,16 +83,16 @@ prioritization. Not ratified; does not modify `docs/spec.md` v1.
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P1 | V1 Gap Closure | Correlation | **Host isolation not enforced in correlator** — in-window multi-host bundles possible; citation-anchored gate is sole defense (AG-0080, REVIEW-004 strict xfail). | Correlation | — | `correlation/`, `tests/evals/test_phase3_regression_gate.py` | Correlator drops cross-host in-window noise OR documented acceptance with gate-only defense removed from xfail. | Open |
-| P2 | V1 Gap Closure | Identity | **SID format validation deferred** — any non-empty string treated as SID-backed (synthetic v1). | Engine/Policy | Phase 3 identity gates | `policy/identity.py`, `correlation/` | SID format validator with pinned pass/fail vectors; or explicit v1 waiver in decisions. | Open |
-| P2 | V1 Gap Closure | Identity | **Future Windows normalizers** must set `ambiguity_flag` on malformed domain-separator accounts (PE-0024). | Correlation | New normalizers | `correlation/security_log.py`, `correlation/sysmon.py` | Normalizer conformance test for ambiguity_flag rule on new event types. | Open |
+| P1 | V1 Gap Closure | Correlation | **Host isolation not enforced in correlator** — in-window multi-host bundles possible; citation-anchored gate is sole defense (AG-0080, REVIEW-004 strict xfail). | Correlation | — | `correlation/`, `tests/evals/test_phase3_regression_gate.py` | Correlator drops cross-host in-window noise OR documented acceptance with gate-only defense removed from xfail. | **Closed (V2-014)** |
+| P2 | V1 Gap Closure | Identity | **SID format validation deferred** — any non-empty string treated as SID-backed (synthetic v1). | Engine/Policy | Phase 3 identity gates | `policy/identity.py`, `correlation/` | SID format validator with pinned pass/fail vectors; or explicit v1 waiver in decisions. | **Closed (DEC-062, V2-022)** — presence waiver + `is_valid_sid_format` vectors |
+| P2 | V1 Gap Closure | Identity | **Future Windows normalizers** must set `ambiguity_flag` on malformed domain-separator accounts (PE-0024). | Correlation | New normalizers | `correlation/security_log.py`, `correlation/sysmon.py` | Normalizer conformance test for ambiguity_flag rule on new event types. | **Closed (DEC-063, V2-022)** |
 
 ### Org config & sweep
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
 | P2 | V1 Gap Closure | Org config | **Sweep policy/statute sections remain placeholders** — sweep does not infer never-contain, subnet, or containment policy (by design); operators must hand-author. | Operator/Config | — | `codification/sweep.py`, `docs/operator_runbook.md` | Runbook states required hand-edits before activation; sweep output clearly labeled proposed-only. | Accepted Deferral |
-| P3 | V1 Gap Closure | Org config | **No standalone sweep CLI** — API-only prototype (TASK-034 G-3). | Operator/Config | — | `codification/`, CLI entry if added | Documented invocation path; or CLI wrapper for sweep + preflight. | Open |
+| P3 | V1 Gap Closure | Org config | **No standalone sweep CLI** — API-only prototype (TASK-034 G-3). | Operator/Config | — | `codification/`, CLI entry if added | Documented invocation path; or CLI wrapper for sweep + preflight. | **Closed (V2-027)** |
 
 ### Metrics & intake
 
@@ -108,31 +110,31 @@ prioritization. Not ratified; does not modify `docs/spec.md` v1.
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
 | P0 | V2 Rewire/Architecture | PolicyGate | **Ratify authorization model** — v1 default-allow is drift, not decision; containment should be earned, not granted-by-omission (`v2_hardening` Item 2). | Owner | Independent review checklist | `docs/decisions.md`, `docs/proposals/v2_hardening.md` | Decision recorded; v2 spec section or contracts amendment drafted. | **Resolved (DEC-058, V2-001)** |
-| P1 | V2 Rewire/Architecture | PolicyGate | **2a: ContainmentRule strict schema** — typed `scope`, `extra="forbid"` on `ContainmentRule`/`ContainmentPolicy`, preflight rejects malformed scope (fail loud; posture unchanged). | Engine/Config | Silent `scope` skip (P0, PolicyGate row above) | `org_config_sections.py`, `preflight.py`, `tests/config/` | Invalid scope fails preflight; example config validates; no silent rule drop. | Open |
-| P1 | V2 Rewire/Architecture | PolicyGate | **2b: `default_action` catch-all primitive** — express "escalate/deny by default, allow only these groups" in one place. | Engine/Config | 2a, posture decision | `org_config_sections.py`, `containment_policy.py`, `preflight.py`, `configs/example_org.yaml` | Operator can set global default; rules override with documented precedence. | Open |
-| P1 | V2 Rewire/Architecture | PolicyGate | **2b: Flip policy-layer default to deny** — no matching rule → target does not reach `auto_contain`. | Engine/Policy | 2b catch-all, posture decision | `containment_policy.py`, `gate.py`, `configs/example_org.yaml`, `evals/`, notebook | Regression: no-rule target escalates; walkthrough Case 1 + `confirmed_malicious_sequence` updated with explicit allow rules. | Open |
+| P1 | V2 Rewire/Architecture | PolicyGate | **2a: ContainmentRule strict schema** — typed `scope`, `extra="forbid"` on `ContainmentRule`/`ContainmentPolicy`, preflight rejects malformed scope (fail loud; posture unchanged). | Engine/Config | Silent `scope` skip (P0, PolicyGate row above) | `org_config_sections.py`, `preflight.py`, `tests/config/` | Invalid scope fails preflight; example config validates; no silent rule drop. | **Closed (V2-005)** |
+| P1 | V2 Rewire/Architecture | PolicyGate | **2b: `default_action` catch-all primitive** — express "escalate/deny by default, allow only these groups" in one place. | Engine/Config | 2a, posture decision | `org_config_sections.py`, `containment_policy.py`, `preflight.py`, `configs/example_org.yaml` | Operator can set global default; rules override with documented precedence. | **Closed (V2-012)** |
+| P1 | V2 Rewire/Architecture | PolicyGate | **2b: Flip policy-layer default to deny** — no matching rule → target does not reach `auto_contain`. | Engine/Policy | 2b catch-all, posture decision | `containment_policy.py`, `gate.py`, `configs/example_org.yaml`, `evals/`, notebook | Regression: no-rule target escalates; walkthrough Case 1 + `confirmed_malicious_sequence` updated with explicit allow rules. | **Closed (V2-013)** |
 | P2 | V2 Rewire/Architecture | PolicyGate | **Deployment-configurable default posture** — `default_action` in org config vs hard-coded denylist/allowlist (`v2_hardening` open question). | Owner | 2b | `org_config_sections.py`, `docs/decisions.md` | Owner chooses configurable vs fixed; schema reflects choice. | **Resolved (DEC-058): configurable `default_action`; V2-012 implements** |
 
 ### Evidence authorization
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P0 | V2 Rewire/Architecture | PolicyGate | **Host `auto_contain` corroboration floor** — cited facts span ≥2 distinct `provenance_path`, ≥1 non-attacker-controllable; no sole-basis `ambiguity_flag=true` (`v2_hardening` Item 1, DEC-059). | Engine/Policy | V2-002 contract | `policy/gate.py`, `evidence/citations.py`, `evidence/provenance.py`, `evals/outcome_matrix.py`, `tests/policy/` | New fault flag `insufficient_corroboration` wired; host single-citation path escalates; harness scenario passes. | **Unblocked** — implement V2-011 |
+| P0 | V2 Rewire/Architecture | PolicyGate | **Host `auto_contain` corroboration floor** — cited facts span ≥2 distinct `provenance_path`, ≥1 non-attacker-controllable; no sole-basis `ambiguity_flag=true` (`v2_hardening` Item 1, DEC-059). | Engine/Policy | V2-002 contract | `policy/gate.py`, `evidence/citations.py`, `evidence/provenance.py`, `evals/outcome_matrix.py`, `tests/policy/` | New fault flag `insufficient_corroboration` wired; host single-citation path escalates; harness scenario passes. | **Closed (V2-011)** |
 | P1 | V2 Rewire/Architecture | PolicyGate | **Promote corroboration to first-class spec concept** — not account-only (`v2_hardening` open question). | Owner | V2-002 | `docs/contracts.md` §12a, `docs/decisions.md` DEC-059 | Spec section defines host + account corroboration symmetrically. | **Resolved (DEC-059)** |
-| P2 | V2 Rewire/Architecture | PolicyGate | **Gate reads citation `provenance_path` / `ambiguity_flag` for hosts** — validator resolves them today; gate ignores for authorization (`v2_hardening` grounding). | Engine/Policy | V2-011 | `policy/gate.py`, `evidence/citations.py` | Gate authorization uses resolved citation metadata; tests pin behavior. | Open |
+| P2 | V2 Rewire/Architecture | PolicyGate | **Gate reads citation `provenance_path` / `ambiguity_flag` for hosts** — validator resolves them today; gate ignores for authorization (`v2_hardening` grounding). | Engine/Policy | V2-011 | `policy/gate.py`, `evidence/citations.py` | Gate authorization uses resolved citation metadata; tests pin behavior. | **Closed (V2-011)** |
 
 ### Deferred-directive & intake architecture
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P2 | V2 Rewire/Architecture | Engine | **Orchestrator must consume gate directive target** — never re-derive from raw correlation bundle (AG-0080). | Engine | Correlator host isolation or accepted risk | `engine/orchestrator.py`, `policy/gate.py` | Lint or test forbids bundle-based target override on intake path. | Open |
+| P2 | V2 Rewire/Architecture | Engine | **Orchestrator must consume gate directive target** — never re-derive from raw correlation bundle (AG-0080). | Engine | Correlator host isolation or accepted risk | `engine/orchestrator.py`, `policy/gate.py` | Lint or test forbids bundle-based target override on intake path. | **Closed (V2-015)** |
 
 ### Contract registry
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
 | P2 | V2 Rewire/Architecture | Contracts | **Pin `evidence_id` derivation in `docs/contracts.md`** (DEC-051, AG-0073). | Infra/Contracts | GR-0003 doc approval | `docs/contracts.md`, `hashing/domains.py`, `correlation/ids.py` | Contract § documents preimage; cross-module test matches `ids.py`. | **Done (DEC-051, V2-021)** — contracts §3b is authoritative |
-| P2 | V2 Rewire/Architecture | Contracts | **`ContainmentRule` aligns with AG-0005** — all contract models `extra="forbid"` (playbook vs current `extra="allow"`). | Config/Contracts | 2a typed scope | `contracts/org_config_sections.py`, `tests/contracts/` | Containment models forbid unknown keys; migration path for existing configs documented. | Open |
+| P2 | V2 Rewire/Architecture | Contracts | **`ContainmentRule` aligns with AG-0005** — all contract models `extra="forbid"` (playbook vs current `extra="allow"`). | Config/Contracts | 2a typed scope | `contracts/org_config_sections.py`, `tests/contracts/` | Containment models forbid unknown keys; migration path for existing configs documented. | **Closed (V2-005/V2-023)** |
 
 ---
 
@@ -142,10 +144,10 @@ prioritization. Not ratified; does not modify `docs/spec.md` v1.
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P2 | Quality & Hardening | Eval harness | **T1: Static guard — policy fault-flag literals ⊆ `OutcomeMatrixFaultFlag`** (phase-2/3/4 TRACK). | Engine | — | `tests/policy/`, `tests/contracts/`, `evals/outcome_matrix.py` | CI test fails on orphan gate/engine fault string not in enum. | Open |
-| P2 | Quality & Hardening | State store | **T2: Production open path asserts five policy tables** under held singleton without manual `init_*`. | Engine | — | `tests/`, `state/store.py`, `policy/state.py` | `open_production_state_store` + `init_state_dir` test creates all required tables. | Open |
+| P2 | Quality & Hardening | Eval harness | **T1: Static guard — policy fault-flag literals ⊆ `OutcomeMatrixFaultFlag`** (phase-2/3/4 TRACK). | Engine | — | `tests/policy/`, `tests/contracts/`, `evals/outcome_matrix.py` | CI test fails on orphan gate/engine fault string not in enum. | **Closed (V2-016)** |
+| P2 | Quality & Hardening | State store | **T2: Production open path asserts five policy tables** under held singleton without manual `init_*`. | Engine | — | `tests/`, `state/store.py`, `policy/state.py` | `open_production_state_store` + `init_state_dir` test creates all required tables. | **Closed (V2-017)** |
 | P3 | Quality & Hardening | Eval harness | **T4: Optional `engine_intake` rate-counter assertion** on `auto_contain` path. | Engine | TASK-028a closed | `evals/harness.py`, `evals/scenarios/` | `engine_intake` scenario asserts rate counter row after gated contain. | Open |
-| P3 | Quality & Hardening | Eval harness | **Eval-scenario regression locking discipline** — every confirmed model error becomes harness scenario (`v2_hardening` 4c). | SOC/Process | — | `evals/`, `.workflow/`, `docs/eval_gates.md` | Documented procedure; template in workflow; CI documents minimum scenario bar. | Open |
+| P3 | Quality & Hardening | Eval harness | **Eval-scenario regression locking discipline** — every confirmed model error becomes harness scenario (`v2_hardening` 4c). | SOC/Process | — | `evals/`, `.workflow/`, `docs/eval_gates.md` | Documented procedure; template in workflow; CI documents minimum scenario bar. | **Closed (V2-036)** |
 | P3 | Quality & Hardening | Eval harness | **`ledger_chain_integrity_failure` harness scenario** — startup-only; not fixture-runnable (phase-2 D2). | Engine | Production startup test harness | `tests/`, `ledger/`, `evals/` | Dedicated startup integration test OR permanent carve-out in completeness guard with rationale. | Accepted Deferral |
 | P3 | Quality & Hardening | Contracts | **T5: Widen `test_scope_guard.py` allowlist** for Phase 5 docs (`operator_runbook.md`, `architecture.md`, `eval_gates.md`). | Infra | Docs landing | `tests/contracts/test_scope_guard.py` | Allowlist includes sanctioned doc paths; guard still blocks `spec.md`. | Open |
 | P3 | Quality & Hardening | Outcome Matrix | **`DecisionEdict` model_validator** for fault_flag ↔ system_fault pairing (eval-only today). | Engine | — | `contracts/`, `engine/edict.py` | Pydantic validator enforces matrix polarity at edict construction. | Open |
@@ -191,8 +193,8 @@ prioritization. Not ratified; does not modify `docs/spec.md` v1.
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P3 | Feature Enablers | PolicyGate | **Enable `account_auto_contain_enabled` in production** — preflight rejects `true` until Phase 3 identity gates pass (PE-0005, spec §311). | Engine/Policy | Identity compliance tests, owner sign-off | `preflight.py`, `policy/gate.py`, `tests/config/`, `evals/` | Preflight allows flag only when identity gate evals pass; harness covers account `auto_contain`. | Open |
-| P3 | Feature Enablers | PolicyGate | **Route all containment through PolicyGate** — direct `evaluate_account_containment_eligibility` callers bypass `account_containment_disabled` (PE-0014). | Engine/Policy | — | `policy/identity.py`, `policy/gate.py`, grep for direct callers | No production caller authorizes contain without gate; static or integration test enforces. | Open |
+| P3 | Feature Enablers | PolicyGate | **Enable `account_auto_contain_enabled` in production** — preflight rejects `true` until Phase 3 identity gates pass (PE-0005, spec §311). | Engine/Policy | Identity compliance tests, owner sign-off | `preflight.py`, `policy/gate.py`, `tests/config/`, `evals/` | Preflight allows flag only when identity gate evals pass; harness covers account `auto_contain`. | **Closed (V2-024)** — enablement path gated; example org remains `false` |
+| P3 | Feature Enablers | PolicyGate | **Route all containment through PolicyGate** — direct `evaluate_account_containment_eligibility` callers bypass `account_containment_disabled` (PE-0014). | Engine/Policy | — | `policy/identity.py`, `policy/gate.py`, grep for direct callers | No production caller authorizes contain without gate; static or integration test enforces. | **Closed (V2-025)** |
 
 ### Metrics production wiring
 
@@ -204,13 +206,13 @@ prioritization. Not ratified; does not modify `docs/spec.md` v1.
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P3 | Feature Enablers | Org config | **Org-config numeric per-scope rate ceilings** — v1 fixed ceiling = 1 (phase-2 D4, DEC-029). | Engine/Config | Schema design | `org_config_sections.py`, `policy/rate_limit.py`, `preflight.py` | Org config declares per-scope limits; gate enforces configured ceilings. | Open |
+| P3 | Feature Enablers | Org config | **Org-config numeric per-scope rate ceilings** — v1 fixed ceiling = 1 (phase-2 D4, DEC-029). | Engine/Config | Schema design | `org_config_sections.py`, `policy/rate_limit.py`, `preflight.py` | Org config declares per-scope limits; gate enforces configured ceilings. | **Closed (V2-026)** |
 
 ### Provider integration
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P3 | Feature Enablers | Judgment | **VertexProvider real network implementation** — structural stub only (TASK-013). | Judgment | Provider credentials, DEC-047 probe policy | `judgment/vertex.py`, `judgment/provider.py`, `tests/judgment/` | Real provider obeys Protocol; probe uses synthetic canary; failures trip breaker. | Open |
+| P3 | Feature Enablers | Judgment | **VertexProvider real network implementation** — structural stub only (TASK-013). | Judgment | Provider credentials, DEC-047 probe policy | `judgment/vertex.py`, `judgment/provider.py`, `tests/judgment/` | Real provider obeys Protocol; probe uses synthetic canary; failures trip breaker. | **Closed (V2-028)** |
 | P4 | Feature Enablers | Judgment | **Live Gemini adversarial probe in CI** — probabilistic, non-gating by design (DEC-047, phase-2 D3). | Judgment | — | `evals/real_provider_adversarial.py`, `docs/eval_gates.md` | Documented manual/scheduled run; not required for CI green. | Accepted Deferral |
 
 ### Splunk demo (Phase 5)
@@ -233,21 +235,21 @@ prioritization. Not ratified; does not modify `docs/spec.md` v1.
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P4 | V2 Features | PolicyGate | **Progressive authorization model** — narrow mandate, earned authority via SOC-led config promotion (`v2_hardening` Item 3). | Owner + Engine | 2b posture, override-rate metrics | `docs/decisions.md`, org config schema, runbook | Documented promotion workflow; reversible audited config changes only. | Open |
-| P4 | V2 Features | Metrics | **Per-asset-class / target-type promotion reporting view** — aggregates annotations + override-rate for promotion decisions. | SOC/Engine | TASK-25 annotations, TASK-24 metrics | `metrics/`, reporting module, `docs/operator_runbook.md` | SOC lead can query override rate by asset class over window; no self-tuning. | Open |
+| P4 | V2 Features | PolicyGate | **Progressive authorization model** — narrow mandate, earned authority via SOC-led config promotion (`v2_hardening` Item 3). | Owner + Engine | 2b posture, override-rate metrics | `docs/decisions.md`, org config schema, runbook | Documented promotion workflow; reversible audited config changes only. | **Closed (V2-032)** — reporting + runbook; intake feed follow-up |
+| P4 | V2 Features | Metrics | **Per-asset-class / target-type promotion reporting view** — aggregates annotations + override-rate for promotion decisions. | SOC/Engine | TASK-25 annotations, TASK-24 metrics | `metrics/`, reporting module, `docs/operator_runbook.md` | SOC lead can query override rate by asset class over window; no self-tuning. | **Closed (V2-032)** |
 
 ### Feedback loop (human-in-the-middle)
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P4 | V2 Features | Judgment | **Similar-case in-context exemplars (RAG)** — retrieve human-confirmed cases into judgment prompt (`v2_hardening` 4a; plan §Deferred Work). | Judgment | Prompt slot, retrieval contract | `judgment/prompt.py`, retrieval module, `tests/judgment/` | Exemplars injected bounded/auditable; excluded from evidence hash path; A/B eval shows retrieval contract met. | Open |
-| P4 | V2 Features | Org config | **Statute curation workflow** — annotation → proposed statute edit → review → re-activate (`v2_hardening` 4b). | SOC/Operator | — | `.workflow/`, `codification/`, `config/activation.py` | Tracked workflow artifact; preflight on proposed edits; activation audit trail. | Open |
+| P4 | V2 Features | Judgment | **Similar-case in-context exemplars (RAG)** — retrieve human-confirmed cases into judgment prompt (`v2_hardening` 4a; plan §Deferred Work). | Judgment | Prompt slot, retrieval contract | `judgment/prompt.py`, retrieval module, `tests/judgment/` | Exemplars injected bounded/auditable; excluded from evidence hash path; A/B eval shows retrieval contract met. | **Closed (V2-034)** — library; intake wiring follow-up |
+| P4 | V2 Features | Org config | **Statute curation workflow** — annotation → proposed statute edit → review → re-activate (`v2_hardening` 4b). | SOC/Operator | — | `.workflow/`, `codification/`, `config/activation.py` | Tracked workflow artifact; preflight on proposed edits; activation audit trail. | **Closed (V2-035)** |
 
 ### Judgment prompt
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P4 | V2 Features | Judgment | **Few-shot / exemplar slot in prompt** — not present today (`v2_hardening` grounding; prerequisite for RAG). | Judgment | — | `judgment/prompt.py` | Prompt template accepts optional exemplar block; tests verify rendering budget. | Open |
+| P4 | V2 Features | Judgment | **Few-shot / exemplar slot in prompt** — not present today (`v2_hardening` grounding; prerequisite for RAG). | Judgment | — | `judgment/prompt.py` | Prompt template accepts optional exemplar block; tests verify rendering budget. | **Closed (V2-033)** |
 
 ---
 

@@ -2,19 +2,13 @@
 
 ## Current focus
 
-**V2 plan initialized** — executable backlog in `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints). V1 complete (pytest **778** at TASK-035).
+**V2 COMPLETE** — Gates 0–5 closed; tasks V2-001–036 done. Correctness audit 2026-07-10:
+`.workflow/v2-correctness-audit/final-report.md` (pytest **1029**, walkthrough OK, docs refreshed).
 
-**Sprint V2-0 (Decision and Contract Ratification):** V2-001 through V2-004 complete (DEC-058 – DEC-061). **Gate 0 closed.**
+**Follow-ups (non-blocking):** wire `record_policy_gate_evaluation` + similar-case prompt builder into
+production intake; residual `delivery_backlog.md` Open-row reconcile.
 
-**Sprint V2-1 (Safety-Critical V1 Gap Closure):** V2-005 through V2-010 complete. **V2 Gate 1 closed.**
-
-**Sprint V2-2 (Authorization Rewire Foundations):** V2-011 through V2-016 complete. **V2 Gate 2 CLOSED** (full pytest 856 / ruff / mypy green; `.workflow/v2-gate-2-exit/`).
-
-**Sprint V2-3 (State, Ledger, Feed, Metrics Hardening):** V2-017 through V2-023 complete (autopilot loop). **V2 Gate 3 CLOSED** (attempt 2, full pytest 914 passed / 2 deselected, ruff clean, mypy clean 124 files; `.workflow/v2-gate-3-exit/results/verifier-result-final.md`). Attempt-1 FAILED criterion 8 (`ruff check .` 10 findings); lint remediated (import sort / unused imports / 2 line wraps, no behavioral change); attempt-2 re-ran all three gate commands fresh and passed.
-
-**Sprint V2-4 (Feature Enablers and Operator Readiness):** V2-024 through V2-031 complete. **V2 Gate 4 CLOSED** (re-confirmed 2026-07-10: full pytest 970 passed / 2 deselected, ruff clean, mypy clean 126 files; `.workflow/v2-gate-4-exit/results/verifier-result.md`). Prior attempt-1 failed on schema drift + ruff; remediated without behavioral change.
-
-**Sprint V2-5 (V2 Product Features):** V2-032 through V2-036 complete. **V2 Gate 5 CLOSED** (attempt 2, 2026-07-10: full pytest 1029 passed / 2 deselected, ruff clean, mypy clean 134 files; `.workflow/v2-gate-5-exit/results/verifier-result-final.md`). Attempt-1 failed on scope-guard + ruff/mypy; remediated (allowlist + lint/typing, no behavioral change); attempt-2 re-ran all three gate commands fresh and passed.
+**Sprint history (all closed):** V2-0 … V2-5 — see `memory-bank/progress.md` and `.workflow/v2-gate-*-exit/`.
 
 ## Build order (V2)
 

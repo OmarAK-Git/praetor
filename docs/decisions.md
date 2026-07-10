@@ -267,3 +267,32 @@ An outstanding directive row whose `decision_id` has **no** matching ledger `Dec
 | V2-020 | Metrics production completeness |
 
 **Doc placement.** §13 row lands in V2-004; enum, `evals/outcome_matrix.py`, harness scenario, and minimal orchestrator catch in V2-004. `docs/spec.md` mirror deferred until spec unfreeze.
+
+## DEC-062 — SID identity eligibility remains presence-only (v1 waiver)
+
+**Status:** accepted (2026-07-09, V2-022)
+
+**Context.** Account containment eligibility historically treated any non-empty SID string as SID-backed so synthetic fixtures and early telemetry could flow. Contracts §11 already define a Windows SID form for directive emission; tightening eligibility to that form without a recorded waiver would break fixtures and blur the v1→V2 boundary.
+
+### Decision
+
+- `is_sid_backed` remains **presence-only**: non-empty, non-whitespace SID strings qualify for identity eligibility.
+- Strict Windows SID form is exposed via `is_valid_sid_format` (contracts §11 pattern) with pinned pass/fail vectors in `tests/evidence/test_sid_format.py`.
+- Format validation **does not yet gate** `is_sid_backed`. Directive emission continues to validate SID form separately where required.
+- Future tightening of eligibility to format-valid SIDs requires an explicit follow-on decision (not silently flipped).
+
+**Doc placement.** Recorded here; memory-bank index row retained as pointer. Implementation: `src/praetor/policy/identity.py`.
+
+## DEC-063 — Windows normalizer PE-0024 domain-separator ambiguity
+
+**Status:** accepted (2026-07-09, V2-022)
+
+**Context.** PE-0024 requires that combined account fields lacking a `DOMAIN\\user` separator set `ambiguity_flag=true`. Sysmon and Security normalizers must share one conformance rule so future event-type normalizers cannot drift.
+
+### Decision
+
+- Shared helpers live in `correlation/normalizer_conformance.py` (`require_domain_separator_ambiguity_flag`).
+- Sysmon (and other Windows normalizers) call the shared helper; conformance tests pin the rule.
+- Future event-type normalizers must use the same helper and add conformance coverage.
+
+**Doc placement.** Recorded here; memory-bank index row retained as pointer.
