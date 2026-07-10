@@ -100,7 +100,7 @@ def test_intake_records_bypass_gate_metrics_on_correlation_failure(activated) ->
     snap = metrics.snapshot()
     assert snap.policy_gate_evaluations_total == 0
     assert snap.disposition_counts[Disposition.ESCALATE.value] == 1
-    assert snap.llm_failure_by_fault_flag["correlation_failure"] == 1
+    assert snap.llm_failure_by_fault_flag == {}
 
 
 def test_intake_records_provider_unavailable_llm_failure_metric(activated) -> None:

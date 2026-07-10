@@ -364,6 +364,10 @@ def open_state_store(
     from praetor.revocation.outbox import init_revocation_feed_export_schema
 
     init_revocation_feed_export_schema(conn)
+    if singleton is not None:
+        from praetor.policy.state import ensure_production_policy_tables
+
+        ensure_production_policy_tables(conn)
     from praetor.config.state import fetch_active_snapshot
     from praetor.ledger.startup import run_ledger_startup_hook
     from praetor.revocation.exporter import run_feed_startup_hook_for_db

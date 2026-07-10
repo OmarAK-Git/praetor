@@ -74,8 +74,20 @@ class EmergencyNeverContainPolicy(ContractModel):
     max_lifetime_seconds: StrictInt = Field(..., gt=0)
 
 
+class RateLimitCeilings(ContractModel):
+    per_host: StrictInt = Field(..., gt=0)
+    per_subnet: StrictInt = Field(..., gt=0)
+    per_asset_group: StrictInt = Field(..., gt=0)
+
+
+def _default_rate_limit_ceilings() -> RateLimitCeilings:
+    # DEC-029 default when ceilings omitted from direct model construction.
+    return RateLimitCeilings(per_host=1, per_subnet=1, per_asset_group=1)
+
+
 class RateLimitPolicy(ContractModel):
     scopes: list[str] = Field(..., min_length=1)
+    ceilings: RateLimitCeilings = Field(default_factory=_default_rate_limit_ceilings)
 
 
 class CircuitBreakerPolicy(ContractModel):

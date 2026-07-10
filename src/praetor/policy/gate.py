@@ -122,6 +122,29 @@ class PolicyGateEvaluation:
     containment_directive: ContainmentDirective | None = None
     directive_suppressed: bool = False
     live_never_contain_entries: tuple[dict[str, object], ...] = ()
+    resolved_target: ContainmentTarget | None = None
+
+
+def gate_resolved_containment_target(
+    evaluation: PolicyGateEvaluation,
+) -> ContainmentTarget:
+    """Return the containment target resolved by PolicyGate evaluation."""
+    target = evaluation.resolved_target
+    if target is None:
+        msg = "PolicyGate evaluation missing resolved containment target"
+        raise RuntimeError(msg)
+    directive = evaluation.containment_directive
+    if directive is not None:
+        if directive.target_type.value != target.target_type:
+            msg = "gate directive target_type disagrees with resolved_target"
+            raise RuntimeError(msg)
+        if directive.target_id != target.target_id:
+            msg = "gate directive target_id disagrees with resolved_target"
+            raise RuntimeError(msg)
+        if directive.scope != target.scope:
+            msg = "gate directive scope disagrees with resolved_target"
+            raise RuntimeError(msg)
+    return target
 
 
 def _escalate(
@@ -345,12 +368,14 @@ def evaluate_policy_gate(
     if target.target_type == "account":
         identity = extract_account_identity(list(evidence_bundle.facts))
         assert identity is not None
+        # Sole production caller of evaluate_account_containment_eligibility (PE-0014).
         eligibility = evaluate_account_containment_eligibility(
             identity,
             evidence_bundle.facts,
         )
         if not eligibility.authorized:
             return _escalate(proposed, AMBIGUOUS_TARGET_IDENTITY, system_fault=False)
+        # account_containment_disabled is enforced here, not in the eligibility helper.
         if not org_snapshot.account_auto_contain_enabled:
             return _escalate(proposed, ACCOUNT_CONTAINMENT_DISABLED, system_fault=False)
 
@@ -409,6 +434,7 @@ def evaluate_policy_gate(
             containment_directive=outstanding,
             directive_suppressed=True,
             live_never_contain_entries=tuple(live_entries),
+            resolved_target=target,
         )
 
     exceeded, _scope_key = is_rate_limit_exceeded_for_target(
@@ -487,6 +513,7 @@ def evaluate_policy_gate(
         system_fault_escalation=False,
         containment_directive=directive,
         live_never_contain_entries=tuple(refreshed_live),
+        resolved_target=target,
     )
 
 

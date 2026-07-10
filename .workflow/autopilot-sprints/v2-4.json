@@ -1,0 +1,396 @@
+{
+  "sprint_id": "v2-4",
+  "gate_item_id": "v2-gate-4-exit",
+  "prerequisite_done": [
+    "v2-gate-3-exit"
+  ],
+  "items": [
+    {
+      "id": "v2-024-account-containment",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-3-exit",
+        "v2-011-host-corroboration",
+        "v2-016-fault-flag-guard",
+        "v2-022-sid-normalizer"
+      ],
+      "goal": "V2-024 — Account containment production enablement: account_auto_contain_enabled passes preflight only when identity gates are satisfied; corroborated SID-backed account auto_contain harness scenario passes; disabled configs still escalate account_containment_disabled.",
+      "scope": "Account containment enablement and identity gating only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "src/praetor/config/preflight.py",
+        "src/praetor/policy/gate.py",
+        "evals/",
+        "tests/config/",
+        "tests/policy/",
+        "tests/correlation/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "account_auto_contain_enabled=true passes preflight only when identity gates are satisfied by local deterministic tests.",
+        "Production account auto_contain harness scenario passes with SID-backed, corroborated identity.",
+        "Feature-disabled configs still escalate account_containment_disabled.",
+        "The verifier checks only V2-024 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/config/ tests/policy/ tests/correlation/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-024-account-containment",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-025-policygate-boundary",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-024-account-containment"
+      ],
+      "goal": "V2-025 — All containment through PolicyGate: no production caller authorizes account or host containment via lower eligibility helpers; static guard catches direct calls; integration tests prove the feature gate cannot be bypassed.",
+      "scope": "PolicyGate authorization boundary enforcement only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "src/praetor/policy/identity.py",
+        "src/praetor/policy/gate.py",
+        "tests/contracts/",
+        "tests/policy/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "No production caller authorizes account or host containment by calling lower eligibility helpers directly.",
+        "Static grep/AST guard catches direct calls to evaluate_account_containment_eligibility outside approved tests/policy code.",
+        "Integration tests prove the feature gate cannot be bypassed.",
+        "The verifier checks only V2-025 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/contracts/ tests/policy/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-025-policygate-boundary",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-026-rate-ceilings",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-3-exit",
+        "v2-012-default-action"
+      ],
+      "goal": "V2-026 — Org-config numeric rate ceilings: org config declares numeric per-scope ceilings with strict integer validation; gate enforces ceilings for host, subnet, and asset-group scopes; missing/invalid ceilings fail preflight or apply documented defaults consistently.",
+      "scope": "Org-config rate ceilings and enforcement only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "src/praetor/contracts/org_config_sections.py",
+        "src/praetor/config/preflight.py",
+        "src/praetor/policy/rate_limit.py",
+        "tests/config/",
+        "tests/policy/test_rate_limits.py",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Org config declares numeric per-scope ceilings with strict integer validation.",
+        "Gate enforces configured ceilings for host, subnet, and asset-group scopes.",
+        "Missing or invalid ceilings fail preflight, or documented defaults are applied consistently.",
+        "The verifier checks only V2-026 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/config/ tests/policy/test_rate_limits.py -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-026-rate-ceilings",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-027-sweep-cli",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-3-exit"
+      ],
+      "goal": "V2-027 — Org-config sweep CLI: CLI runs sweep, writes proposed YAML and markdown report, exits non-zero on invalid inputs; proposed artifacts still fail activation preflight; docs state sweep does not infer never-contain, subnet membership, or containment policy.",
+      "scope": "Sweep CLI and operator docs only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "src/praetor/codification/",
+        "docs/operator_runbook.md",
+        "tests/codification/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "CLI runs sweep, writes proposed YAML and markdown report, and exits non-zero on invalid inputs.",
+        "Proposed artifacts still fail activation preflight.",
+        "CLI docs state sweep does not infer never-contain, subnet membership, or containment policy.",
+        "The verifier checks only V2-027 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/codification/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-027-sweep-cli",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-028-vertex-provider",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-3-exit"
+      ],
+      "goal": "V2-028 — Real Vertex provider implementation: Vertex/Gemini provider implements the existing Protocol; canary probe is rate-limited by provider-health breaker; network tests are marker-gated; unavailable/timeout/malformed/refusal map to documented faults.",
+      "scope": "Real provider implementation with deterministic CI only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "src/praetor/judgment/vertex_provider.py",
+        "src/praetor/judgment/provider.py",
+        "tests/judgment/",
+        "evals/real_provider_adversarial.py",
+        "tests/evals/test_real_provider_adversarial.py",
+        "docs/eval_gates.md",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Vertex/Gemini provider implements the existing Protocol.",
+        "Synthetic canary probe is supported and rate-limited by the provider-health breaker.",
+        "Network tests are marker-gated; the default suite uses fakes/mocks.",
+        "Unavailable, timeout, malformed response, and refusal map to documented faults.",
+        "The verifier checks only V2-028 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/judgment/ tests/evals/test_real_provider_adversarial.py -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-028-vertex-provider",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-029-detection-splunk",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-3-exit"
+      ],
+      "goal": "V2-029 — Detection and Splunk demo durability: Sigma matcher set equals SPL matcher set per rule; Splunk saved searches use a fixture-stable window or documented override; live Splunk Free demo test is env-gated; tools/ is in the mypy gate or its exclusion is documented.",
+      "scope": "Detection parity and Splunk demo durability only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "tests/splunk/",
+        "tests/detections/",
+        "tools/spl_match.py",
+        "tools/compile_sigma.py",
+        "splunk/savedsearches.conf",
+        "splunk/README.md",
+        "docs/eval_gates.md",
+        "pyproject.toml",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Sigma matcher set equals SPL matcher set per rule over manifest fixtures.",
+        "Splunk saved searches use a fixture-stable time window or docs require an explicit time-range override.",
+        "Live Splunk Free demo test is env-gated and executable when HEC settings exist.",
+        "tools/ is either in the mypy gate or its exclusion is documented.",
+        "The verifier checks only V2-029 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/detections/ tests/splunk/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-029-detection-splunk",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-030-benchmark-runbook",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-3-exit",
+        "v2-020-metrics-completeness"
+      ],
+      "goal": "V2-030 — Benchmark burst measurement and runbook pins: burst rate measured in a separate window or reported with burst_separately_measured=False; hardware/context metadata always emitted; operator docs numerical claims pinned by doc tests.",
+      "scope": "Benchmark measurement and operator doc pins only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "benchmarks/serialized_path.py",
+        "tests/benchmarks/",
+        "docs/operator_runbook.md",
+        "tests/docs/test_docs.py",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Burst rate is measured in a separate window or reported with an explicit burst_separately_measured=False flag.",
+        "Hardware/context metadata is always emitted with benchmark results.",
+        "Operator docs numerical claims are pinned by doc tests.",
+        "The verifier checks only V2-030 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/benchmarks/ tests/docs/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-030-benchmark-runbook",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-031-consumer-boundary",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-018-revocation-feed",
+        "v2-019-ledger-feed-floor"
+      ],
+      "goal": "V2-031 — Consumer policy and feed roadmap boundary: reference verifier documents local consumer policy ownership; JSONL append-only/no-rotation/no-registry boundaries preserved or promoted to roadmap; consumer residual risk appears in operator docs.",
+      "scope": "Consumer verification boundary and feed roadmap docs only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "consumer_sdk/reference_verifier.py",
+        "docs/contracts.md",
+        "docs/operator_runbook.md",
+        "docs/proposals/delivery_backlog.md",
+        "tests/consumer_sdk/",
+        "tests/docs/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Reference verifier documents local consumer policy ownership for contracts section 10.6.",
+        "JSONL append-only, no rotation, no feed registry, and no multi-feed directives are preserved as V2 boundaries or promoted to explicit roadmap tasks.",
+        "Consumer residual risk appears in operator docs.",
+        "The verifier checks only V2-031 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/consumer_sdk/ tests/docs/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-031-consumer-boundary",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-gate-4-exit",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-024-account-containment",
+        "v2-025-policygate-boundary",
+        "v2-026-rate-ceilings",
+        "v2-027-sweep-cli",
+        "v2-028-vertex-provider",
+        "v2-029-detection-splunk",
+        "v2-030-benchmark-runbook",
+        "v2-031-consumer-boundary"
+      ],
+      "goal": "V2 Gate 4 exit (PASS-only): feature enablement and operator readiness sprint complete per docs/proposals/v2_implementation_plan.md § V2 Gate 4.",
+      "scope": "Full V2 Gate 4 exit verification only. No new implementation; confirm pass criteria for V2-024 through V2-031.",
+      "files_allowed": [
+        ".workflow/v2-gate-4-exit/",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md",
+        "memory-bank/tasks.md"
+      ],
+      "acceptance_criteria": [
+        "Account containment can be deliberately enabled through preflight (V2-024).",
+        "All production containment authorization flows through PolicyGate (V2-025).",
+        "Org-config rate ceilings are implemented or intentionally waived (V2-026).",
+        "Sweep has an operator CLI (V2-027).",
+        "Provider integration is real but deterministic CI remains stable (V2-028).",
+        "Splunk demo conditions are resolved (V2-029).",
+        "Benchmark/operator docs are pinned (V2-030, V2-031).",
+        "Full pytest, ruff, and mypy pass."
+      ],
+      "verification": {
+        "scope": "phase_exit",
+        "commands": [
+          "pytest -q",
+          "ruff check .",
+          "mypy ."
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "skeptic-verifier",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-gate-4-exit",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "run_mode": "chat_gate"
+    }
+  ]
+}

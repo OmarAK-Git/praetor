@@ -14,6 +14,9 @@ from praetor.correlation._event_fields import (
     event_timestamp,
 )
 from praetor.correlation.ids import derive_evidence_id, source_event_reference
+from praetor.correlation.normalizer_conformance import (
+    malformed_domain_separator_ambiguity,
+)
 from praetor.evidence.provenance import SYSMON_EVENT_LOG
 
 SYSMON_PROCESS_CREATE_EVENT_ID = 1
@@ -115,7 +118,7 @@ def _sysmon_ambiguity_flag(
     parent_process_guid: str,
     parent_image: Any,
 ) -> bool:
-    if user and "\\" not in user:
+    if malformed_domain_separator_ambiguity(user):
         return True
     if parent_image and not parent_process_guid:
         return True

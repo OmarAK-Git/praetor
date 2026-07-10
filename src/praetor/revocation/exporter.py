@@ -1,4 +1,9 @@
-"""Sequential revocation-feed JSONL exporter and startup recovery."""
+"""Sequential revocation-feed JSONL exporter and startup recovery.
+
+Feed projection omits ``superseded_by_directive_id`` even when the ledger
+revocation reason is supersession; consumers pair ``reason_code=supersession``
+with replacement-directive metadata per ``docs/contracts.md`` §8.4.
+"""
 
 from __future__ import annotations
 
@@ -12,6 +17,7 @@ from praetor.alerts.outbox import write_pending_health_alert
 from praetor.contracts.feed import RevocationFeedRecord
 from praetor.contracts.health import SystemHealthAlert
 from praetor.contracts.ledger import DirectiveRevocationRecord
+from praetor.metrics.collector import MetricsCollector
 from praetor.revocation.feed import (
     FeedChecksumError,
     FeedPrefixIntegrityError,
@@ -106,6 +112,27 @@ def _transition_feed_unhealthy(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
+def _record_feed_export_lag_on_completion(
+    conn: sqlite3.Connection,
+    *,
+    revocation_id: str,
+    metrics: MetricsCollector | None,
+    propagation_delay_seconds: int,
+    export_completed_at: datetime,
+) -> None:
+    """Record per-export lag from ledger commit to verified feed write."""
+    if metrics is None:
+        return
+    commit_at = fetch_ledger_commit_at(conn, revocation_id)
+    if commit_at is None:
+        return
+    metrics.record_feed_export_lag(
+        ledger_commit_at=commit_at,
+        export_completed_at=export_completed_at,
+        warning_threshold_seconds=float(propagation_delay_seconds),
+    )
+
+
 def _propagation_lag_seconds(
     conn: sqlite3.Connection,
     *,
@@ -189,9 +216,16 @@ def _feed_path_for_sink(sink: FeedJsonlSink) -> Path | None:
     return None
 
 
-def _ensure_feed_prefix_valid(conn: sqlite3.Connection, feed_path: Path | None) -> bool:
-    if feed_path is None:
-        return True
+def reconcile_feed_metadata_against_jsonl(
+    conn: sqlite3.Connection,
+    feed_path: Path,
+) -> bool:
+    """Reconcile ``last_verified_exported_sequence`` against on-disk JSONL (AG-0030).
+
+    Returns ``True`` when metadata matches the physical artifact. On mismatch
+    (missing file, empty file, or truncated prefix vs metadata), marks the feed
+    unhealthy and returns ``False``.
+    """
     try:
         validate_feed_file_prefix(conn, feed_path)
     except FeedPrefixIntegrityError:
@@ -200,11 +234,20 @@ def _ensure_feed_prefix_valid(conn: sqlite3.Connection, feed_path: Path | None) 
     return True
 
 
+def _ensure_feed_prefix_valid(conn: sqlite3.Connection, feed_path: Path | None) -> bool:
+    if feed_path is None:
+        return True
+    return reconcile_feed_metadata_against_jsonl(conn, feed_path)
+
+
 def _recover_verified_line_from_feed(
     conn: sqlite3.Connection,
     *,
     sequence_number: int,
     feed_path: Path,
+    metrics: MetricsCollector | None = None,
+    propagation_delay_seconds: int = 60,
+    export_completed_at: datetime | None = None,
 ) -> bool:
     """Mark exported when JSONL already contains a verified line (crash recovery)."""
     verified = find_verified_feed_line_for_sequence(feed_path, sequence_number)
@@ -224,6 +267,16 @@ def _recover_verified_line_from_feed(
     with critical_transaction(conn):
         mark_feed_row_exported(conn, sequence_number=sequence_number)
     conn.commit()
+    completed_at = (
+        export_completed_at if export_completed_at is not None else datetime.now(UTC)
+    )
+    _record_feed_export_lag_on_completion(
+        conn,
+        revocation_id=row.revocation_id,
+        metrics=metrics,
+        propagation_delay_seconds=propagation_delay_seconds,
+        export_completed_at=completed_at,
+    )
     return True
 
 
@@ -264,6 +317,7 @@ def export_next_pending_row(
     max_feed_export_retries: int,
     propagation_delay_seconds: int = 60,
     now: datetime | None = None,
+    metrics: MetricsCollector | None = None,
 ) -> bool:
     """Export one row in strict sequence order. Returns False when no work remains."""
     feed_path = _feed_path_for_sink(sink)
@@ -284,7 +338,12 @@ def export_next_pending_row(
         return False
 
     if feed_path is not None and _recover_verified_line_from_feed(
-        conn, sequence_number=next_seq, feed_path=feed_path
+        conn,
+        sequence_number=next_seq,
+        feed_path=feed_path,
+        metrics=metrics,
+        propagation_delay_seconds=propagation_delay_seconds,
+        export_completed_at=now,
     ):
         row = fetch_feed_outbox_row_extended(conn, next_seq)
         slo_missed = False
@@ -319,6 +378,14 @@ def export_next_pending_row(
     with critical_transaction(conn):
         mark_feed_row_exported(conn, sequence_number=next_seq)
     conn.commit()
+    completed_at = now if now is not None else datetime.now(UTC)
+    _record_feed_export_lag_on_completion(
+        conn,
+        revocation_id=row.revocation_id,
+        metrics=metrics,
+        propagation_delay_seconds=propagation_delay_seconds,
+        export_completed_at=completed_at,
+    )
     slo_missed = _mark_unhealthy_if_propagation_slo_missed(
         conn,
         revocation_id=row.revocation_id,
@@ -341,6 +408,7 @@ def export_pending_feed_rows(
     max_feed_export_retries: int,
     propagation_delay_seconds: int = 60,
     now: datetime | None = None,
+    metrics: MetricsCollector | None = None,
 ) -> FeedExportResult:
     """Drain pending rows in sequence until idle or unhealthy."""
     exported = 0
@@ -350,6 +418,7 @@ def export_pending_feed_rows(
         max_feed_export_retries=max_feed_export_retries,
         propagation_delay_seconds=propagation_delay_seconds,
         now=now,
+        metrics=metrics,
     ):
         exported += 1
     unhealthy = is_feed_unhealthy(conn)
@@ -372,9 +441,22 @@ def run_feed_startup_hook(
     max_feed_export_retries: int,
     propagation_delay_seconds: int,
     now: datetime | None = None,
+    metrics: MetricsCollector | None = None,
 ) -> FeedExportResult:
     """Recover pending feed rows before actuation; set degraded if SLO missed."""
     init_revocation_feed_export_schema(conn)
+    if not reconcile_feed_metadata_against_jsonl(conn, feed_path):
+        unhealthy = is_feed_unhealthy(conn)
+        degraded = is_feed_actuation_blocked(
+            conn,
+            propagation_delay_seconds=propagation_delay_seconds,
+            now=now,
+        )
+        return FeedExportResult(
+            exported_count=0,
+            feed_unhealthy=unhealthy,
+            degraded_actuation=degraded,
+        )
     sink = FileFeedJsonlSink(feed_path)
     result = export_pending_feed_rows(
         conn,
@@ -382,6 +464,7 @@ def run_feed_startup_hook(
         max_feed_export_retries=max_feed_export_retries,
         propagation_delay_seconds=propagation_delay_seconds,
         now=now,
+        metrics=metrics,
     )
     if is_feed_actuation_blocked(
         conn,
@@ -404,6 +487,7 @@ def run_feed_startup_hook_for_db(
     *,
     max_feed_export_retries: int = 3,
     propagation_delay_seconds: int = 60,
+    metrics: MetricsCollector | None = None,
 ) -> FeedExportResult:
     """Default hook using feed path adjacent to the state database."""
     return run_feed_startup_hook(
@@ -411,4 +495,5 @@ def run_feed_startup_hook_for_db(
         feed_path=default_feed_jsonl_path(db_path),
         max_feed_export_retries=max_feed_export_retries,
         propagation_delay_seconds=propagation_delay_seconds,
+        metrics=metrics,
     )

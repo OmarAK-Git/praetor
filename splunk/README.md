@@ -65,7 +65,12 @@ The script:
 
 ## 5. Run saved searches
 
-In Splunk Search (time range covering fixture timestamps, e.g. `2026-06-08`):
+Saved searches inherit the fixture-stable dispatch window from `savedsearches.conf` `[default]`:
+
+- `dispatch.earliest_time = 2026-06-08T00:00:00`
+- `dispatch.latest_time = 2026-06-08T23:59:59`
+
+This covers all committed fixture timestamps on `2026-06-08`. If you ingest fixtures with different timestamps, override the time range in Splunk Search before running saved searches.
 
 | Saved search | Expected matching `record_id`(s) |
 |---|---|
@@ -96,7 +101,12 @@ Set environment variables before running the env-gated integration marker:
 ```powershell
 $env:PRAETOR_SPLUNK_HEC_HOST = "https://localhost:8088"
 $env:PRAETOR_SPLUNK_HEC_TOKEN = "<hec-token>"
+# Optional when HEC token cannot query the management API (port 8089):
+# $env:PRAETOR_SPLUNK_MGMT_HOST = "https://localhost:8089"
+# $env:PRAETOR_SPLUNK_MGMT_TOKEN = "<mgmt-capable-token>"
 pytest -m integration tests/splunk/test_savedsearch_generation.py::test_splunk_demo_integration_with_hec_env
 ```
+
+The integration test ingests all manifest fixtures via HEC, then runs each committed SPL query against Splunk with the fixture-stable time window and asserts expected `record_id` sets.
 
 Ingest uses `sourcetype=_json` with flattened `EventData` fields (`tools/splunk_ingest_demo.ps1`); `props.conf` applies to file/monitor ingest with `source::WinEventLog:...` — see step 3 above.

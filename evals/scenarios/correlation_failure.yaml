@@ -11,3 +11,6 @@ expectations:
   fault_flags:
     - correlation_failure
   system_fault_escalation: true
+  metrics:
+    policy_gate_evaluations_total: 0
+    llm_failure_by_fault_flag: {}

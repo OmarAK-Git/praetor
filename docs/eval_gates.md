@@ -20,12 +20,41 @@ This document distinguishes deterministic eval evidence from probabilistic probe
 - Included in default `pytest -q`
 - Failure blocks merge
 
+## Similar-case retrieval (V2-034) — deterministic
+
+**What it proves**
+
+- Retrieval selects only human-confirmed precedents (`disposition_correct=true` on analyst annotations)
+- Ranking contract: token overlap with current evidence excerpt text, then recency of confirmation, then stable `decision_id` tie-break; at most `MAX_PROMPT_EXEMPLARS` (3)
+- Retrieved cases wire into `prompt_exemplar_block` via V2-033 exemplar types
+- Exemplar payloads are bounded and excluded from evidence hash derivation (`prompt_excerpt_set` and `evidence_bundle_hash` unchanged when exemplars are present)
+- Citation validity and raw-source exclusion behavior are unchanged
+
+**Ranking contract**
+
+1. Eligibility: decision has at least one analyst annotation with `disposition_correct=true`.
+2. Exclusion: active `decision_id` (when provided) is never retrieved.
+3. Similarity: token overlap between current evidence excerpt-eligible text and precedent summary (narrative, key tells, benign alternatives, analyst comment).
+4. Recency: among equal overlap, prefer the more recently stored human-confirmed annotation.
+5. Stability: tie-break on `decision_id` ascending.
+6. Bound: return at most `MAX_PROMPT_EXEMPLARS` (3).
+
+**Where it runs**
+
+- `tests/judgment/test_similar_case_retrieval.py`
+- `src/praetor/retrieval/ranking.py` (contract docstring)
+
+**CI behavior**
+
+- Included in default `pytest -q` via `tests/judgment/`
+- Failure blocks merge
+
 ## Real-provider adversarial excerpt probe (Task 27) — probabilistic
 
 **What it exercises**
 
 - Instruction-like text embedded in normalized, excerpt-eligible fields (e.g. `command_line`) that survives Task 14 sanitization
-- Optional live Gemini call when `PRAETOR_REAL_PROVIDER_PROBE=1` and an API key is configured
+- Optional live Vertex/Gemini call via `VertexProvider` when `PRAETOR_REAL_PROVIDER_PROBE=1` and an API key is configured
 
 **What it does not prove**
 
@@ -40,7 +69,7 @@ This document distinguishes deterministic eval evidence from probabilistic probe
 **CI behavior**
 
 - Default `pytest` excludes `integration` and `probabilistic` markers
-- Deterministic unit tests (mocked Gemini path, structural pre-checks) run in CI
+- Deterministic unit tests (mocked Vertex provider path, structural pre-checks) run in CI
 - Live probe results are logged for operator review only
 
 **Manual live run**
@@ -52,6 +81,49 @@ python -m evals.real_provider_adversarial
 ```
 
 See also `docs/decisions.md` DEC-047.
+
+## Eval harness regression locking (V2-036) — deterministic
+
+**What it proves**
+
+- Every confirmed model error is either pinned by a mandatory harness scenario under `evals/scenarios/` or covered by an explicit waiver recorded in `docs/decisions.md` / `memory-bank/decisions.md`
+- Scenario YAML passes schema validation (`evals/schemas/scenario_schema.json`) and expectation-key validation at load time (AG-0077)
+- Escalate outcomes declare `fault_flags` and `system_fault_escalation` consistent with `docs/contracts.md` §13 / Outcome Matrix
+- Outcome Matrix escalate-producing fault flags remain covered by `test_outcome_matrix_completeness_guard`
+
+**Minimum scenario quality**
+
+1. `schema_version` is `"1"`; `scenario_id` matches the filename stem.
+2. `runner` is one of the harness runners enumerated in the scenario schema.
+3. `description` is non-empty and states the behavior under test.
+4. Escalate blocks include `final_disposition`, `fault_flags`, and `system_fault_escalation`.
+5. `fault_flags` use canonical `OutcomeMatrixFaultFlag` enum values with SFE polarity matching `evals/outcome_matrix.py`.
+6. New escalate-producing fault flags ship with a companion scenario in the same change (GR-0012); startup-only flags may be waived per AG-0070 with a documented decision.
+
+**Expectation-key validation**
+
+The harness assertion layer maintains a runner-scoped key registry (`RUNNER_EXPECTATION_KEYS` in `evals/harness.py`). At scenario load:
+
+- **Unknown keys** — any top-level expectation key not in `ALL_EXPECTATION_KEYS` is rejected.
+- **Stale keys** — keys recognized globally but not consumed by the scenario's `runner` are rejected (prevents typos and copy-paste drift across runners).
+- **Nested keys** — `revocation_feed_degraded_mode` `auto_contain` / `standard_review` blocks may only use `final_disposition`, `fault_flags`, and `system_fault_escalation`.
+
+Silently ignored YAML keys produce false-green passes; the validator fails closed.
+
+**Where it runs**
+
+- `evals/harness.py` — `load_scenario` / `_validate_expectations`
+- `tests/evals/test_expectation_key_validation.py` — CI guard for registry completeness and stale/unknown keys
+- `tests/evals/test_eval_harness.py` — schema, Outcome Matrix completeness, full harness pass
+
+**CI behavior**
+
+- Included in default `pytest -q` via `tests/evals/`
+- Failure blocks merge
+
+**Workflow discipline**
+
+- `.workflow/_template/` requires every confirmed model error in a task's final report to cite `evals/scenarios/<scenario_id>.yaml` or an explicit waiver decision ID
 
 ## Phase gates (release checklist)
 
@@ -95,7 +167,11 @@ python tools/compile_sigma.py --check
 python -m pytest -q tests/detections/ tests/splunk/
 ```
 
-Pass: Sigma validation, deterministic SPL, Splunk demo artifacts with checksum-verified fixtures.
+Pass: Sigma validation, deterministic SPL, Splunk demo artifacts with checksum-verified fixtures; Sigma↔SPL matcher sets pinned per rule over manifest fixtures; `savedsearches.conf` uses fixture-stable dispatch window (`2026-06-08`).
+
+**`tools/` mypy exclusion**
+
+`python -m mypy .` strict-checks `praetor`, `consumer_sdk`, and `evals` only. The `tools/` tree (Sigma compiler, SPL matcher, Splunk ingest) is excluded via `pyproject.toml` `[tool.mypy] exclude` because it is operator/demo scripting outside the production source packages and currently carries pySigma untyped-export noise. Ruff still lints `tools/**/*.py`. To typecheck tooling explicitly: `python -m mypy tools/compile_sigma.py tools/spl_match.py tools/fixture_events.py tools/splunk_conf.py` (advisory, not a merge gate).
 
 ### Phase 5 — Operator readiness (Tasks 34–35)
 
@@ -111,4 +187,4 @@ The benchmark step is self-contained: it creates a temporary DB, activates
 prints sustained rate vs the active provisional targets. No pre-existing
 ``state/bench.db`` is required.
 
-Pass: org-config sweep produces review-only proposed artifacts; production throughput ceiling measured and documented in `docs/operator_runbook.md`; operator runbook and architecture cover responsibility boundaries; Splunk demo is manual-only per `splunk/README.md` (no automated saved-search CI gate).
+Pass: org-config sweep produces review-only proposed artifacts; production throughput ceiling measured and documented in `docs/operator_runbook.md`; operator runbook and architecture cover responsibility boundaries; Splunk live demo is env-gated (`PRAETOR_SPLUNK_HEC_HOST` / `PRAETOR_SPLUNK_HEC_TOKEN`) per `splunk/README.md` — default CI excludes `@pytest.mark.integration`.

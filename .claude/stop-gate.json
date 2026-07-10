@@ -1,0 +1,7 @@
+{
+  "checks": [
+    {"name": "tests", "command": "pytest -q"},
+    {"name": "lint", "command": "ruff check ."},
+    {"name": "typecheck", "command": "mypy ."}
+  ]
+}

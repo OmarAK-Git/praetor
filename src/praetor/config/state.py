@@ -344,6 +344,7 @@ def fetch_outstanding_unrevoked_directives(
     *,
     now: datetime | None = None,
 ) -> list[ContainmentDirective]:
+    """Live outstanding directives used for suppression, scans, and step-6 reconcile."""
     moment = (now or datetime.now(UTC)).isoformat()
     rows = conn.execute(
         """
@@ -360,6 +361,27 @@ def fetch_outstanding_unrevoked_directives(
             continue
         result.append(directive)
     return result
+
+
+def fetch_expired_unrevoked_directives(
+    conn: sqlite3.Connection,
+    *,
+    now: datetime | None = None,
+) -> list[ContainmentDirective]:
+    """Audit-residue rows excluded from outstanding scans (DEC-060 §4.2.1)."""
+    moment = (now or datetime.now(UTC)).isoformat()
+    rows = conn.execute(
+        """
+        SELECT directive_json FROM outstanding_containment_directives
+        WHERE revoked = 0 AND expires_at <= ?
+        ORDER BY issued_at
+        """,
+        (moment,),
+    ).fetchall()
+    return [
+        ContainmentDirective.model_validate_json(str(row["directive_json"]))
+        for row in rows
+    ]
 
 
 def _directive_has_revocation(conn: sqlite3.Connection, directive_id: str) -> bool:

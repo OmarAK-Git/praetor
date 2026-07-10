@@ -261,9 +261,22 @@ def test_string_false_account_gate_rejected() -> None:
     assert exc.value.code == "invalid_boolean"
 
 
-def test_account_auto_contain_true_rejected_in_v1() -> None:
+def test_account_auto_contain_true_passes_when_identity_gates_satisfied() -> None:
     doc = load_org_config_document(EXAMPLE_CONFIG)
     doc["account_auto_contain_enabled"] = True
+    snapshot = preflight_document(doc)
+    assert snapshot.account_auto_contain_enabled is True
+
+
+def test_account_auto_contain_true_rejected_when_identity_gates_unsatisfied(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    doc = load_org_config_document(EXAMPLE_CONFIG)
+    doc["account_auto_contain_enabled"] = True
+    monkeypatch.setattr(
+        "praetor.config.preflight._identity_gates_satisfied",
+        lambda: False,
+    )
     with pytest.raises(PreflightError) as exc:
         preflight_document(doc)
     assert exc.value.code == "account_containment_prerequisite"

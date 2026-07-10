@@ -1,14 +1,31 @@
-"""Canonical account identity and containment eligibility."""
+"""Canonical account identity and containment eligibility.
+
+V1 waiver (DEC-062): ``is_sid_backed`` treats any non-empty, non-whitespace SID
+as sufficient for identity eligibility. Strict Windows SID form validation is
+exposed via ``is_valid_sid_format`` (contracts §11 pattern) for directive
+emission and future gates; it does not yet gate ``is_sid_backed``.
+
+PE-0014 / V2-025: ``evaluate_account_containment_eligibility`` signals
+AUTO_CONTAIN eligibility only. Production authorization — including the
+``account_containment_disabled`` feature gate — is applied exclusively by
+``evaluate_policy_gate`` in ``policy/gate.py``.
+"""
 
 from __future__ import annotations
 
+import ast
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass
+from pathlib import Path
 
 from praetor.contracts.disposition import Disposition
 from praetor.contracts.evidence import EvidenceFact
 from praetor.contracts.identity import CanonicalAccountIdentity
 from praetor.evidence.provenance import meets_account_corroboration
+
+# Windows SID form (docs/contracts.md §11); matches ContainmentDirective validator.
+WINDOWS_SID_PATTERN = re.compile(r"^S-1-5(?:-\d+)+$", re.IGNORECASE)
 
 AMBIGUOUS_TARGET_IDENTITY = "ambiguous_target_identity"
 AMBIGUOUS_CONTAINMENT_TARGET = "ambiguous_containment_target"
@@ -26,12 +43,14 @@ class AccountContainmentEvaluation:
     final_disposition: Disposition | None = None
 
 
-def is_sid_backed(identity: CanonicalAccountIdentity) -> bool:
-    """Return whether the identity has a non-empty SID.
+def is_valid_sid_format(sid: str) -> bool:
+    """Return whether ``sid`` matches the Windows SID form (contracts §11)."""
+    stripped = sid.strip()
+    return bool(stripped) and bool(WINDOWS_SID_PATTERN.match(stripped))
 
-    SID format validation (e.g. rejecting ``not-a-sid``) is deferred; any
-    non-empty/non-whitespace string is treated as SID-backed for synthetic v1.
-    """
+
+def is_sid_backed(identity: CanonicalAccountIdentity) -> bool:
+    """Return whether the identity has a non-empty SID (v1 waiver; see DEC-062)."""
     return bool(identity.sid.strip())
 
 
@@ -59,3 +78,131 @@ def evaluate_account_containment_eligibility(
         system_fault_escalation=False,
         final_disposition=Disposition.ESCALATE,
     )
+
+
+_account_eligibility_helper = "evaluate_account_containment_eligibility"
+_host_corroboration_helper = "meets_host_cited_corroboration"
+
+_AUTHORIZED_ACCOUNT_ELIGIBILITY_CALLERS = frozenset(
+    {"src/praetor/policy/gate.py"}
+)
+_AUTHORIZED_HOST_CORROBORATION_CALLERS = frozenset({"src/praetor/policy/gate.py"})
+_HELPER_DEFINITION_PATHS = frozenset(
+    {
+        "src/praetor/policy/identity.py",
+        "src/praetor/evidence/provenance.py",
+    }
+)
+
+
+def _repo_root() -> Path:
+    return Path(__file__).resolve().parents[3]
+
+
+def _relative_repo_path(path: Path) -> str:
+    return path.resolve().relative_to(_repo_root()).as_posix()
+
+
+def _find_direct_helper_calls(source: str, *, helper_name: str) -> list[int]:
+    tree = ast.parse(source)
+    hits: list[int] = []
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name):
+            if node.func.id == helper_name:
+                hits.append(node.lineno)
+    return hits
+
+
+def collect_unauthorized_containment_helper_calls(
+    *,
+    repo_root: Path | None = None,
+) -> dict[str, list[tuple[str, int]]]:
+    """Return helper -> [(path, lineno)] for prod calls outside PolicyGate."""
+    root = repo_root or _repo_root()
+    src_root = root / "src" / "praetor"
+    violations: dict[str, list[tuple[str, int]]] = {
+        _account_eligibility_helper: [],
+        _host_corroboration_helper: [],
+    }
+
+    for path in sorted(src_root.rglob("*.py")):
+        rel = _relative_repo_path(path)
+        if rel in _HELPER_DEFINITION_PATHS:
+            continue
+        source = path.read_text(encoding="utf-8")
+        for helper_name, authorized in (
+            (
+                _account_eligibility_helper,
+                _AUTHORIZED_ACCOUNT_ELIGIBILITY_CALLERS,
+            ),
+            (
+                _host_corroboration_helper,
+                _AUTHORIZED_HOST_CORROBORATION_CALLERS,
+            ),
+        ):
+            if rel in authorized:
+                continue
+            for lineno in _find_direct_helper_calls(source, helper_name=helper_name):
+                violations[helper_name].append((rel, lineno))
+
+    return violations
+
+
+def collect_unauthorized_test_containment_helper_calls(
+    *,
+    repo_root: Path | None = None,
+) -> dict[str, list[tuple[str, int]]]:
+    """Return helper calls in tests outside approved policy/contracts tests."""
+    root = repo_root or _repo_root()
+    approved_roots = ("tests/policy", "tests/contracts")
+    violations: dict[str, list[tuple[str, int]]] = {
+        _account_eligibility_helper: [],
+        _host_corroboration_helper: [],
+    }
+    tests_root = root / "tests"
+    if not tests_root.is_dir():
+        return violations
+
+    for path in sorted(tests_root.rglob("*.py")):
+        rel = _relative_repo_path(path)
+        if any(rel.startswith(f"{approved}/") for approved in approved_roots):
+            continue
+        source = path.read_text(encoding="utf-8")
+        for helper_name in violations:
+            for lineno in _find_direct_helper_calls(source, helper_name=helper_name):
+                violations[helper_name].append((rel, lineno))
+    return violations
+
+
+def assert_containment_authorization_routes_through_policy_gate(
+    *,
+    repo_root: Path | None = None,
+) -> None:
+    """Fail when production containment helpers are called outside PolicyGate."""
+    violations = collect_unauthorized_containment_helper_calls(repo_root=repo_root)
+    messages: list[str] = []
+    for helper_name, hits in violations.items():
+        if not hits:
+            continue
+        details = ", ".join(f"{path}:{lineno}" for path, lineno in sorted(hits))
+        messages.append(f"{helper_name} called outside PolicyGate boundary: {details}")
+    if messages:
+        raise AssertionError("\n".join(messages))
+
+
+def assert_test_containment_helper_calls_are_approved(
+    *,
+    repo_root: Path | None = None,
+) -> None:
+    """Fail when tests call eligibility helpers outside policy/contracts tests."""
+    violations = collect_unauthorized_test_containment_helper_calls(repo_root=repo_root)
+    messages: list[str] = []
+    for helper_name, hits in violations.items():
+        if not hits:
+            continue
+        details = ", ".join(f"{path}:{lineno}" for path, lineno in sorted(hits))
+        messages.append(
+            f"{helper_name} called from non-approved test paths: {details}"
+        )
+    if messages:
+        raise AssertionError("\n".join(messages))

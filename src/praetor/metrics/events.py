@@ -71,6 +71,13 @@ LLM_FAILURE_FAULT_FLAGS = frozenset(
 )
 
 
+def is_llm_failure_fault_flag(
+    fault_flag: OutcomeMatrixFaultFlag | str,
+) -> bool:
+    """Return whether ``fault_flag`` is an approved LLM/provider failure metric."""
+    return normalize_fault_flag(fault_flag) in LLM_FAILURE_FAULT_FLAGS
+
+
 class InvalidMetricFaultFlagError(ValueError):
     """Raised when a fault flag is not in the Outcome Matrix set."""
 

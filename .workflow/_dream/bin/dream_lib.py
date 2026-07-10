@@ -147,7 +147,8 @@ class Entry:
     text: str = ""
     superseded_by: str | None = None
     merged_into: str | None = None
-    scopes: list[str] = field(default_factory=list)  # subsystem tags for differential loading (AG/PE only; comma-sep in marker)
+    # subsystem tags for differential loading (AG/PE only; comma-sep in marker)
+    scopes: list[str] = field(default_factory=list)
 
     @property
     def prefix(self) -> str:
@@ -666,7 +667,11 @@ def apply_candidates(
         counters[prefix] += 1
         new_id = f"{prefix}-{counters[prefix]:04d}"
         raw_scope = str(cand.get("scope", "")).strip()
-        scopes = [s.strip() for s in raw_scope.split(",") if s.strip()] if raw_scope else []
+        scopes = (
+            [s.strip() for s in raw_scope.split(",") if s.strip()]
+            if raw_scope
+            else []
+        )
         bullet = f"- **{new_id}** - {text} _({slug} @{short})_"
         entry = Entry(
             id=new_id,

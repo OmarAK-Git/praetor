@@ -17,9 +17,6 @@ from praetor.policy.state import (
 )
 from praetor.state.sqlite_guard import require_critical_transaction
 
-# Org config lists scopes but not numeric ceilings; Task 17 used limit=1 per scope.
-DEFAULT_SCOPE_EVENT_LIMIT = 1
-
 
 @dataclass(frozen=True)
 class RateLimitScope:
@@ -117,6 +114,12 @@ def _window_seconds(snapshot: OrgConfigSnapshot) -> int:
     return int(snapshot.containment_circuit_breaker_policy.window_seconds)
 
 
+def scope_event_ceiling(snapshot: OrgConfigSnapshot, scope_name: str) -> int:
+    """Return configured event ceiling for a rate-limit scope name."""
+    ceilings = snapshot.rate_limit_policy.ceilings
+    return int(getattr(ceilings, scope_name))
+
+
 def _effective_event_count(
     conn: sqlite3.Connection,
     *,
@@ -146,9 +149,8 @@ def is_rate_limit_exceeded_for_target(
     snapshot: OrgConfigSnapshot,
     target: ContainmentTarget,
     now: datetime | None = None,
-    limit: int = DEFAULT_SCOPE_EVENT_LIMIT,
 ) -> tuple[bool, str | None]:
-    """Return whether any applicable scope is at or above its limit."""
+    """Return whether any applicable scope is at or above its configured ceiling."""
     moment = now or datetime.now(UTC)
     window_seconds = _window_seconds(snapshot)
     for scope in applicable_rate_limit_scopes(snapshot, target):
@@ -158,7 +160,7 @@ def is_rate_limit_exceeded_for_target(
             window_seconds=window_seconds,
             now=moment,
         )
-        if count >= limit:
+        if count >= scope_event_ceiling(snapshot, scope.scope_name):
             return True, scope.scope_key
     return False, None
 

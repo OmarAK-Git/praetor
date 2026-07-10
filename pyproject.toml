@@ -36,6 +36,23 @@ python_version = "3.11"
 strict = true
 plugins = ["pydantic.mypy"]
 packages = ["praetor", "consumer_sdk", "evals"]
+# `mypy .` (the documented gate command) otherwise aborts with "Duplicate module
+# named conftest" and would strict-check the untyped test tree, which the
+# packages-based config never covered. Pin src-layout resolution and restrict
+# the positional `.` scan to the real source packages: tests keep their own
+# (relaxed) override when checked explicitly, and non-source tooling trees are
+# excluded entirely.
+mypy_path = "src"
+explicit_package_bases = true
+exclude = [
+    '^tests/',
+    '^tools/',
+    '^\.workflow/',
+    '^\.claude/',
+    '^notebooks/',
+    '^build/',
+    '^awesome-ai-workflow/',
+]
 
 [[tool.mypy.overrides]]
 module = "tests.*"

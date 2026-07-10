@@ -60,6 +60,7 @@ Domain separation prevents two different hash purposes computed over overlapping
 | Purpose | Constant (exact bytes) |
 |---|---|
 | Decision identifier | `praetor:v1:decision_id` |
+| Evidence fact identifier | `praetor:v1:evidence_id` |
 | Idempotency key | `praetor:v1:idempotency_key` |
 | Ticket stamp identifier | `praetor:v1:stamp_id` |
 
@@ -150,6 +151,51 @@ Each distinct `org_config_snapshot_hash` is stored durably with its full `OrgCon
 For the minimal valid `configs/example_org.yaml` in the repository at Task 9 completion, the binding-body hash must equal:
 
 `8b694ab5aea32db12b6a0b89000ecb34fd1bfe8a7c70489396c18c3b9607d7d3`
+
+---
+
+## 3b. `evidence_id`
+
+`evidence_id` is the stable identifier assigned to each normalized `EvidenceFact` at correlation time. It answers "which evidence fact am I citing" and is distinct per `(provenance_path, source_event_reference)` pair. Redelivery of the same upstream source event carries the same `evidence_id`.
+
+### Construction
+
+```
+digest = SHA256( delimited([
+    DOMAIN_EVIDENCE_ID,        # "praetor:v1:evidence_id" -- always first
+    provenance_path,           # §3b.1
+    source_event_reference,    # §3b.2
+]) )
+
+evidence_id = "ev-" + digest[:32]   # lowercase hex; first 32 digest chars only
+```
+
+Three inputs in exactly this order. The domain constant is the first delimited part. The external identifier prefixes `ev-` and truncates the digest to 32 hex characters (128 bits); the full 64-character digest is never exposed as an `evidence_id`.
+
+Implemented in `src/praetor/correlation/ids.py` as `derive_evidence_id`; the domain constant is `DOMAIN_EVIDENCE_ID` in `src/praetor/hashing/domains.py`.
+
+### 3b.1 `provenance_path`
+
+The normalized provenance classifier for the fact (field-level shape in `schemas/evidence_bundle.json`). v1 values include `sysmon_event_log` and `windows_security_log` (§12a table). The string is used as-is in the preimage; it is not re-canonicalized beyond what the normalizer emits.
+
+### 3b.2 `source_event_reference`
+
+The canonical source-reference string for the upstream event within its collection channel. Constructed by `source_event_reference()` in `src/praetor/correlation/ids.py`:
+
+```
+channel_key = channel.split("/")[0].lower().replace(" ", "_")
+source_event_reference = f"{channel_key}:{event_id}:{record_id}"
+```
+
+`event_id` is the decimal string form of the Windows EventID. `record_id` is the event's durable record identifier from the normalization layer (`event_record_id`). The channel segment before the first `/` is lowercased with spaces replaced by underscores; sub-channel suffixes (e.g. `/Operational`) are not included in the reference string.
+
+### Test vector (v1)
+
+For `provenance_path = sysmon_event_log` and `source_event_reference = microsoft-windows-sysmon:1:12345`:
+
+```
+evidence_id = ev-d874f190dca015a7ba7235e2e933fbd2
+```
 
 ---
 
@@ -330,6 +376,16 @@ ledger_current_hash = 4a702d2467a6763bfb76a23016b46d7f30cdb245514e4c3183b5d64330
 - **In-place tampering** — altering `record_json` or `ledger_current_hash` without recomputing the chain is detected.
 - **Tail truncation** — deleting the latest row(s) leaves a prefix that still verifies internally; v1 has no anchored external tip, so tail truncation is **not detectable** from the chain alone. Production hardening (signed records, WORM storage) is out of scope for v1.
 
+#### Optional tip anchor hook (AG-0027)
+
+Operators may supply an out-of-band `ledger_current_hash` anchor recorded after each controlled append window. The optional verifier:
+
+```
+verify_ledger_tip_against_anchor(conn, expected_tip_hash=<hex-or-null>)
+```
+
+compares `fetch_ledger_tip_hash(conn)` to the anchor. When `expected_tip_hash` is `null`, the check is skipped. A mismatch raises `LedgerTipAnchorMismatchError` (subclass of `LedgerChainIntegrityError`). Procedure details live in `docs/operator_runbook.md`.
+
 Unrecognized `record_type` values, malformed JSON, missing required fields, or canonical-serialization violations during verification are chain integrity failures.
 
 ---
@@ -363,6 +419,33 @@ This precision matters: directive issuance and feed export are different transac
 
 `minimum_feed_sequence_at_issue` is a freshness *floor* the consumer must be at or beyond; it does not by itself satisfy the consumer's current-freshness check (§10 item 3).
 
+#### Metadata floor reconciliation (AG-0030)
+
+`last_verified_exported_sequence` in SQLite must not outpace the on-disk `revocation_feed.jsonl`. Before export and at startup, `reconcile_feed_metadata_against_jsonl` validates the physical prefix against export metadata. If the file is missing, empty, or contains fewer verified lines than metadata claims, the feed is marked **unhealthy** immediately (`revocation_feed_unhealthy`). Rows still in `pending` state must not advance the floor (AG-0055); a fresh database yields floor `0`.
+
+### 8.4 Supersession feed projection — consumer-local replacement linkage
+
+`RevocationFeedRecord` intentionally omits `superseded_by_directive_id` even when the underlying `DirectiveRevocationRecord` carries it for supersession. The feed checksum allowed-key set (§8.1) and `schemas/revocation_feed_record.json` exclude that field by design.
+
+Consumers verify a **live** supersession chain using two independent signals:
+
+1. **Feed (revocation proof).** A feed line at or below the consumer cursor with `directive_id` equal to the superseded directive and `reason_code = supersession`.
+2. **Consumer-local directive metadata (replacement proof).** The replacement `ContainmentDirective` the consumer is evaluating (or holds in its local directive store) carries `supersedes_directive_id` pointing at that superseded `directive_id`.
+
+The feed alone cannot prove *which* replacement a supersession record refers to; pairing (1) and (2) is required. A consumer that acts on a replacement without both signals fails closed via §10 item 5 (`lineage_conflict`).
+
+**Expired re-issue carve-out (DEC-060 §4.2).** Natural expiry is not supersession. A fresh emission after expiry reuses the idempotency key, gets a new `directive_id`, leaves `supersedes_directive_id` unset, and writes **no** `DirectiveRevocationRecord` or feed row for the expired directive. Consumers therefore must not expect a supersession feed line when evaluating such a replacement.
+
+### 8.5 V2 feed delivery boundaries (roadmap-deferred)
+
+V2 preserves the v1 revocation-feed delivery model. Praetor does **not** ship:
+
+- **Rotation machinery** — v2 has **no rotation machinery**; the feed remains append-only JSONL with operator-managed archival/truncation below a retention floor (see `docs/operator_runbook.md`).
+- **Feed segment registry or consumer cursor registration** — consumers track their own cursor; Praetor does not register or reconcile consumer positions.
+- **Multi-feed deployments or `revocation_feed_id` on directives** — v2 assumes a single revocation feed projection per deployment.
+
+These capabilities are explicit P5 roadmap items in `docs/proposals/delivery_backlog.md`. The hash-chained ledger remains authoritative; feed file retention is a consumer-freshness concern, not an audit completeness requirement.
+
 ---
 
 ## 9. Embedded never-contain entries: consumer hash verification
@@ -391,7 +474,7 @@ Praetor does not actuate. It emits honest, freshness-bearing, revocable directiv
 3. **Feed freshness, two independent requirements.** (a) The consumer's feed cursor is at or beyond `minimum_feed_sequence_at_issue` (§8.3). (b) `feed_last_read_at` is within `max_revocation_feed_propagation_delay_seconds + max_consumer_clock_skew_seconds` of the consumer-local check time. Either failing → fail closed.
 4. **No revocation.** No `DirectiveRevocationRecord` for this `directive_id` appears in the feed up to the consumer's cursor. Present → non-actionable.
 5. **No lineage conflict.** No overlapping directive lineage conflict for the target and scope, including supersession records.
-6. **Local policy.** Any consumer-owned current-policy or local never-contain check required by that actuation environment.
+6. **Local policy (§10.6, consumer-owned).** Any consumer-owned current-policy or local never-contain check required by that actuation environment. The reference verifier (`consumer_sdk/reference_verifier.py`) implements items 1–5 only; item 6 is intentionally out of reference scope and must be wired by each integrator.
 
 Fail-closed conditions, collectively: feed stale, feed unavailable, sequence gap, checksum/corruption failure, clock-sync unprovable, hash mismatch, or any local-policy block. On any of these the consumer must not actuate and must surface a human-visible reason. A consumer that fires a stale, expired, revoked, unverifiable, or locally unsafe directive is operating its own actuation layer unsafely; that is the consumer's responsibility, not Praetor's. The residual window — a never-contain addition after emission and before a revocation record is published, on a not-yet-expired directive — is not machine-detectable by the consumer and is the named, accepted v1 gap, bounded by the 300-second directive lifetime.
 
@@ -549,7 +632,7 @@ Field-level shape for each contract is generated to `schemas/` and is the source
 - `schemas/analyst_annotation.json`
 - `schemas/canonical_account_identity.json`
 
-Each is exported deterministically (Task 2) and includes `schema_version`. A change to any model regenerates its schema; a change that alters canonical hashing bytes for unchanged logical input (§1 rule 7) requires a `schema_version` bump and is a breaking change.
+Each is exported deterministically (Task 2) and includes `schema_version`. Regenerate with `python tools/schema_export.py --write`; CI and contract guards run `python tools/schema_export.py --check` to detect drift. A change to any model regenerates its schema; a change that alters canonical hashing bytes for unchanged logical input (§1 rule 7) requires a `schema_version` bump and is a breaking change.
 
 ---
 

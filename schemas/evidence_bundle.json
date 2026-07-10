@@ -2,7 +2,7 @@
   "$defs": {
     "EvidenceFact": {
       "additionalProperties": false,
-      "description": "Normalized fact; ``normalized_fields`` shape is source-specific (deferred to correlation).",
+      "description": "Normalized fact; normalized fields are source-specific.",
       "properties": {
         "ambiguity_flag": {
           "title": "Ambiguity Flag",

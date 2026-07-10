@@ -3,10 +3,17 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
+import os
 import re
+import ssl
 import subprocess
 import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 import pytest
@@ -18,6 +25,8 @@ sys.path.insert(0, str(REPO_ROOT))
 from sigma.collection import SigmaCollection  # noqa: E402
 from tools.compile_sigma import (  # noqa: E402
     ALLOWED_MODIFIERS,
+    FIXTURE_DISPATCH_EARLIEST,
+    FIXTURE_DISPATCH_LATEST,
     UnsupportedSigmaFeatureError,
     check_outputs,
     compile_outputs,
@@ -34,6 +43,12 @@ from tools.spl_match import (  # noqa: E402
     matching_record_ids,
 )
 from tools.splunk_conf import parse_savedsearch_queries  # noqa: E402
+
+_SIGMA_RULES_TEST = REPO_ROOT / "tests" / "detections" / "test_sigma_rules.py"
+_sigma_spec = importlib.util.spec_from_file_location("test_sigma_rules", _SIGMA_RULES_TEST)
+assert _sigma_spec and _sigma_spec.loader
+_sigma_rules_mod = importlib.util.module_from_spec(_sigma_spec)
+_sigma_spec.loader.exec_module(_sigma_rules_mod)
 
 SIGMA_DIR = REPO_ROOT / "detections" / "sigma" / "windows"
 SPL_DIR = REPO_ROOT / "detections" / "spl"
@@ -168,6 +183,40 @@ def test_committed_spl_semantic_match_and_discrimination(flattened_manifest_even
         assert matched == set(expected_ids), f"{spl_name}: matched {matched}, expected {expected_ids}"
         for record_id in excluded_ids:
             assert record_id not in matched, f"{spl_name} should exclude record {record_id}"
+
+
+def test_sigma_spl_matcher_sets_equal_per_rule(
+    compiled_outputs,
+    flattened_manifest_events,
+) -> None:
+    """Per rule, Sigma matcher set must equal SPL matcher set over manifest fixtures."""
+    stem_by_title = {rule.title: rule.source_stem for rule in compiled_outputs.rules}
+    divergences: list[str] = []
+    for sigma_rule in _sigma_rules_mod._load_sigma_rules():
+        stem = stem_by_title.get(sigma_rule.title)
+        if stem is None:
+            divergences.append(f"{sigma_rule.title}: no compiled SPL stem")
+            continue
+        sigma_matches: set[str] = set()
+        for _path, event in _sigma_rules_mod._iter_manifest_fixture_events():
+            fields = _sigma_rules_mod._flatten_fixture_event(event)
+            if _sigma_rules_mod._event_matches_rule(sigma_rule, fields):
+                sigma_matches.add(str(event["record_id"]))
+        spl = (SPL_DIR / f"{stem}.spl").read_text(encoding="utf-8").strip()
+        spl_matches = matching_record_ids(spl, flattened_manifest_events)
+        if sigma_matches != spl_matches:
+            divergences.append(
+                f"{sigma_rule.title}: sigma={sorted(sigma_matches)} spl={sorted(spl_matches)}"
+            )
+    assert divergences == [], f"Sigma↔SPL matcher drift: {divergences}"
+
+
+def test_savedsearches_use_fixture_stable_dispatch_window() -> None:
+    text = SAVEDSEARCHES.read_text(encoding="utf-8")
+    assert f"dispatch.earliest_time = {FIXTURE_DISPATCH_EARLIEST}" in text
+    assert f"dispatch.latest_time = {FIXTURE_DISPATCH_LATEST}" in text
+    assert "-30d" not in text
+    assert "dispatch.latest_time = now" not in text
 
 
 def test_unsupported_modifier_raises_clear_error() -> None:
@@ -372,19 +421,107 @@ def test_props_conf_parses_as_splunk_stanzas() -> None:
 
 
 @pytest.mark.integration
-def test_splunk_demo_manual_procedure_only() -> None:
-    """Splunk demo reproducibility is manual per splunk/README.md — not CI-gated."""
-    import os
-
-    if not os.environ.get("PRAETOR_SPLUNK_HEC_HOST") or not os.environ.get(
-        "PRAETOR_SPLUNK_HEC_TOKEN"
-    ):
+def test_splunk_demo_integration_with_hec_env() -> None:
+    """Live Splunk Free demo: ingest fixtures via HEC and verify SPL match sets."""
+    hec_host = os.environ.get("PRAETOR_SPLUNK_HEC_HOST")
+    hec_token = os.environ.get("PRAETOR_SPLUNK_HEC_TOKEN")
+    if not hec_host or not hec_token:
         pytest.skip(
-            "Optional: set PRAETOR_SPLUNK_HEC_HOST and PRAETOR_SPLUNK_HEC_TOKEN "
-            "before running the manual splunk/README.md demo"
+            "Set PRAETOR_SPLUNK_HEC_HOST and PRAETOR_SPLUNK_HEC_TOKEN "
+            "to run the live Splunk demo integration test"
         )
-    if not (Path("/opt/splunk").exists() or Path("C:/Program Files/Splunk").exists()):
-        pytest.skip("Splunk installation not present on this host")
+    if sys.platform != "win32":
+        pytest.skip("PowerShell ingest script requires Windows")
+
+    index = os.environ.get("PRAETOR_SPLUNK_HEC_INDEX", "main")
+    mgmt_host = os.environ.get(
+        "PRAETOR_SPLUNK_MGMT_HOST",
+        hec_host.replace(":8088", ":8089"),
+    )
+    mgmt_token = os.environ.get("PRAETOR_SPLUNK_MGMT_TOKEN", hec_token)
+
+    ingest = subprocess.run(
+        [
+            "powershell",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-File",
+            str(INGEST_SCRIPT),
+            "-SplunkHost",
+            hec_host,
+            "-HecToken",
+            hec_token,
+            "-Index",
+            index,
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert ingest.returncode == 0, ingest.stderr or ingest.stdout
+    assert "Ingested" in ingest.stdout
+
+    time.sleep(3)
+
+    def _run_oneshot_search(search: str) -> set[str]:
+        query = urllib.parse.urlencode(
+            {
+                "search": search,
+                "output_mode": "json",
+                "exec_mode": "oneshot",
+            }
+        )
+        url = f"{mgmt_host.rstrip('/')}/services/search/jobs/export?{query}"
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+        last_error: str | None = None
+        for auth_header in (
+            f"Bearer {mgmt_token}",
+            f"Splunk {mgmt_token}",
+        ):
+            request = urllib.request.Request(
+                url,
+                method="POST",
+                headers={"Authorization": auth_header},
+            )
+            try:
+                with urllib.request.urlopen(request, context=ctx, timeout=120) as response:
+                    body = response.read().decode("utf-8")
+            except urllib.error.HTTPError as exc:
+                last_error = f"{auth_header.split()[0]} auth failed: HTTP {exc.code}"
+                continue
+            except urllib.error.URLError as exc:
+                pytest.fail(f"Splunk management API unreachable at {mgmt_host}: {exc}")
+            record_ids: set[str] = set()
+            for line in body.splitlines():
+                if not line.strip():
+                    continue
+                row = json.loads(line)
+                result = row.get("result", row)
+                rid = result.get("record_id")
+                if rid is not None:
+                    record_ids.add(str(rid))
+            return record_ids
+        pytest.fail(
+            f"Splunk search auth failed at {mgmt_host}; {last_error}. "
+            "Set PRAETOR_SPLUNK_MGMT_TOKEN if HEC token cannot query the management API."
+        )
+
+    time_bounds = (
+        f"earliest={FIXTURE_DISPATCH_EARLIEST} latest={FIXTURE_DISPATCH_LATEST}"
+    )
+    for spl_name, expected_ids, _excluded in SPL_SEMANTIC_EXPECTATIONS:
+        spl = (SPL_DIR / spl_name).read_text(encoding="utf-8").strip()
+        search = (
+            f"search index={index} {time_bounds} {spl} "
+            "| dedup record_id | table record_id"
+        )
+        matched = _run_oneshot_search(search)
+        assert matched == set(expected_ids), (
+            f"{spl_name}: live Splunk matched {matched}, expected {expected_ids}"
+        )
 
 
 def test_allowed_modifiers_documented() -> None:

@@ -1,0 +1,55 @@
+{
+  "goal": "Bounded GSD autopilot loop for Praetor V2: queue-driven implementation and fresh-context verification with task-scoped checks by default.",
+  "success_criteria": [
+    "Cursor command exists at .cursor/commands/gsd-autopilot-loop.md",
+    "Queue schema exists at .workflow/autopilot-queue.json",
+    "Loop orchestration exists under .workflow/autopilot-loop/",
+    "Verification defaults to task scope; phase gates are explicit queue items only",
+    "depends_on ordering is enforced before dispatch"
+  ],
+  "constraints": [
+    "Do not install dependencies",
+    "Do not edit global harness config",
+    "Do not clone repositories or write outside the workspace"
+  ],
+  "queue_path": ".workflow/autopilot-queue.json",
+  "command_path": ".cursor/commands/gsd-autopilot-loop.md",
+  "max_concurrent_agents": 2,
+  "max_total_agents": 2,
+  "packets": [
+    {
+      "id": "01-loop-command",
+      "objective": "Add Cursor command that drives the bounded loop",
+      "status": "done"
+    },
+    {
+      "id": "02-queue-contract",
+      "objective": "Add machine-readable queue and human task template",
+      "status": "done"
+    },
+    {
+      "id": "03-run-state",
+      "objective": "Add durable loop state and orchestration docs",
+      "status": "done"
+    },
+    {
+      "id": "04-seed-queue",
+      "objective": "Seed V2-015 through V2-017 chain with explicit Gate 2 exit item",
+      "status": "done"
+    }
+  ],
+  "verification": [
+    {
+      "check": "Queue JSON parses",
+      "command": "python -m json.tool .workflow/autopilot-queue.json",
+      "required": true,
+      "status": "pending"
+    },
+    {
+      "check": "Command references queue and state",
+      "command": "rg \"autopilot-queue|autopilot-loop/state\" .cursor/commands/gsd-autopilot-loop.md",
+      "required": true,
+      "status": "pending"
+    }
+  ]
+}

@@ -14,7 +14,7 @@ from praetor.state.idempotency import (
     fetch_active_idempotency_key,
     insert_active_idempotency_key,
 )
-from praetor.state.sqlite_guard import critical_transaction
+from praetor.state.sqlite_guard import StartupGuardError, critical_transaction
 
 _POLICY_STATE_DDL = """
 CREATE TABLE IF NOT EXISTS containment_rate_counters (
@@ -40,6 +40,16 @@ INSERT OR IGNORE INTO circuit_breaker_state (
 ) VALUES ('provider_health', 0, 0, 0, '1970-01-01T00:00:00+00:00');
 """
 
+REQUIRED_PRODUCTION_POLICY_TABLES = frozenset(
+    {
+        "analyst_annotations",
+        "containment_rate_counters",
+        "circuit_breaker_state",
+        "provider_health_metrics",
+        "revocation_feed_export_meta",
+    }
+)
+
 # Task 17 uses a fixed per-scope ceiling until Task 18 adds org-config limits.
 _V1_DEFAULT_SCOPE_LIMIT = 1
 
@@ -58,6 +68,32 @@ class PolicyStateReconciliationResult:
 
 def init_policy_state_schema(conn: sqlite3.Connection) -> None:
     conn.executescript(_POLICY_STATE_DDL)
+
+
+def _existing_table_names(conn: sqlite3.Connection) -> set[str]:
+    rows = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'"
+    ).fetchall()
+    return {str(row[0]) for row in rows}
+
+
+def ensure_production_policy_tables(conn: sqlite3.Connection) -> None:
+    """Create or upgrade policy tables required for production startup."""
+    init_policy_state_schema(conn)
+    from praetor.judgment.provider_health_breaker import (
+        init_provider_health_breaker_schema,
+    )
+
+    init_provider_health_breaker_schema(conn)
+
+
+def assert_production_policy_tables(conn: sqlite3.Connection) -> None:
+    """Fail closed when required production policy tables are missing."""
+    missing = REQUIRED_PRODUCTION_POLICY_TABLES - _existing_table_names(conn)
+    if missing:
+        names = ", ".join(sorted(missing))
+        msg = f"production startup missing required policy tables: {names}"
+        raise StartupGuardError(msg)
 
 
 def rate_limit_scope_key(scope: str, *, target_type: str, target_id: str) -> str:
@@ -174,12 +210,7 @@ def _register_idempotency_for_directive(
 
 def reconcile_policy_state(conn: sqlite3.Connection) -> PolicyStateReconciliationResult:
     """Startup step 6: align idempotency keys and policy counters with durable state."""
-    init_policy_state_schema(conn)
-    from praetor.judgment.provider_health_breaker import (
-        init_provider_health_breaker_schema,
-    )
-
-    init_provider_health_breaker_schema(conn)
+    ensure_production_policy_tables(conn)
     registered = 0
     with critical_transaction(conn):
         conn.execute("DELETE FROM containment_rate_counters")

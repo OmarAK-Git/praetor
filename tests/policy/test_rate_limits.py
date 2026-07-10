@@ -19,6 +19,7 @@ from praetor.contracts.org_config_sections import (
     CircuitBreakerPolicy,
     ContainmentPolicy,
     ContainmentRule,
+    RateLimitCeilings,
     RateLimitPolicy,
 )
 from praetor.policy.containment_policy import resolve_host_target
@@ -46,6 +47,23 @@ def _gate(activated, org_snapshot, *, bundle=None, alert_identity: str, **kwargs
     )
 
 
+def _rate_limit_policy(
+    *,
+    per_host: int = 1,
+    per_subnet: int = 1,
+    per_asset_group: int = 1,
+    scopes: list[str] | None = None,
+) -> RateLimitPolicy:
+    return RateLimitPolicy(
+        scopes=scopes or ["per_host", "per_subnet", "per_asset_group"],
+        ceilings=RateLimitCeilings(
+            per_host=per_host,
+            per_subnet=per_subnet,
+            per_asset_group=per_asset_group,
+        ),
+    )
+
+
 def _snapshot_with_registry(store, base, entries: list[AssetEntry]):
     return persist_snapshot_with_overrides(
         store,
@@ -62,9 +80,7 @@ def _snapshot_with_registry(store, base, entries: list[AssetEntry]):
                 )
             ],
         ),
-        rate_limit_policy=RateLimitPolicy(
-            scopes=["per_host", "per_subnet", "per_asset_group"]
-        ),
+        rate_limit_policy=_rate_limit_policy(),
         containment_circuit_breaker_policy=CircuitBreakerPolicy(
             window_seconds=300,
             failure_threshold=5,
@@ -151,7 +167,7 @@ def test_per_asset_group_scope_collapses_to_per_host_for_v1(
                 )
             ],
         ),
-        rate_limit_policy=RateLimitPolicy(scopes=["per_host", "per_asset_group"]),
+        rate_limit_policy=_rate_limit_policy(scopes=["per_host", "per_asset_group"]),
         containment_circuit_breaker_policy=CircuitBreakerPolicy(
             window_seconds=300,
             failure_threshold=5,
@@ -324,6 +340,76 @@ def test_in_tx_rate_limit_race_loser_records_single_failure(
         assert int(failure_row[0]) == 1
     finally:
         conn_b.close()
+
+
+def test_configured_per_host_ceiling_allows_n_events(activated, org_snapshot) -> None:
+    snapshot = _snapshot_with_registry(
+        activated,
+        org_snapshot,
+        [AssetEntry(asset_id="ws-multi", subnet_membership="10.60.0.0/24")],
+    )
+    snapshot = persist_snapshot_with_overrides(
+        activated,
+        snapshot,
+        rate_limit_policy=_rate_limit_policy(
+            per_host=2, per_subnet=99, per_asset_group=99
+        ),
+    )
+    for idx in range(2):
+        result = _gate(
+            activated,
+            snapshot,
+            bundle=host_bundle(host_id="ws-multi"),
+            alert_identity=f"ALERT-MULTI-{idx}",
+        )
+        assert result.final_disposition == Disposition.AUTO_CONTAIN
+
+    blocked = _gate(
+        activated,
+        snapshot,
+        bundle=host_bundle(host_id="ws-multi"),
+        alert_identity="ALERT-MULTI-BLOCK",
+    )
+    assert blocked.final_disposition == Disposition.ESCALATE
+    assert blocked.fault_flags == [RATE_LIMIT_EXCEEDED]
+
+
+def test_configured_subnet_ceiling_blocks_third_host(activated, org_snapshot) -> None:
+    snapshot = persist_snapshot_with_overrides(
+        activated,
+        _snapshot_with_registry(
+            activated,
+            org_snapshot,
+            [
+                AssetEntry(asset_id="ws-ce-1", subnet_membership="10.70.0.0/24"),
+                AssetEntry(asset_id="ws-ce-2", subnet_membership="10.70.0.0/24"),
+                AssetEntry(asset_id="ws-ce-3", subnet_membership="10.70.0.0/24"),
+            ],
+        ),
+        rate_limit_policy=_rate_limit_policy(
+            per_host=99, per_subnet=2, per_asset_group=99
+        ),
+    )
+    for host_id, alert in (
+        ("ws-ce-1", "ALERT-CE-1"),
+        ("ws-ce-2", "ALERT-CE-2"),
+    ):
+        result = _gate(
+            activated,
+            snapshot,
+            bundle=host_bundle(host_id=host_id),
+            alert_identity=alert,
+        )
+        assert result.final_disposition == Disposition.AUTO_CONTAIN
+
+    blocked = _gate(
+        activated,
+        snapshot,
+        bundle=host_bundle(host_id="ws-ce-3"),
+        alert_identity="ALERT-CE-3",
+    )
+    assert blocked.final_disposition == Disposition.ESCALATE
+    assert blocked.fault_flags == [RATE_LIMIT_EXCEEDED]
 
 
 def test_pre_check_rate_limit_failure_not_double_counted(

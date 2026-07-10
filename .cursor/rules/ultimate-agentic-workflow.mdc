@@ -1,75 +1,72 @@
 ---
-description: Use for all non-trivial coding work. Combines Superpowers, Memory Bank, and Flight Recorder.
+description: Use for all non-trivial coding work. v2 tiered workflow with Memory Bank, Flight Recorder, and bounded GSD autopilot.
 alwaysApply: false
 ---
 
-# ultimate-agentic-workflow
+# ultimate-agentic-workflow (v2)
 
 Use this rule whenever the user asks to build, modify, debug, refactor, test, review, or plan code.
 
+Skill router: `awesome-ai-workflow/ultimate-agentic-workflow/SKILL.md` (load references on demand).
+Operational commands: `OPS.md`.
+
 ## First move
 
-Before doing non-trivial work:
+Before non-trivial work:
 
-1. Use Superpowers.
-2. Select the relevant Superpowers workflow:
-   - unclear idea or feature: brainstorming
-   - approved design: writing-plans
-   - executing existing plan: executing-plans
-   - bug: systematic-debugging
-   - behavior change: test-driven-development where practical
-   - finishing/checking work: verification-before-completion or code review
-3. Announce the workflow briefly.
-4. Classify the task as T0, T1, T2, or T3.
-5. Do not edit code until the required planning level is satisfied.
+1. Use Superpowers where applicable (brainstorming, writing-plans, executing-plans, systematic-debugging, TDD, verification-before-completion).
+2. Announce the workflow briefly.
+3. Classify the task T0–T3.
+4. Do not edit code until the required planning level is satisfied.
 
 ## Tiers
 
 ### T0
 
-Answer directly or make the tiny safe edit.
+Answer directly or make the tiny safe edit. Verify if files changed.
 
 ### T1
 
-Briefly state approach, execute, verify.
+Write a one-line durable goal note, execute, verify, summarize.
 
 ### T2
 
-Create a spec/plan before implementation.
+Spec and plan before implementation.
 
-Use:
-- `memory-bank/activeContext.md`
-- `memory-bank/tasks.md`
-- `memory-bank/progress.md`
+Canonical live state: `IMPLEMENTATION_PLAN.md` (create while active; remove or archive when done).
 
-Update Memory Bank if project state changes.
+Also use:
+
+- `specs/<topic>.md` — REQ/AC/VERIFY IDs, acceptance criteria, constraints
+- `memory-bank/activeContext.md`, `memory-bank/tasks.md`, `memory-bank/progress.md` — projections; sync from the plan
+
+Flow: intake → spec → plan → optional creative → build → task-scoped verify → fresh-context review → reflect.
 
 ### T3
 
-Use the full Flight Recorder workflow.
+Full Flight Recorder under `.workflow/<task-slug>/`:
 
-Create:
+- `plan.md`, `state.json`, `traceability.md`, `verification.md`, `review.md`, `final-report.md`
 
-`.workflow/<task-slug>/`
-
-With:
-
-- `plan.md`
-- `state.json`
-- `traceability.md`
-- `verification.md`
-- `review.md`
-- `final-report.md`
+Before implementing `.workflow` tasks, consult `.workflow/_dream/playbook.digest.md`.
 
 Do not implement until scope, requirements, risks, and verification plan are written.
+
+## Bounded autopilot loop
+
+For queued multi-task execution, use `/gsd-autopilot-loop`.
+
+- Queue: `.workflow/autopilot-queue.json`
+- Loop state: `.workflow/autopilot-loop/state.json`
+- Default verification: **task-scoped** (`verification.scope: task`)
+- Phase/sprint gates: explicit queue items only (`verification.scope: phase_exit`)
+- Ordering: `depends_on` on queue items
+- Drain runnable `pending`/`retry` items until done, blocked, dependency-waiting, or human approval needed
+
+The controller stops before dependency installs, global config edits, clones, or external writes.
 
 ## Completion rule
 
 Never claim completion without fresh evidence.
 
-Final response must include:
-
-- files changed
-- checks run
-- check results
-- known gaps or skipped checks
+Final response must include: files changed, checks run, check results, known gaps or skipped checks.

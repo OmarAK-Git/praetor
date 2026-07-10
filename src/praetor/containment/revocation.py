@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 
 from praetor.config.live import directive_matches_entry
 from praetor.config.state import mark_directive_revoked
+from praetor.containment.lifecycle import directive_is_outstanding_by_expiry
 from praetor.contracts.containment import ContainmentDirective
 from praetor.contracts.health import SystemHealthAlert
 from praetor.contracts.ledger import DirectiveRevocationRecord, RevocationReason
@@ -21,6 +22,10 @@ from praetor.state.store import RevocationWriteResult, StateStore
 NEVER_CONTAIN_CONFLICT_ALERT = "never_contain_conflict"
 POST_ACTIVATION_CONFLICT_ALERT = "never_contain_post_activation_conflict"
 ORPHAN_OUTSTANDING_DIRECTIVE_ALERT = "orphan_outstanding_directive"
+
+
+class SupersessionNotApplicableError(ValueError):
+    """Supersession revocation applies only to still-live outstanding directives."""
 
 
 def new_revocation_record(
@@ -69,6 +74,13 @@ def revoke_supersession_in_transaction(
     triggered_by: str,
     now: datetime | None = None,
 ) -> RevocationWriteResult:
+    if not directive_is_outstanding_by_expiry(directive, now=now):
+        msg = (
+            "supersession revocation requires a still-live outstanding directive "
+            "(DEC-060 §4.2); expired natural expiry uses fresh re-issue without "
+            "revocation"
+        )
+        raise SupersessionNotApplicableError(msg)
     record = new_revocation_record(
         directive,
         reason=RevocationReason.SUPERSESSION,

@@ -1,0 +1,265 @@
+{
+  "sprint_id": "v2-5",
+  "gate_item_id": "v2-gate-5-exit",
+  "prerequisite_done": [
+    "v2-gate-4-exit"
+  ],
+  "items": [
+    {
+      "id": "v2-032-progressive-reporting",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-4-exit",
+        "v2-020-metrics-completeness",
+        "v2-026-rate-ceilings"
+      ],
+      "goal": "V2-032 — Progressive authorization reporting: reporting view aggregates PolicyGate override rate and analyst annotation outcomes by target type and asset class over a window; reports are read-only decision support with no self-tuning; runbook documents SOC-led promotion/reversal workflow.",
+      "scope": "Progressive authorization reporting and operator docs only. Do not run V2 Gate 5 exit.",
+      "files_allowed": [
+        "src/praetor/metrics/",
+        "src/praetor/annotations/",
+        "src/praetor/reporting/",
+        "docs/operator_runbook.md",
+        "tests/metrics/",
+        "tests/annotations/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Reporting view aggregates PolicyGate override rate and analyst annotation outcomes by target type and asset class over a window.",
+        "Reports are read-only decision support; no self-tuning or automatic config promotion occurs.",
+        "Runbook documents SOC-led promotion/reversal workflow.",
+        "The verifier checks only V2-032 acceptance, not V2 Gate 5 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/metrics/ tests/annotations/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-032-progressive-reporting",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-033-prompt-exemplar",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-4-exit"
+      ],
+      "goal": "V2-033 — Judgment prompt exemplar slot: prompt template accepts an optional exemplar block; exemplar rendering is bounded, auditable, and clearly separated from cited evidence; evidence hash and PromptExcerptSet behavior are unchanged.",
+      "scope": "Prompt exemplar slot and isolation only. Do not run V2 Gate 5 exit.",
+      "files_allowed": [
+        "src/praetor/judgment/prompt.py",
+        "src/praetor/judgment/excerpt.py",
+        "tests/judgment/test_prompt_isolation.py",
+        "evals/scenarios/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Prompt template accepts an optional exemplar block.",
+        "Exemplar rendering is bounded, auditable, and clearly separated from cited evidence.",
+        "Evidence hash and PromptExcerptSet behavior are unchanged.",
+        "The verifier checks only V2-033 acceptance, not V2 Gate 5 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/judgment/test_prompt_isolation.py -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-033-prompt-exemplar",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-034-similar-case-retrieval",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-032-progressive-reporting",
+        "v2-033-prompt-exemplar"
+      ],
+      "goal": "V2-034 — Similar-case retrieval: retrieval selects only human-confirmed cases that satisfy a documented ranking contract; exemplar payloads are bounded and excluded from evidence hash derivation; contract eval proves retrieval is wired without changing citation validity or raw-source exclusion.",
+      "scope": "Similar-case retrieval and judgment wiring only. Do not run V2 Gate 5 exit.",
+      "files_allowed": [
+        "src/praetor/retrieval/",
+        "src/praetor/judgment/prompt.py",
+        "src/praetor/annotations/",
+        "tests/judgment/",
+        "tests/annotations/",
+        "docs/eval_gates.md",
+        "evals/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Retrieval selects only human-confirmed cases that satisfy a documented ranking contract.",
+        "Exemplar payloads are bounded and excluded from evidence hash derivation.",
+        "A/B or contract eval proves retrieval is wired without changing citation validity or raw-source exclusion.",
+        "The verifier checks only V2-034 acceptance, not V2 Gate 5 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/judgment/ tests/annotations/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-034-similar-case-retrieval",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-035-statute-curation",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-027-sweep-cli",
+        "v2-032-progressive-reporting"
+      ],
+      "goal": "V2-035 — Statute curation workflow: annotation-to-proposed-statute artifact is review-only and not activatable; SOC-lead promotion runs full preflight and records activation audit trail; workflow artifact captures source annotations, proposed edits, reviewer, and activation result.",
+      "scope": "Statute curation workflow and activation audit only. Do not run V2 Gate 5 exit.",
+      "files_allowed": [
+        ".workflow/",
+        "src/praetor/codification/",
+        "src/praetor/config/activation.py",
+        "docs/operator_runbook.md",
+        "tests/codification/",
+        "tests/config/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Annotation-to-proposed-statute artifact is review-only and not activatable.",
+        "SOC-lead promotion runs full preflight and records activation audit trail.",
+        "Workflow artifact captures source annotations, proposed edits, reviewer, and activation result.",
+        "The verifier checks only V2-035 acceptance, not V2 Gate 5 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/codification/ tests/config/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-035-statute-curation",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-036-eval-regression",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-034-similar-case-retrieval",
+        "v2-035-statute-curation"
+      ],
+      "goal": "V2-036 — Eval regression locking discipline: workflow template requires every confirmed model error to identify a harness scenario or explicit waiver; eval gate docs define minimum scenario quality and expectation-key validation; CI catches stale or unknown expectation keys.",
+      "scope": "Eval regression discipline and workflow template only. Do not run V2 Gate 5 exit.",
+      "files_allowed": [
+        ".workflow/_template/",
+        "evals/",
+        "docs/eval_gates.md",
+        "tests/evals/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Workflow template requires every confirmed model error to identify a harness scenario or explicit waiver.",
+        "Eval gate docs define minimum scenario quality and expectation-key validation.",
+        "CI catches stale or unknown expectation keys.",
+        "The verifier checks only V2-036 acceptance, not V2 Gate 5 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-036-eval-regression",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-gate-5-exit",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-032-progressive-reporting",
+        "v2-033-prompt-exemplar",
+        "v2-034-similar-case-retrieval",
+        "v2-035-statute-curation",
+        "v2-036-eval-regression"
+      ],
+      "goal": "V2 Gate 5 exit (PASS-only): feedback and progressive authorization sprint complete per docs/proposals/v2_implementation_plan.md § V2 Gate 5.",
+      "scope": "Full V2 Gate 5 exit verification only. No new implementation; confirm pass criteria for V2-032 through V2-036.",
+      "files_allowed": [
+        ".workflow/v2-gate-5-exit/",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md",
+        "memory-bank/tasks.md"
+      ],
+      "acceptance_criteria": [
+        "Promotion reporting is read-only and human-led (V2-032).",
+        "Prompt exemplars are bounded and outside the evidence hash path (V2-033).",
+        "Similar-case retrieval uses only human-confirmed cases (V2-034).",
+        "Statute curation is review-only until activation (V2-035).",
+        "Confirmed model errors become eval scenarios or documented waivers (V2-036).",
+        "Full pytest, ruff, and mypy pass."
+      ],
+      "verification": {
+        "scope": "phase_exit",
+        "commands": [
+          "pytest -q",
+          "ruff check .",
+          "mypy ."
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "skeptic-verifier",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-gate-5-exit",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "run_mode": "chat_gate"
+    }
+  ]
+}

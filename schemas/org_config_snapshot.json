@@ -106,8 +106,18 @@
       "type": "object"
     },
     "ContainmentPolicy": {
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
+        "default_action": {
+          "enum": [
+            "allow",
+            "deny",
+            "escalate",
+            "auto_contain"
+          ],
+          "title": "Default Action",
+          "type": "string"
+        },
         "precedence": {
           "anyOf": [
             {
@@ -127,22 +137,26 @@
           "items": {
             "$ref": "#/$defs/ContainmentRule"
           },
-          "minItems": 1,
           "title": "Rules",
           "type": "array"
         }
       },
       "required": [
-        "rules"
+        "default_action"
       ],
       "title": "ContainmentPolicy",
       "type": "object"
     },
     "ContainmentRule": {
-      "additionalProperties": true,
+      "additionalProperties": false,
       "properties": {
         "action": {
-          "minLength": 1,
+          "enum": [
+            "allow",
+            "deny",
+            "escalate",
+            "auto_contain"
+          ],
           "title": "Action",
           "type": "string"
         },
@@ -150,13 +164,80 @@
           "minLength": 1,
           "title": "Name",
           "type": "string"
+        },
+        "scope": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ContainmentRuleTargetScope"
+            },
+            {
+              "$ref": "#/$defs/ContainmentRuleAssetScope"
+            },
+            {
+              "$ref": "#/$defs/ContainmentRuleCatchAllScope"
+            }
+          ],
+          "title": "Scope"
         }
       },
       "required": [
         "name",
-        "action"
+        "action",
+        "scope"
       ],
       "title": "ContainmentRule",
+      "type": "object"
+    },
+    "ContainmentRuleAssetScope": {
+      "additionalProperties": false,
+      "properties": {
+        "asset_id": {
+          "minLength": 1,
+          "title": "Asset Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "asset_id"
+      ],
+      "title": "ContainmentRuleAssetScope",
+      "type": "object"
+    },
+    "ContainmentRuleCatchAllScope": {
+      "additionalProperties": false,
+      "properties": {
+        "catch_all": {
+          "const": true,
+          "default": true,
+          "title": "Catch All",
+          "type": "boolean"
+        }
+      },
+      "title": "ContainmentRuleCatchAllScope",
+      "type": "object"
+    },
+    "ContainmentRuleTargetScope": {
+      "additionalProperties": false,
+      "properties": {
+        "target_id": {
+          "minLength": 1,
+          "title": "Target Id",
+          "type": "string"
+        },
+        "target_type": {
+          "enum": [
+            "host",
+            "account"
+          ],
+          "title": "Target Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "target_type",
+        "target_id"
+      ],
+      "title": "ContainmentRuleTargetScope",
       "type": "object"
     },
     "DirectiveLifetimePolicy": {
@@ -294,9 +375,39 @@
       "title": "ProvisionalAlertRateTargets",
       "type": "object"
     },
+    "RateLimitCeilings": {
+      "additionalProperties": false,
+      "properties": {
+        "per_asset_group": {
+          "exclusiveMinimum": 0,
+          "title": "Per Asset Group",
+          "type": "integer"
+        },
+        "per_host": {
+          "exclusiveMinimum": 0,
+          "title": "Per Host",
+          "type": "integer"
+        },
+        "per_subnet": {
+          "exclusiveMinimum": 0,
+          "title": "Per Subnet",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "per_host",
+        "per_subnet",
+        "per_asset_group"
+      ],
+      "title": "RateLimitCeilings",
+      "type": "object"
+    },
     "RateLimitPolicy": {
       "additionalProperties": false,
       "properties": {
+        "ceilings": {
+          "$ref": "#/$defs/RateLimitCeilings"
+        },
         "scopes": {
           "items": {
             "type": "string"

@@ -512,6 +512,44 @@ def test_supersession_feed_avoids_lineage_conflict() -> None:
     assert result.failed_check is None
 
 
+def test_expired_prior_directive_allows_reissue_without_lineage_conflict() -> None:
+    old_issued = NOW - timedelta(seconds=200)
+    old = _directive(
+        directive_id="dir-old",
+        target_id="host-01",
+        issued_at=old_issued,
+        lifetime_seconds=120,
+    )
+    new = _directive(directive_id="dir-new", target_id="host-01")
+    result = verify_directive_pre_actuation(
+        new,
+        config=DEFAULT_CONFIG,
+        clock=_clock(),
+        feed=_fresh_feed(cursor=0),
+        known_directives=(old,),
+    )
+    assert result.outcome == VerifierOutcome.ACTIONABLE
+    assert result.failed_check is None
+
+
+def test_live_supersession_missing_feed_lineage_conflict() -> None:
+    old = _directive(directive_id="dir-old", target_id="host-01")
+    new = _directive(
+        directive_id="dir-new",
+        target_id="host-01",
+        supersedes_directive_id="dir-old",
+    )
+    result = verify_directive_pre_actuation(
+        new,
+        config=DEFAULT_CONFIG,
+        clock=_clock(),
+        feed=_fresh_feed(cursor=0),
+        known_directives=(old,),
+    )
+    assert result.outcome == VerifierOutcome.ESCALATE_HUMAN
+    assert result.failed_check == FailedCheck.LINEAGE_CONFLICT
+
+
 @pytest.mark.parametrize(
     ("cursor", "minimum"),
     [

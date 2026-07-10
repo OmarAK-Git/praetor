@@ -9,35 +9,13 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Any
 
+from praetor.contracts.fault_flags import (
+    OUTCOME_MATRIX_SFE as _CONTRACTS_OUTCOME_MATRIX_SFE,
+)
 from praetor.metrics.events import OutcomeMatrixFaultFlag
 
-# §13 table: policy/safety-gate flags => false; infra/model/feed/queue/latency => true.
-OUTCOME_MATRIX_SFE: dict[OutcomeMatrixFaultFlag, bool] = {
-    OutcomeMatrixFaultFlag.CORRELATION_FAILURE: True,
-    OutcomeMatrixFaultFlag.CONFIG_OVER_BUDGET: True,
-    OutcomeMatrixFaultFlag.INVALID_MODEL_CITATION: True,
-    OutcomeMatrixFaultFlag.PROVIDER_MALFORMED_JSON: True,
-    OutcomeMatrixFaultFlag.PROVIDER_TIMEOUT: True,
-    OutcomeMatrixFaultFlag.PROVIDER_REFUSAL: True,
-    OutcomeMatrixFaultFlag.PROVIDER_UNAVAILABLE: True,
-    OutcomeMatrixFaultFlag.NEVER_CONTAIN_SNAPSHOT: False,
-    OutcomeMatrixFaultFlag.NEVER_CONTAIN_LIVE_CONFLICT: False,
-    OutcomeMatrixFaultFlag.AMBIGUOUS_TARGET_IDENTITY: False,
-    OutcomeMatrixFaultFlag.AMBIGUOUS_CONTAINMENT_TARGET: False,
-    OutcomeMatrixFaultFlag.INSUFFICIENT_CORROBORATION: False,
-    OutcomeMatrixFaultFlag.ACCOUNT_CONTAINMENT_DISABLED: False,
-    OutcomeMatrixFaultFlag.POLICY_AMBIGUITY: False,
-    OutcomeMatrixFaultFlag.CONTAINMENT_POLICY_DENIED: False,
-    OutcomeMatrixFaultFlag.CONTAINMENT_POLICY_ESCALATION_REQUIRED: False,
-    OutcomeMatrixFaultFlag.RATE_LIMIT_EXCEEDED: False,
-    OutcomeMatrixFaultFlag.CONTAINMENT_BREAKER_OPEN: False,
-    OutcomeMatrixFaultFlag.PROVIDER_HEALTH_BREAKER_OPEN: True,
-    OutcomeMatrixFaultFlag.REVOCATION_FEED_UNHEALTHY: True,
-    OutcomeMatrixFaultFlag.LATENCY_SLA_EXCEEDED: True,
-    OutcomeMatrixFaultFlag.QUEUE_AGING_EXCEEDED: True,
-    OutcomeMatrixFaultFlag.TICKET_STAMP_FAILED: False,
-    OutcomeMatrixFaultFlag.LEDGER_CHAIN_INTEGRITY_FAILURE: False,
-}
+# Re-export canonical SFE polarity from contracts to keep eval harness aligned.
+OUTCOME_MATRIX_SFE: dict[OutcomeMatrixFaultFlag, bool] = dict(_CONTRACTS_OUTCOME_MATRIX_SFE)
 
 EXCLUDED_FROM_MATRIX_COMPLETENESS: frozenset[OutcomeMatrixFaultFlag] = frozenset(
     {

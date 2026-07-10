@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from typing import Any
 
 MAX_PROMPT_EXCERPT_CHARS = 200
+MAX_PROMPT_EXEMPLARS = 3
+MAX_PROMPT_EXEMPLAR_CHARS = 400
 _RAW_SOURCE_KEY = "raw_source"
 _RESERVED_FACT_KEYS = frozenset(
     {
@@ -71,11 +73,76 @@ class PromptExcerptSet:
         return {"facts": [fact.as_provider_payload() for fact in self.facts]}
 
 
+@dataclass(frozen=True)
+class PromptExemplar:
+    exemplar_id: str
+    source_case_id: str
+    summary: str
+    disposition: str | None = None
+    incomplete: bool = False
+    omitted_characters: int = 0
+
+    def as_provider_payload(self) -> dict[str, object]:
+        payload: dict[str, object] = {
+            "exemplar_id": self.exemplar_id,
+            "source_case_id": self.source_case_id,
+            "summary": self.summary,
+            "incomplete": self.incomplete,
+            "omitted_characters": self.omitted_characters,
+        }
+        if self.disposition is not None:
+            payload["disposition"] = self.disposition
+        return payload
+
+
+@dataclass(frozen=True)
+class PromptExemplarBlock:
+    exemplars: tuple[PromptExemplar, ...]
+
+    @property
+    def has_incomplete_content(self) -> bool:
+        return any(exemplar.incomplete for exemplar in self.exemplars)
+
+    def as_provider_payload(self) -> dict[str, object]:
+        return {
+            "exemplars": [
+                exemplar.as_provider_payload() for exemplar in self.exemplars
+            ]
+        }
+
+
 def build_prompt_excerpt_set(
     evidence_facts: Iterable[Mapping[str, Any]],
 ) -> PromptExcerptSet:
     return PromptExcerptSet(
         facts=tuple(_build_prompt_fact(fact) for fact in evidence_facts)
+    )
+
+
+def build_prompt_exemplar_block(
+    exemplars: Iterable[Mapping[str, Any]] | None,
+) -> PromptExemplarBlock | None:
+    if exemplars is None:
+        return None
+
+    built = tuple(_build_prompt_exemplar(exemplar) for exemplar in exemplars)
+    if not built:
+        return None
+
+    return PromptExemplarBlock(exemplars=built[:MAX_PROMPT_EXEMPLARS])
+
+
+def _build_prompt_exemplar(exemplar: Mapping[str, Any]) -> PromptExemplar:
+    summary_text = str(exemplar["summary"])
+    summary, omitted = _head_tail_truncate(summary_text, MAX_PROMPT_EXEMPLAR_CHARS)
+    disposition = exemplar.get("disposition")
+    return PromptExemplar(
+        exemplar_id=str(exemplar["exemplar_id"]),
+        source_case_id=str(exemplar["source_case_id"]),
+        summary=summary,
+        disposition=str(disposition) if disposition is not None else None,
+        incomplete=omitted > 0,
+        omitted_characters=omitted,
     )
 
 

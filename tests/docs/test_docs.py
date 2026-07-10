@@ -58,6 +58,42 @@ def test_operator_runbook_transaction_count_matches_benchmark(
     assert "No automated revocation" in operator_runbook_text
 
 
+def test_operator_runbook_pins_example_org_rate_targets(
+    operator_runbook_text: str,
+) -> None:
+    import yaml
+    from tests.config.shared import REPO_ROOT
+
+    config = yaml.safe_load(
+        (REPO_ROOT / "configs" / "example_org.yaml").read_text(encoding="utf-8")
+    )
+    sustained = config["provisional_alert_rate_targets"]["sustained_alerts_per_minute"]
+    burst = config["provisional_alert_rate_targets"]["burst_alerts_per_minute"]
+    assert sustained == 30
+    assert burst == 60
+    assert f"sustained **{sustained}**/min" in operator_runbook_text
+    assert f"burst **{burst}**/min" in operator_runbook_text
+
+
+def test_operator_runbook_pins_burst_not_separately_measured(
+    operator_runbook_text: str,
+) -> None:
+    assert "burst_separately_measured=false" in operator_runbook_text
+    assert (
+        "does **not** measure burst in a separate time window"
+        in operator_runbook_text
+    )
+
+
+def test_operator_runbook_documents_measurement_context_emission(
+    operator_runbook_text: str,
+) -> None:
+    assert "measurement_context" in operator_runbook_text
+    assert "informational_only" in operator_runbook_text
+    assert "uncontended_distinct_host" in operator_runbook_text
+    assert "not production SLAs" in operator_runbook_text
+
+
 def test_operator_runbook_required_topics(operator_runbook_text: str) -> None:
     required_phrases = [
         "LLM failure recovery",
@@ -122,6 +158,38 @@ def test_contracts_references_schemas_and_throughput() -> None:
     assert "schemas/org_config_snapshot.json" in text
     assert "benchmarks/serialized_path.py" in text
     assert "docs/operator_runbook.md" in text
+
+
+def test_contracts_documents_feed_v2_boundaries() -> None:
+    text = CONTRACTS.read_text(encoding="utf-8")
+    assert "append-only JSONL" in text
+    for phrase in (
+        "no rotation machinery",
+        "feed segment registry",
+        "consumer cursor registration",
+        "multi-feed",
+    ):
+        assert phrase in text.lower(), f"missing feed boundary phrase: {phrase}"
+
+
+def test_operator_runbook_documents_consumer_residual_risk_detail(
+    operator_runbook_text: str,
+) -> None:
+    assert "Non-compliant consumer residual risk" in operator_runbook_text
+    assert "consumer-local policy" in operator_runbook_text.lower()
+    assert "never-contain addition after emission" in operator_runbook_text
+    assert "reference verifier implements §10 items 1" in operator_runbook_text
+
+
+def test_delivery_backlog_promotes_feed_roadmap_items() -> None:
+    backlog = (DOCS / "proposals" / "delivery_backlog.md").read_text(encoding="utf-8")
+    assert (
+        "Feed segment registry, rotation machinery, consumer cursor registration"
+        in backlog
+    )
+    assert "Multi-feed deployments and `revocation_feed_id` on directives" in backlog
+    assert "§10.6 local consumer policy check" in backlog
+    assert "consumer-owned" in backlog.lower()
 
 
 def test_generated_schema_index_files_exist() -> None:

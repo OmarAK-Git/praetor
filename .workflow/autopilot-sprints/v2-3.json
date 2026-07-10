@@ -1,0 +1,351 @@
+{
+  "sprint_id": "v2-3",
+  "gate_item_id": "v2-gate-3-exit",
+  "prerequisite_done": [
+    "v2-gate-2-exit"
+  ],
+  "items": [
+    {
+      "id": "v2-017-prod-state-init",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-2-exit"
+      ],
+      "goal": "V2-017 — Production state initialization guard: open_production_state_store under held singleton creates or asserts all required policy tables without manual init_* calls.",
+      "scope": "Production startup table initialization only. Do not run V2 Gate 3 exit.",
+      "files_allowed": [
+        "src/praetor/state/store.py",
+        "src/praetor/runtime/startup.py",
+        "src/praetor/policy/state.py",
+        "tests/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "open_production_state_store under a held singleton creates or asserts all required policy tables.",
+        "Older additive DB fixtures get new tables through CREATE TABLE IF NOT EXISTS where allowed.",
+        "Incompatible schema version still rejects startup.",
+        "The verifier checks only V2-017 acceptance, not V2 Gate 3 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/ -q -k \"production_state or state_store or startup or policy_state\""
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-017-prod-state-init",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-018-revocation-feed",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-2-exit"
+      ],
+      "goal": "V2-018 — Revocation supersession and feed verifiability: expired directive re-issue matches owner decision; feed supports consumer supersession verification or documents limitation.",
+      "scope": "Revocation, feed projection, and consumer verification only. Do not run V2 Gate 3 exit.",
+      "files_allowed": [
+        "src/praetor/containment/lifecycle.py",
+        "src/praetor/containment/revocation.py",
+        "src/praetor/config/state.py",
+        "src/praetor/revocation/exporter.py",
+        "consumer_sdk/reference_verifier.py",
+        "docs/contracts.md",
+        "tests/containment/",
+        "tests/consumer_sdk/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Expired directive re-issue behavior matches the owner decision (DEC-060).",
+        "Expired-unrevoked outstanding rows do not create duplicate-suppression ambiguity.",
+        "Feed records expose enough information for consumers to verify supersession chains, or limitation is documented as consumer-local.",
+        "The verifier checks only V2-018 acceptance, not V2 Gate 3 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/containment/ tests/consumer_sdk/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-018-revocation-feed",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-021-evidence-id",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-2-exit"
+      ],
+      "goal": "V2-021 — Evidence ID contract pin: docs/contracts.md defines evidence_id preimage; exact test vector pins one known evidence_id.",
+      "scope": "Evidence ID contract and hashing only. Do not run V2 Gate 3 exit.",
+      "files_allowed": [
+        "docs/contracts.md",
+        "src/praetor/hashing/domains.py",
+        "src/praetor/correlation/ids.py",
+        "tests/hashing/",
+        "tests/correlation/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "docs/contracts.md defines evidence_id preimage, domain constant, and input ordering.",
+        "Exact test vector pins one known evidence_id.",
+        "Domain literal isolation check still passes.",
+        "DEC-051 is no longer an open doc decision.",
+        "The verifier checks only V2-021 acceptance, not V2 Gate 3 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/hashing/ tests/correlation/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-021-evidence-id",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-022-sid-normalizer",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-2-exit"
+      ],
+      "goal": "V2-022 — SID and normalizer conformance: SID validation vectors or documented waiver; malformed domain-separator accounts set ambiguity_flag=true in test helpers.",
+      "scope": "SID/normalizer conformance only. Do not run V2 Gate 3 exit.",
+      "files_allowed": [
+        "src/praetor/policy/identity.py",
+        "src/praetor/correlation/",
+        "tests/evidence/",
+        "tests/correlation/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "SID format validation has pass/fail vectors or a documented v1 waiver.",
+        "Future Windows normalizer test helpers require malformed domain-separator accounts to set ambiguity_flag=true.",
+        "Existing Sysmon and Security behavior stays pinned.",
+        "The verifier checks only V2-022 acceptance, not V2 Gate 3 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evidence/ tests/correlation/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-022-sid-normalizer",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-019-ledger-feed-floor",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-017-prod-state-init"
+      ],
+      "goal": "V2-019 — Ledger tip anchor and feed floor hardening: runbook documents tail-truncation; feed exporter reconciles metadata floor against on-disk JSONL.",
+      "scope": "Ledger/feed integrity limits and operator visibility only. Do not run V2 Gate 3 exit.",
+      "files_allowed": [
+        "src/praetor/ledger/",
+        "src/praetor/revocation/exporter.py",
+        "docs/contracts.md",
+        "docs/operator_runbook.md",
+        "tests/ledger/",
+        "tests/revocation/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Runbook documents tail-truncation limitation and an out-of-band tip-anchor procedure.",
+        "Optional verifier hook compares current ledger tip against an operator-supplied anchor.",
+        "Feed exporter reconciles metadata floor against the on-disk JSONL artifact and marks stale metadata unhealthy.",
+        "The verifier checks only V2-019 acceptance, not V2 Gate 3 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/ledger/ tests/revocation/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-019-ledger-feed-floor",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-020-metrics-completeness",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-017-prod-state-init",
+        "v2-016-fault-flag-guard"
+      ],
+      "goal": "V2-020 — Metrics production completeness: feed export lag on completion; record_llm_failure uses only LLM_FAILURE_FAULT_FLAGS; metrics thread-safety documented or guarded.",
+      "scope": "Metrics wiring and production call sites only. Do not run V2 Gate 3 exit.",
+      "files_allowed": [
+        "src/praetor/metrics/",
+        "src/praetor/engine/orchestrator.py",
+        "src/praetor/revocation/exporter.py",
+        "evals/harness.py",
+        "evals/scenarios/",
+        "docs/operator_runbook.md",
+        "tests/metrics/",
+        "tests/evals/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Feed export lag is recorded on export completion, not guessed at intake.",
+        "record_llm_failure production call sites pass only LLM_FAILURE_FAULT_FLAGS.",
+        "MetricsCollector thread-safety is documented as single-writer or guarded with locking and a concurrency test.",
+        "The verifier checks only V2-020 acceptance, not V2 Gate 3 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/metrics/ tests/evals/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-020-metrics-completeness",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-023-scope-guard",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-021-evidence-id",
+        "v2-016-fault-flag-guard"
+      ],
+      "goal": "V2-023 — Contract scope guard and generated artifact hygiene: scope guard allowlist strict; generators expose --check and --write.",
+      "scope": "Scope guard and artifact hygiene only. Do not run V2 Gate 3 exit.",
+      "files_allowed": [
+        "tests/contracts/test_scope_guard.py",
+        "schemas/",
+        "tools/",
+        "docs/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Scope guard allowlist covers sanctioned V2 docs and source packages only.",
+        "Generated schema artifacts remain deterministic after schema changes.",
+        "Any generator touched by V2 exposes --check and --write where applicable.",
+        "The verifier checks only V2-023 acceptance, not V2 Gate 3 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/contracts/test_scope_guard.py -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-023-scope-guard",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-gate-3-exit",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-017-prod-state-init",
+        "v2-018-revocation-feed",
+        "v2-019-ledger-feed-floor",
+        "v2-020-metrics-completeness",
+        "v2-021-evidence-id",
+        "v2-022-sid-normalizer",
+        "v2-023-scope-guard"
+      ],
+      "goal": "V2 Gate 3 exit (PASS-only): production hardening sprint complete per docs/proposals/v2_implementation_plan.md § V2 Gate 3.",
+      "scope": "Full V2 Gate 3 exit verification only. No new implementation; confirm pass criteria for V2-017 through V2-023.",
+      "files_allowed": [
+        ".workflow/v2-gate-3-exit/",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md",
+        "memory-bank/tasks.md"
+      ],
+      "acceptance_criteria": [
+        "Production startup initializes required tables (V2-017).",
+        "Revocation/feed semantics are consumer-verifiable (V2-018).",
+        "Ledger/feed integrity limits are guarded or operator-visible (V2-019).",
+        "Metrics are wired from real completion points (V2-020).",
+        "Evidence IDs are contract-pinned (V2-021).",
+        "SID/normalizer conformance is tested (V2-022).",
+        "Scope/schema guards remain strict (V2-023).",
+        "Full pytest, ruff, and mypy pass."
+      ],
+      "verification": {
+        "scope": "phase_exit",
+        "commands": [
+          "pytest -q",
+          "ruff check .",
+          "mypy ."
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "skeptic-verifier",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-gate-3-exit",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "run_mode": "chat_gate"
+    }
+  ]
+}

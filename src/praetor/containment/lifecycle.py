@@ -24,6 +24,26 @@ if TYPE_CHECKING:
     from praetor.policy.containment_policy import ContainmentTarget
 
 
+def directive_is_outstanding_by_expiry(
+    directive: ContainmentDirective,
+    *,
+    now: datetime | None = None,
+) -> bool:
+    """True when ``expires_at`` is still in the future (DEC-060 outstanding gate)."""
+    moment = now or datetime.now(UTC)
+    return directive.expires_at > moment
+
+
+def validate_expired_reissue_carve_out(directive: ContainmentDirective) -> None:
+    """Fresh re-issue after natural expiry must not link supersession (DEC-060 §4.2)."""
+    if directive.supersedes_directive_id is not None:
+        msg = (
+            "expired-directive fresh re-issue must not set supersedes_directive_id "
+            "(DEC-060 §4.2)"
+        )
+        raise ValueError(msg)
+
+
 def build_proposed_directive_in_transaction(
     conn: sqlite3.Connection,
     *,

@@ -17,7 +17,6 @@ import argparse
 import json
 import os
 import sys
-from pathlib import Path
 
 import dream_lib as dl
 from compaction import COMPACTION_SCHEMA, _build_compaction_prompt
@@ -34,7 +33,7 @@ GROUND_TRUTH_PAIRS = [
 
 
 def _make_synthetic_playbook() -> str:
-    """Return a playbook text where the superseded ground-truth entries are re-activated.
+    """Return a playbook text with superseded ground-truth entries re-activated.
 
     We clone the real playbook, flip the three superseded entries back to active,
     and remove their superseded-by markers so the compaction sees them as live
@@ -64,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--verbose", action="store_true")
     args = ap.parse_args(argv)
 
-    print(f"building synthetic playbook with V2-003 pairs re-activated ...")
+    print("building synthetic playbook with V2-003 pairs re-activated ...")
     synthetic_text = _make_synthetic_playbook()
 
     # Verify we re-activated them correctly
@@ -87,7 +86,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     print(f"  cost: ${cost:.4f}")
 
-    proposed = {c["superseded_id"]: c["canonical_id"] for c in data.get("compactions", [])}
+    proposed = {
+        c["superseded_id"]: c["canonical_id"]
+        for c in data.get("compactions", [])
+    }
     if args.verbose:
         for sup, can in proposed.items():
             print(f"  proposed: {sup} -> {can}")

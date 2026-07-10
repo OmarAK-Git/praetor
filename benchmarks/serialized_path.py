@@ -21,6 +21,8 @@ target for planning visibility only.
 
 from __future__ import annotations
 
+import os
+import platform
 import time
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -66,6 +68,36 @@ PRODUCTION_MEASURED_SUBSYSTEMS: tuple[str, ...] = (
 # Back-compat alias for tests referencing the old name.
 MEASURED_SUBSYSTEMS = PRODUCTION_MEASURED_SUBSYSTEMS
 
+DEFAULT_BENCHMARK_SCENARIO = "uncontended_distinct_host"
+
+
+@dataclass(frozen=True)
+class BenchmarkMeasurementContext:
+    """Hardware and scenario metadata emitted with every benchmark result."""
+
+    scenario: str
+    platform: str
+    machine: str
+    processor: str
+    cpu_count: int | None
+    python_version: str
+    informational_only: bool = True
+
+
+def collect_benchmark_measurement_context(
+    *,
+    scenario: str = DEFAULT_BENCHMARK_SCENARIO,
+) -> BenchmarkMeasurementContext:
+    """Capture local hardware and scenario context for benchmark interpretation."""
+    return BenchmarkMeasurementContext(
+        scenario=scenario,
+        platform=platform.system(),
+        machine=platform.machine(),
+        processor=platform.processor() or "unknown",
+        cpu_count=os.cpu_count(),
+        python_version=platform.python_version(),
+    )
+
 
 @dataclass(frozen=True)
 class SerializedPathBenchmarkResult:
@@ -79,6 +111,7 @@ class SerializedPathBenchmarkResult:
     meets_sustained_target: bool
     burst_separately_measured: bool
     meets_burst_target_informational: bool
+    measurement_context: BenchmarkMeasurementContext
 
 
 def _host_bundle(*, host_id: str, moment: datetime) -> EvidenceBundle:
@@ -142,11 +175,13 @@ def benchmark_result_from_timing(
     elapsed: float,
     target_sustained: int,
     target_burst: int,
+    measurement_context: BenchmarkMeasurementContext | None = None,
 ) -> SerializedPathBenchmarkResult:
     """Build a result from known timing (used by tests and recorded sample runs)."""
     if elapsed <= 0:
         elapsed = 1e-9
     sustained_rate = (operations / elapsed) * 60.0
+    context = measurement_context or collect_benchmark_measurement_context()
     return SerializedPathBenchmarkResult(
         operations=operations,
         elapsed_seconds=elapsed,
@@ -156,6 +191,7 @@ def benchmark_result_from_timing(
         meets_sustained_target=sustained_rate >= float(target_sustained),
         burst_separately_measured=BURST_SEPARATELY_MEASURED_V1,
         meets_burst_target_informational=sustained_rate >= float(target_burst),
+        measurement_context=context,
     )
 
 

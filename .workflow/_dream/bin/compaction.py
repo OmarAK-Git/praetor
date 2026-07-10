@@ -34,7 +34,6 @@ import json
 import os
 import subprocess
 import sys
-from pathlib import Path
 
 import conservation_check
 import dream_lib as dl
@@ -56,11 +55,15 @@ COMPACTION_SCHEMA: dict = {
                 "properties": {
                     "superseded_id": {
                         "type": "string",
-                        "description": "ID of the weaker/redundant entry to mark superseded",
+                        "description": (
+                            "ID of the weaker/redundant entry to mark superseded"
+                        ),
                     },
                     "canonical_id": {
                         "type": "string",
-                        "description": "ID of the surviving canonical entry (must already exist)",
+                        "description": (
+                            "ID of the surviving canonical entry (must already exist)"
+                        ),
                     },
                     "rationale": {"type": "string"},
                 },
@@ -117,7 +120,10 @@ def apply_compactions(
             warnings.append(f"canonical_id {can_id!r} not found in playbook")
             continue
         if sup_entry.status == "superseded":
-            warnings.append(f"{sup_id} already superseded (by {sup_entry.superseded_by}) — skipping")
+            warnings.append(
+                f"{sup_id} already superseded "
+                f"(by {sup_entry.superseded_by}) — skipping"
+            )
             continue
 
         sup_entry.status = "superseded"
@@ -131,7 +137,10 @@ def apply_compactions(
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(
-        description="Compact the playbook: detect and propose near-duplicate supersessions."
+        description=(
+            "Compact the playbook: detect and propose near-duplicate "
+            "supersessions."
+        )
     )
     ap.add_argument("--model", default=DEFAULT_MODEL)
     ap.add_argument(
@@ -181,7 +190,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  proposed {len(superseded)} supersession(s): {superseded or '(none)'}")
     print(f"  cost: ${cost:.4f}")
     if data.get("notes"):
-        notes = str(data["notes"]).strip()[:300].encode("ascii", errors="replace").decode("ascii")
+        raw_notes = str(data["notes"]).strip()[:300]
+        notes = raw_notes.encode("ascii", errors="replace").decode("ascii")
         print(f"  model notes: {notes}")
     for w in warnings:
         print(f"  warning: {w}")

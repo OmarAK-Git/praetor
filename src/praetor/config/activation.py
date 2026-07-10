@@ -2,13 +2,23 @@
 
 from __future__ import annotations
 
+import copy
+import tempfile
 from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 
 from praetor.auth.verifier import (
     TokenVerifier,
     authenticate_org_config_activation,
     verified_record_identity,
+)
+from praetor.codification.statute_curation import (
+    StatuteCurationActivationAudit,
+    StatuteCurationWorkflow,
+    activation_ready_config,
+    render_proposed_statute_yaml,
+    with_activation_audit,
 )
 from praetor.config.errors import ActivationError, PreflightError
 from praetor.config.health_emit import (
@@ -106,3 +116,70 @@ def activate_org_config(
         emitted_alert_ids=emitted,
         health_alert_batch_id=batch_id,
     )
+
+
+def promote_statute_curation(
+    store: StateStore,
+    workflow: StatuteCurationWorkflow,
+    *,
+    token: str | None,
+    verifier: TokenVerifier,
+    output_path: Path | None = None,
+    activation_ready: bool = True,
+) -> tuple[StatuteCurationWorkflow, ActivationResult]:
+    """SOC-lead promotion: full preflight activation with workflow audit trail."""
+    principal = authenticate_org_config_activation(token, verifier)
+    reviewer = verified_record_identity(principal)
+    if workflow.reviewer is not None and workflow.reviewer != reviewer:
+        msg = (
+            "workflow reviewer does not match authenticated SOC lead "
+            f"({workflow.reviewer!r} != {reviewer!r})"
+        )
+        raise ActivationError(PreflightError("reviewer_mismatch", msg))
+
+    config_document = (
+        activation_ready_config(workflow.proposed_config)
+        if activation_ready
+        else copy.deepcopy(workflow.proposed_config)
+    )
+    yaml_text = render_proposed_statute_yaml(config_document)
+
+    if output_path is not None:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(yaml_text, encoding="utf-8")
+        config_path = output_path
+        cleanup_path = False
+    else:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=".yaml",
+            delete=False,
+            encoding="utf-8",
+        ) as handle:
+            handle.write(yaml_text)
+            config_path = Path(handle.name)
+        cleanup_path = True
+
+    try:
+        activation = activate_org_config(
+            store,
+            config_path,
+            token=token,
+            verifier=verifier,
+        )
+    finally:
+        if cleanup_path:
+            config_path.unlink(missing_ok=True)
+
+    audit = StatuteCurationActivationAudit(
+        workflow_id=workflow.workflow_id,
+        reviewer=reviewer,
+        snapshot_hash=activation.snapshot_hash,
+        activated_at=datetime.now(UTC),
+        revoked_directive_ids=tuple(activation.revoked_directive_ids),
+        retired_emergency_entry_ids=tuple(activation.retired_emergency_entry_ids),
+        emitted_alert_ids=tuple(activation.emitted_alert_ids),
+        health_alert_batch_id=activation.health_alert_batch_id,
+    )
+    updated = with_activation_audit(workflow, audit)
+    return updated, activation

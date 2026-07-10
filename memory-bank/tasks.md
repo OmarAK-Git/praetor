@@ -24,8 +24,30 @@ Index of `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints
 | V2-012 | Default Action Primitive | V2-2 | **complete** | V2-001, V2-005, V2-006 | L |
 | V2-013 | Default-Deny or Configurable Posture Flip | V2-2 | **complete** | V2-012 | L |
 | V2-014 | Correlator Host Isolation | V2-2 | **complete** | V2-011 | L |
+| V2-015 | Gate Target Ownership Guard | V2-2 | **complete** | V2-011, V2-014 | M |
+| V2-016 | Static Policy Fault-Flag Guard | V2-2 | **complete** | V2-011, V2-015 | M |
+| V2-017 | Production State Initialization Guard | V2-3 | **complete** | V2 Gate 2 | M |
+| V2-018 | Revocation Supersession and Feed Verifiability | V2-3 | **complete** | V2 Gate 2 | L |
+| V2-019 | Ledger Tip Anchor and Feed Floor Hardening | V2-3 | **complete** | V2-017 | L |
+| V2-020 | Metrics Production Completeness | V2-3 | **complete** | V2-017, V2-016 | L |
+| V2-021 | Evidence ID Contract Pin | V2-3 | **complete** | V2 Gate 2 | M |
+| V2-022 | SID and Normalizer Conformance | V2-3 | **complete** | V2 Gate 2 | M |
+| V2-023 | Contract Scope Guard and Generated Artifact Hygiene | V2-3 | **complete** | V2-021, V2-016 | M |
+| V2-024 | Account Containment Production Enablement | V2-4 | **complete** | V2 Gate 3, V2-011, V2-016, V2-022 | L |
+| V2-025 | All Containment Through PolicyGate | V2-4 | **complete** | V2-024 | M |
+| V2-026 | Org-Config Numeric Rate Ceilings | V2-4 | **complete** | V2 Gate 3, V2-012 | M |
+| V2-027 | Org-Config Sweep CLI | V2-4 | **complete** | V2 Gate 3 | M |
+| V2-028 | Real Vertex Provider Implementation | V2-4 | **complete** | V2 Gate 3 | L |
+| V2-029 | Detection and Splunk Demo Durability | V2-4 | **complete** | V2 Gate 3 | M |
+| V2-030 | Benchmark Burst Measurement and Runbook Pins | V2-4 | **complete** | V2 Gate 3, V2-020 | M |
+| V2-031 | Consumer Policy and Feed Roadmap Boundary | V2-4 | **complete** | V2-018, V2-019 | M |
+| V2-032 | Progressive Authorization Reporting | V2-5 | **complete** | V2-020, V2-026 | L |
+| V2-033 | Judgment Prompt Exemplar Slot | V2-5 | **complete** | — | M |
+| V2-034 | Similar-Case Retrieval | V2-5 | **complete** | V2-032, V2-033 | L |
+| V2-035 | Statute Curation Workflow | V2-5 | **complete** | V2-027, V2-032 | L |
+| V2-036 | Eval Regression Locking Discipline | V2-5 | **complete** | V2-034, V2-035 | M |
 
-**Next up:** V2-015 (Gate 2); **V2 Gate 1 closed**; Gate 2 in progress.
+**Next up:** V2 plan queue drained through Gate 5. Autopilot queue has no remaining pending items after `v2-gate-5-exit` **done**.
 
 Full task definitions, tests-first criteria, file paths, and done-when gates: **`docs/proposals/v2_implementation_plan.md`**.
 
@@ -108,7 +130,7 @@ Full task definitions, tests-first criteria, file paths, and done-when gates: **
 - Proposed org-config sweep artifacts remain non-activatable.
 - Marker-gated tests for real providers / live Splunk; fixture-backed tests in default suite.
 
-## V2 — complete (Gate 0 + Gate 1 + V2-011 + V2-012)
+## V2 — complete (Gate 0 + Gate 1 + Gate 2)
 
 | ID | Task | Evidence |
 |---|---|---|
@@ -126,6 +148,9 @@ Full task definitions, tests-first criteria, file paths, and done-when gates: **
 | V2-012 | Default Action Primitive | `.workflow/V2-012/verification.md` — `default_action` schema + preflight + policy fallback; pytest 834 |
 | V2-013 | Default-Deny or Configurable Posture Flip | `.workflow/V2-013/verification.md` — explicit allowlist posture; eval harness 31/31; pytest 836 |
 | V2-014 | Correlator Host Isolation | `.workflow/V2-014/verification.md` — anchor-host filter; xfail removed; pytest 842 |
+| V2-015 | Gate Target Ownership Guard | `.workflow/v2-015-gate-target/results/verifier-result.md` — `resolved_target` ownership; AG-0080 enforced; scoped pytest 125 |
+| V2-016 | Static Policy Fault-Flag Guard | `.workflow/v2-016-fault-flag-guard/results/verifier-result.md` — literals ⊆ OutcomeMatrixFaultFlag; edict flag/SFE validation; scoped pytest 208 |
+| V2 Gate 2 exit | Authorization Rewire phase exit | `.workflow/v2-gate-2-exit/results/verifier-result-final.md` — full pytest 856 / ruff clean / mypy clean (122 files) |
 
 ## Done (V1 — recent)
 

@@ -114,7 +114,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  superseded {len(superseded)}: {superseded or '(none)'}")
     print(f"  cost: ${cost:.4f}")
     if data.get("notes"):
-        notes = str(data["notes"]).strip()[:300].encode("ascii", errors="replace").decode("ascii")
+        raw_notes = str(data["notes"]).strip()[:300]
+        notes = raw_notes.encode("ascii", errors="replace").decode("ascii")
         print(f"  model notes: {notes}")
     for w in warnings:
         print(f"  warning: {w}")

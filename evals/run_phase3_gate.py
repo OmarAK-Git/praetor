@@ -191,27 +191,33 @@ def check_identity_compliance_evidence(
     )
 
 
-def check_account_containment_prerequisite() -> Phase3CheckResult:
+def check_account_containment_prerequisite(
+    *,
+    repo_root: Path = REPO_ROOT,
+) -> Phase3CheckResult:
+    identity = check_identity_compliance_evidence(repo_root=repo_root)
+    if not identity.passed:
+        return Phase3CheckResult(
+            name="account_containment_prerequisite",
+            passed=False,
+            errors=identity.errors,
+        )
     doc = load_org_config_source(EXAMPLE_CONFIG).document
     doc = dict(doc)
     doc["account_auto_contain_enabled"] = True
     try:
         run_preflight(doc, verbatim_text="phase3-gate-account-prerequisite")
     except PreflightError as exc:
-        if exc.code == "account_containment_prerequisite":
-            return Phase3CheckResult(
-                name="account_containment_prerequisite",
-                passed=True,
-            )
         return Phase3CheckResult(
             name="account_containment_prerequisite",
             passed=False,
-            errors=(f"unexpected preflight code: {exc.code}",),
+            errors=(
+                f"account_auto_contain_enabled=true rejected at preflight: {exc.code}",
+            ),
         )
     return Phase3CheckResult(
         name="account_containment_prerequisite",
-        passed=False,
-        errors=("account_auto_contain_enabled=true must be rejected at preflight",),
+        passed=True,
     )
 
 

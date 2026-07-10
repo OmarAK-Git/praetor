@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+import subprocess
+import sys
+from pathlib import Path
 from typing import Any
 
 from pydantic import ValidationError
@@ -32,6 +35,34 @@ from praetor.config.snapshot import (
 )
 from praetor.contracts.org_config import OrgConfigSnapshot
 from praetor.contracts.org_config_sections import ContainmentPolicy, ContainmentRule
+
+_REPO_ROOT = Path(__file__).resolve().parents[3]
+_IDENTITY_COMPLIANCE_TEST = (
+    _REPO_ROOT / "tests" / "correlation" / "test_correlator_identity_compliance.py"
+)
+
+# DEC-029 default preserved when org config omits explicit ceilings (V2-026).
+DEFAULT_RATE_LIMIT_SCOPE_CEILING = 1
+
+
+def _identity_gates_satisfied() -> bool:
+    """Return whether local deterministic identity compliance tests pass."""
+    if not _IDENTITY_COMPLIANCE_TEST.is_file():
+        return False
+    completed = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "pytest",
+            "-q",
+            str(_IDENTITY_COMPLIANCE_TEST.relative_to(_REPO_ROOT)),
+        ],
+        cwd=_REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return completed.returncode == 0
 
 
 def _require_bool(value: Any, *, field: str) -> bool:
@@ -65,10 +96,10 @@ def apply_field_defaults(document: dict[str, Any]) -> dict[str, Any]:
             doc["account_auto_contain_enabled"],
             field="account_auto_contain_enabled",
         )
-    if doc["account_auto_contain_enabled"]:
+    if doc["account_auto_contain_enabled"] and not _identity_gates_satisfied():
         raise PreflightError(
             "account_containment_prerequisite",
-            "account_auto_contain_enabled is not permitted in v1 org config",
+            "account_auto_contain_enabled requires Phase 3 identity compliance gates",
         )
 
     feed = doc["revocation_feed_policy"]
@@ -224,6 +255,33 @@ def _validate_rate_limit_scopes(policy: Any) -> None:
             "invalid_rate_limits",
             f"rate_limit_policy missing scopes: {sorted(missing)}",
         )
+    _validate_rate_limit_ceilings(policy)
+
+
+def _validate_rate_limit_ceilings(policy: dict[str, Any]) -> None:
+    ceilings = policy.get("ceilings")
+    if ceilings is None:
+        policy["ceilings"] = {
+            scope: DEFAULT_RATE_LIMIT_SCOPE_CEILING for scope in sorted(RATE_LIMIT_SCOPES)
+        }
+        return
+    if not isinstance(ceilings, dict):
+        raise PreflightError("invalid_rate_limits", "rate_limit_policy.ceilings must be a mapping")
+    unknown = set(ceilings.keys()) - RATE_LIMIT_SCOPES
+    if unknown:
+        raise PreflightError(
+            "invalid_rate_limits",
+            f"unknown rate_limit ceiling scope: {sorted(unknown)!r}",
+        )
+    for scope in RATE_LIMIT_SCOPES:
+        if scope not in ceilings:
+            ceilings[scope] = DEFAULT_RATE_LIMIT_SCOPE_CEILING
+        else:
+            _require_positive_int(
+                ceilings[scope],
+                field=f"rate_limit_policy.ceilings.{scope}",
+                code="invalid_rate_limits",
+            )
 
 
 def _validate_containment_policy(policy: Any) -> None:

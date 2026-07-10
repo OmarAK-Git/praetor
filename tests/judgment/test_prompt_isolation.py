@@ -25,9 +25,15 @@ from praetor.engine.skeleton import (
 )
 from praetor.judgment.excerpt import (
     MAX_PROMPT_EXCERPT_CHARS,
+    MAX_PROMPT_EXEMPLAR_CHARS,
+    MAX_PROMPT_EXEMPLARS,
     build_prompt_excerpt_set,
+    build_prompt_exemplar_block,
 )
-from praetor.judgment.prompt import build_judgment_prompt_payload
+from praetor.judgment.prompt import (
+    build_judgment_prompt_payload,
+    build_judgment_prompt_payload_from_excerpt_set,
+)
 from praetor.judgment.provider import JudgmentRequest, ProviderProbeResult
 from praetor.state.store import open_state_store
 
@@ -190,6 +196,114 @@ def test_engine_provider_request_uses_prompt_excerpt_set_only(tmp_path) -> None:
         assert "facts" not in payload
     finally:
         store.close()
+
+
+def _exemplar_records() -> list[dict[str, Any]]:
+    long_summary = "case-head-" + ("X" * 500) + "-case-tail"
+    return [
+        {
+            "exemplar_id": "ex-1",
+            "source_case_id": "CASE-CONFIRMED-001",
+            "summary": "Human-confirmed benign admin tooling pattern.",
+            "disposition": "close_benign",
+        },
+        {
+            "exemplar_id": "ex-2",
+            "source_case_id": "CASE-CONFIRMED-002",
+            "summary": long_summary,
+            "disposition": "escalate",
+        },
+    ]
+
+
+def test_prompt_payload_omits_exemplar_block_when_absent() -> None:
+    payload = build_judgment_prompt_payload(
+        evidence_facts=_evidence_facts(),
+        evidence_bundle_hash="bundle-hash",
+        org_config_snapshot_hash="snapshot-hash",
+        org_config_verbatim="containment_policy:\n  default: escalate\n",
+    )
+
+    assert "prompt_exemplar_block" not in payload
+    assert "exemplar_scope" not in _serialized(payload["instructions"])
+
+
+def test_prompt_exemplar_block_bounded_and_auditable() -> None:
+    block = build_prompt_exemplar_block(_exemplar_records())
+
+    assert block is not None
+    assert len(block.exemplars) == 2
+    assert block.exemplars[0].exemplar_id == "ex-1"
+    assert block.exemplars[0].source_case_id == "CASE-CONFIRMED-001"
+    assert block.exemplars[0].disposition == "close_benign"
+    assert block.exemplars[0].incomplete is False
+
+    long_exemplar = block.exemplars[1]
+    assert long_exemplar.incomplete is True
+    assert len(long_exemplar.summary) <= MAX_PROMPT_EXEMPLAR_CHARS
+    marker = OMISSION_RE.search(long_exemplar.summary)
+    assert marker is not None
+
+    capped = build_prompt_exemplar_block(
+        [
+            {
+                "exemplar_id": f"ex-{index}",
+                "source_case_id": f"CASE-{index}",
+                "summary": f"summary-{index}",
+            }
+            for index in range(MAX_PROMPT_EXEMPLARS + 2)
+        ]
+    )
+    assert capped is not None
+    assert len(capped.exemplars) == MAX_PROMPT_EXEMPLARS
+
+
+def test_prompt_exemplar_block_separated_from_cited_evidence() -> None:
+    payload = build_judgment_prompt_payload(
+        evidence_facts=_evidence_facts(),
+        evidence_bundle_hash="bundle-hash",
+        org_config_snapshot_hash="snapshot-hash",
+        org_config_verbatim="containment_policy:\n  default: escalate\n",
+        exemplars=_exemplar_records(),
+    )
+
+    serialized = _serialized(payload)
+    assert payload["evidence_bundle_hash"] == "bundle-hash"
+    assert "prompt_exemplar_block" in payload
+    assert "prompt_excerpt_set" in payload
+    assert payload["prompt_exemplar_block"]["exemplars"][0]["exemplar_id"] == "ex-1"
+    assert "exemplar_id" not in _serialized(payload["prompt_excerpt_set"])
+    assert "Do not cite exemplar_id" in serialized
+    assert "prompt_excerpt_set" in serialized
+
+
+def test_prompt_excerpt_set_unchanged_with_exemplars() -> None:
+    without = build_judgment_prompt_payload(
+        evidence_facts=_evidence_facts(),
+        evidence_bundle_hash="bundle-hash",
+        org_config_snapshot_hash="snapshot-hash",
+        org_config_verbatim="config",
+    )
+    with_exemplars = build_judgment_prompt_payload(
+        evidence_facts=_evidence_facts(),
+        evidence_bundle_hash="bundle-hash",
+        org_config_snapshot_hash="snapshot-hash",
+        org_config_verbatim="config",
+        exemplars=_exemplar_records(),
+    )
+
+    assert without["prompt_excerpt_set"] == with_exemplars["prompt_excerpt_set"]
+    assert without["evidence_bundle_hash"] == with_exemplars["evidence_bundle_hash"]
+
+    excerpt_set = build_prompt_excerpt_set(_evidence_facts())
+    payload_from_set = build_judgment_prompt_payload_from_excerpt_set(
+        excerpt_set=excerpt_set,
+        evidence_bundle_hash="bundle-hash",
+        org_config_snapshot_hash="snapshot-hash",
+        org_config_verbatim="config",
+        exemplar_block=build_prompt_exemplar_block(_exemplar_records()),
+    )
+    assert payload_from_set["prompt_excerpt_set"] == excerpt_set.as_provider_payload()
 
 
 def test_config_budget_blocks_provider_before_prompt_construction(tmp_path) -> None:

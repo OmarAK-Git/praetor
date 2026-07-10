@@ -5,14 +5,59 @@ from __future__ import annotations
 import ast
 import re
 import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
 import pytest
 
+from praetor.contracts.schema_export import SCHEMA_EXPORTS, export_schemas
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SRC = REPO_ROOT / "src" / "praetor"
+SCHEMA_EXPORT_CLI = REPO_ROOT / "tools" / "schema_export.py"
+COMMITTED_SCHEMAS = REPO_ROOT / "schemas"
 
 FORBIDDEN_PACKAGES: tuple[str, ...] = ()
+
+ALLOWED_PACKAGES: frozenset[str] = frozenset(
+    {
+        "alerts",
+        "annotations",
+        "auth",
+        "codification",
+        "config",
+        "containment",
+        "contracts",
+        "correlation",
+        "engine",
+        "evidence",
+        "hashing",
+        "judgment",
+        "ledger",
+        "metrics",
+        "policy",
+        "reporting",
+        "retrieval",
+        "revocation",
+        "runtime",
+        "state",
+        "tickets",
+    }
+)
+
+SANCTIONED_V2_DOC_PATHS: frozenset[str] = frozenset(
+    {
+        "docs/contracts.md",
+        "docs/plan.md",
+        "docs/decisions.md",
+        "docs/operator_runbook.md",
+        "docs/architecture.md",
+        "docs/eval_gates.md",
+        "docs/proposals/delivery_backlog.md",
+        "docs/proposals/v2_hardening.md",
+    }
+)
 
 SQLITE_GUARD = SRC / "state" / "sqlite_guard.py"
 _BARE_BEGIN = re.compile(r"\bBEGIN\b(?!\s+IMMEDIATE\b)", re.IGNORECASE)
@@ -45,31 +90,17 @@ def test_only_expected_top_level_packages() -> None:
     children = {
         p.name for p in SRC.iterdir() if p.is_dir() and not p.name.startswith("_")
     }
-    allowed = {
-        "alerts",
-        "annotations",
-        "auth",
-        "codification",
-        "config",
-        "containment",
-        "contracts",
-        "correlation",
-        "engine",
-        "evidence",
-        "hashing",
-        "judgment",
-        "ledger",
-        "metrics",
-        "policy",
-        "revocation",
-        "runtime",
-        "state",
-        "tickets",
-    }
-    assert children <= allowed, f"unexpected packages: {children - allowed}"
+    assert children == ALLOWED_PACKAGES, (
+        f"package allowlist drift: unexpected={children - ALLOWED_PACKAGES}, "
+        f"missing={ALLOWED_PACKAGES - children}"
+    )
 
 
-def test_docs_changes_limited_to_contracts_md() -> None:
+def test_spec_md_not_sanctioned_doc() -> None:
+    assert "docs/spec.md" not in SANCTIONED_V2_DOC_PATHS
+
+
+def test_docs_changes_limited_to_sanctioned_v2_paths() -> None:
     result = subprocess.run(
         ["git", "diff", "--name-only", "docs/"],
         cwd=REPO_ROOT,
@@ -80,19 +111,8 @@ def test_docs_changes_limited_to_contracts_md() -> None:
     if result.returncode != 0:
         pytest.skip("git not available or not a git repo")
     changed = [line.strip() for line in result.stdout.splitlines() if line.strip()]
-    # Phase 5 operator docs plus sanctioned refinement targets.
-    allowed = {
-        "docs/contracts.md",
-        "docs/plan.md",
-        "docs/decisions.md",
-        "docs/operator_runbook.md",
-        "docs/architecture.md",
-        "docs/eval_gates.md",
-        "docs/proposals/delivery_backlog.md",
-        "docs/proposals/v2_hardening.md",
-    }
-    unexpected = [path for path in changed if path not in allowed]
-    msg = f"only scoped refinement docs may change under docs/: {unexpected}"
+    unexpected = [path for path in changed if path not in SANCTIONED_V2_DOC_PATHS]
+    msg = f"only sanctioned V2 docs may change under docs/: {unexpected}"
     assert unexpected == [], msg
 
 
@@ -107,3 +127,48 @@ def test_no_bare_begin_outside_sqlite_guard() -> None:
     assert violations == [], (
         "bare BEGIN outside sqlite_guard.py:\n" + "\n".join(violations)
     )
+
+
+def test_committed_schemas_match_export() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        export_schemas(out)
+        for _, filename in SCHEMA_EXPORTS:
+            exported = (out / filename).read_bytes()
+            committed = (COMMITTED_SCHEMAS / filename).read_bytes()
+            assert exported == committed, filename
+
+
+def test_schema_export_is_byte_stable() -> None:
+    with tempfile.TemporaryDirectory() as td:
+        out = Path(td)
+        export_schemas(out)
+        first = {p.name: p.read_bytes() for p in out.glob("*.json")}
+        export_schemas(out)
+        second = {p.name: p.read_bytes() for p in out.glob("*.json")}
+    assert first == second
+
+
+def test_schema_export_cli_exposes_check_and_write() -> None:
+    result = subprocess.run(
+        [sys.executable, str(SCHEMA_EXPORT_CLI), "--help"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+    help_text = result.stdout
+    assert "--check" in help_text
+    assert "--write" in help_text
+
+
+def test_schema_export_cli_check_passes() -> None:
+    result = subprocess.run(
+        [sys.executable, str(SCHEMA_EXPORT_CLI), "--check"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr or result.stdout

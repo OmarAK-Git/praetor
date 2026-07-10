@@ -1,0 +1,1388 @@
+{
+  "schema_version": 1,
+  "controller": ".cursor/commands/gsd-autopilot-loop.md",
+  "loop_state": ".workflow/autopilot-loop/state.json",
+  "defaults": {
+    "max_tasks_per_run": "until_queue_empty",
+    "max_retries_per_task": 1,
+    "verification_scope": "task",
+    "phase_gate_verification": "explicit_queue_item_only",
+    "require_fresh_context_verifier": true,
+    "allow_parallel_implementation": false,
+    "implementation_model": "composer-2.5-fast",
+    "verification_model": "claude-opus-4-8-thinking-high",
+    "gate_run_mode": "chat_gate",
+    "active_sprint": "v2-5",
+    "gate_item_id": "v2-gate-5-exit"
+  },
+  "status_values": [
+    "pending",
+    "in_progress",
+    "verifying",
+    "retry",
+    "done",
+    "blocked",
+    "human_needed"
+  ],
+  "task_template": {
+    "id": "v2-015-short-slug",
+    "status": "pending",
+    "tier": "T2",
+    "depends_on": [],
+    "goal": "One sentence user-facing goal, copied verbatim when possible.",
+    "scope": "Short boundary for what this task may change.",
+    "files_allowed": [
+      "relative/path/or/directory"
+    ],
+    "acceptance_criteria": [
+      "Observable outcome that must be true."
+    ],
+    "verification": {
+      "scope": "task",
+      "commands": [
+        "pytest tests/path -q"
+      ],
+      "manual_checks": []
+    },
+    "implementation_agent": "gsd-executor",
+    "verification_agent": "gsd-verifier",
+    "run_dir": ".workflow/v2-015-short-slug",
+    "attempts": 0,
+    "max_retries": 1,
+    "evidence": []
+  },
+  "items": [
+    {
+      "id": "v2-011-host-corroboration",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [],
+      "goal": "V2-011 \u2014 Host auto-contain corroboration floor: host auto_contain requires corroborated cited evidence; insufficient_corroboration fault wired with harness scenario.",
+      "scope": "Host corroboration authorization floor only (completed).",
+      "files_allowed": [
+        "src/praetor/policy/",
+        "src/praetor/evidence/",
+        "evals/",
+        "tests/policy/",
+        "tests/evidence/"
+      ],
+      "acceptance_criteria": [
+        "Host auto_contain with one cited provenance escalates insufficient_corroboration.",
+        "Two distinct approved provenance paths pass only when at least one source is non-attacker-controllable.",
+        "Sole cited ambiguity_flag=true fact cannot authorize host containment.",
+        "Harness scenario covers the new fault flag."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/policy/ tests/evidence/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "gsd-executor",
+      "verification_agent": "gsd-verifier",
+      "run_dir": ".workflow/V2-011",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/V2-011/verification.md"
+      ]
+    },
+    {
+      "id": "v2-012-default-action",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-011-host-corroboration"
+      ],
+      "goal": "V2-012 \u2014 Default action primitive: typed default_action in org config with documented precedence over rule-specific matches.",
+      "scope": "Default action schema and policy fallback only (completed).",
+      "files_allowed": [
+        "src/praetor/contracts/",
+        "src/praetor/config/",
+        "src/praetor/policy/",
+        "configs/",
+        "tests/config/",
+        "tests/policy/"
+      ],
+      "acceptance_criteria": [
+        "Org config accepts typed default_action or owner-approved catch-all rule.",
+        "Rule-specific matches override default with documented precedence.",
+        "Invalid default actions fail preflight."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/config/ tests/policy/ -q -k \"default_action or preflight\""
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "gsd-executor",
+      "verification_agent": "gsd-verifier",
+      "run_dir": ".workflow/V2-012",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/V2-012/verification.md"
+      ]
+    },
+    {
+      "id": "v2-013-posture-flip",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-012-default-action"
+      ],
+      "goal": "V2-013 \u2014 Default-deny or configurable posture flip: no matching rule causes escalation, not allow; walkthrough paths use explicit allow configuration.",
+      "scope": "Default posture flip and example config only (completed).",
+      "files_allowed": [
+        "src/praetor/policy/",
+        "configs/",
+        "evals/scenarios/",
+        "docs/operator_runbook.md",
+        "tests/policy/",
+        "tests/evals/"
+      ],
+      "acceptance_criteria": [
+        "No matching rule/default causes host containment to escalate, not allow.",
+        "confirmed_malicious_sequence and walkthrough paths updated with explicit allow configuration.",
+        "Example config demonstrates intended allowlist posture."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/policy/ tests/evals/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "gsd-executor",
+      "verification_agent": "gsd-verifier",
+      "run_dir": ".workflow/V2-013",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/V2-013/verification.md"
+      ]
+    },
+    {
+      "id": "v2-014-correlator-host-isolation",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-011-host-corroboration"
+      ],
+      "goal": "V2-014 \u2014 Correlator host isolation: anchor-host filter; cross-host in-window noise handled; citation-anchored targeting tests pass.",
+      "scope": "Correlator host isolation only (completed).",
+      "files_allowed": [
+        "src/praetor/correlation/",
+        "evals/correlation_expected/",
+        "tests/correlation/",
+        "tests/evals/",
+        "tests/policy/"
+      ],
+      "acceptance_criteria": [
+        "Strict xfail for cross-host in-window noise resolved or replaced with documented gate-only defense.",
+        "Correlation accuracy scenarios distinguish out-of-window exclusion from in-window incidental noise.",
+        "Citation-anchored target tests continue to pass."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/correlation/ tests/policy/test_citation_anchored_host_targeting.py -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "gsd-executor",
+      "verification_agent": "gsd-verifier",
+      "run_dir": ".workflow/V2-014",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/V2-014/verification.md"
+      ]
+    },
+    {
+      "id": "v2-015-gate-target",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-011-host-corroboration",
+        "v2-014-correlator-host-isolation"
+      ],
+      "goal": "V2-015 \u2014 Gate target ownership guard: intake persists only the target returned by PolicyGate evaluation; static or integration guard fails if orchestrator re-derives directive target from raw bundle facts.",
+      "scope": "Gate target ownership enforcement only. Do not run V2 Gate 2 exit or full-suite verification.",
+      "files_allowed": [
+        "src/praetor/engine/orchestrator.py",
+        "src/praetor/policy/gate.py",
+        "tests/engine/",
+        "tests/policy/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Intake persists only the target returned by PolicyGate evaluation.",
+        "Static or integration guard fails if orchestrator re-derives directive target from raw bundle facts.",
+        "Multi-host noise scenario proves uncited hosts cannot affect directive target.",
+        "AG-0080 is enforced by tests, not only by convention.",
+        "The verifier checks only V2-015 acceptance, not V2 Gate 2 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/engine/ tests/policy/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "gsd-executor",
+      "verification_agent": "gsd-verifier",
+      "run_dir": ".workflow/v2-015-gate-target",
+      "attempts": 1,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-015-gate-target/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "v2-016-fault-flag-guard",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-011-host-corroboration",
+        "v2-015-gate-target"
+      ],
+      "goal": "V2-016 \u2014 Static policy fault-flag guard: policy/engine literal fault flags are a subset of OutcomeMatrixFaultFlag; DecisionEdict rejects invalid fault flag polarity; harness completeness guard covers new flags.",
+      "scope": "Fault-flag static guards and edict validation only. Do not run V2 Gate 2 exit or full-suite verification.",
+      "files_allowed": [
+        "evals/outcome_matrix.py",
+        "src/praetor/contracts/",
+        "src/praetor/engine/edict.py",
+        "tests/contracts/",
+        "tests/policy/",
+        "tests/evals/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Policy/engine literal fault flags are a subset of OutcomeMatrixFaultFlag.",
+        "DecisionEdict construction rejects invalid fault flag or system-fault polarity.",
+        "Harness completeness guard covers newly added flags if any were added.",
+        "Fault-flag drift cannot enter production code silently.",
+        "The verifier checks only V2-016 acceptance, not V2 Gate 2 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/contracts/ tests/policy/ tests/evals/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "gsd-executor",
+      "verification_agent": "gsd-verifier",
+      "run_dir": ".workflow/v2-016-fault-flag-guard",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-016-fault-flag-guard/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "v2-gate-2-exit",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-011-host-corroboration",
+        "v2-012-default-action",
+        "v2-013-posture-flip",
+        "v2-014-correlator-host-isolation",
+        "v2-015-gate-target",
+        "v2-016-fault-flag-guard"
+      ],
+      "goal": "V2 Gate 2 exit (PASS-only): authorization rewire sprint complete per docs/proposals/v2_implementation_plan.md \u00a7 V2 Gate 2.",
+      "scope": "Full V2 Gate 2 exit verification only. No new implementation; confirm pass criteria for V2-011 through V2-016.",
+      "files_allowed": [
+        ".workflow/v2-gate-2-exit/",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md",
+        "memory-bank/tasks.md"
+      ],
+      "acceptance_criteria": [
+        "Host containment requires corroborated cited evidence (V2-011).",
+        "Default authorization posture is explicit (V2-012/V2-013).",
+        "No-rule targets do not contain by omission.",
+        "Correlator/gate target responsibilities are enforced (V2-014, V2-015).",
+        "Fault flags cannot drift outside the Outcome Matrix (V2-016).",
+        "Full pytest, ruff, and mypy pass."
+      ],
+      "verification": {
+        "scope": "phase_exit",
+        "commands": [
+          "pytest -q",
+          "ruff check .",
+          "mypy ."
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "gsd-verifier",
+      "verification_agent": "gsd-verifier",
+      "run_mode": "chat_gate",
+      "run_dir": ".workflow/v2-gate-2-exit",
+      "attempts": 2,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-gate-2-exit/results/verifier-result-final.md",
+        ".workflow/v2-gate-2-exit/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "v2-017-prod-state-init",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-2-exit"
+      ],
+      "goal": "V2-017 \u2014 Production state initialization guard: open_production_state_store under held singleton creates or asserts all required policy tables without manual init_* calls.",
+      "scope": "Production startup table initialization only. Do not run V2 Gate 3 exit.",
+      "files_allowed": [
+        "src/praetor/state/store.py",
+        "src/praetor/runtime/startup.py",
+        "src/praetor/policy/state.py",
+        "tests/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "open_production_state_store under a held singleton creates or asserts all required policy tables.",
+        "Older additive DB fixtures get new tables through CREATE TABLE IF NOT EXISTS where allowed.",
+        "Incompatible schema version still rejects startup.",
+        "The verifier checks only V2-017 acceptance, not V2 Gate 3 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/ -q -k \"production_state or state_store or startup or policy_state\""
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-017-prod-state-init",
+      "attempts": 1,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-017-prod-state-init/results/verifier-result.md",
+        ".workflow/v2-017-prod-state-init/results/lint-remediation-result.md"
+      ]
+    },
+    {
+      "id": "v2-018-revocation-feed",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-2-exit"
+      ],
+      "goal": "V2-018 \u2014 Revocation supersession and feed verifiability: expired directive re-issue matches owner decision; feed supports consumer supersession verification or documents limitation.",
+      "scope": "Revocation, feed projection, and consumer verification only. Do not run V2 Gate 3 exit.",
+      "files_allowed": [
+        "src/praetor/containment/lifecycle.py",
+        "src/praetor/containment/revocation.py",
+        "src/praetor/config/state.py",
+        "src/praetor/revocation/exporter.py",
+        "consumer_sdk/reference_verifier.py",
+        "docs/contracts.md",
+        "tests/containment/",
+        "tests/consumer_sdk/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Expired directive re-issue behavior matches the owner decision (DEC-060).",
+        "Expired-unrevoked outstanding rows do not create duplicate-suppression ambiguity.",
+        "Feed records expose enough information for consumers to verify supersession chains, or limitation is documented as consumer-local.",
+        "The verifier checks only V2-018 acceptance, not V2 Gate 3 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/containment/ tests/consumer_sdk/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-018-revocation-feed",
+      "attempts": 1,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-018-revocation-feed/results/verifier-result.md",
+        ".workflow/v2-018-revocation-feed/results/lint-remediation-result.md"
+      ]
+    },
+    {
+      "id": "v2-021-evidence-id",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-2-exit"
+      ],
+      "goal": "V2-021 \u2014 Evidence ID contract pin: docs/contracts.md defines evidence_id preimage; exact test vector pins one known evidence_id.",
+      "scope": "Evidence ID contract and hashing only. Do not run V2 Gate 3 exit.",
+      "files_allowed": [
+        "docs/contracts.md",
+        "docs/decisions.md",
+        "docs/proposals/delivery_backlog.md",
+        "src/praetor/hashing/domains.py",
+        "src/praetor/correlation/ids.py",
+        "tests/hashing/",
+        "tests/correlation/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "docs/contracts.md defines evidence_id preimage, domain constant, and input ordering.",
+        "Exact test vector pins one known evidence_id.",
+        "Domain literal isolation check still passes.",
+        "DEC-051 is no longer an open doc decision.",
+        "The verifier checks only V2-021 acceptance, not V2 Gate 3 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/hashing/ tests/correlation/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-021-evidence-id",
+      "attempts": 1,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-021-evidence-id/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "v2-022-sid-normalizer",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-2-exit"
+      ],
+      "goal": "V2-022 \u2014 SID and normalizer conformance: SID validation vectors or documented waiver; malformed domain-separator accounts set ambiguity_flag=true in test helpers.",
+      "scope": "SID/normalizer conformance only. Do not run V2 Gate 3 exit.",
+      "files_allowed": [
+        "src/praetor/policy/identity.py",
+        "src/praetor/correlation/",
+        "tests/evidence/",
+        "tests/correlation/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "SID format validation has pass/fail vectors or a documented v1 waiver.",
+        "Future Windows normalizer test helpers require malformed domain-separator accounts to set ambiguity_flag=true.",
+        "Existing Sysmon and Security behavior stays pinned.",
+        "The verifier checks only V2-022 acceptance, not V2 Gate 3 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evidence/ tests/correlation/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-022-sid-normalizer",
+      "attempts": 1,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-022-sid-normalizer/results/verifier-result.md",
+        ".workflow/v2-022-sid-normalizer/results/lint-remediation-result.md"
+      ]
+    },
+    {
+      "id": "v2-019-ledger-feed-floor",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-017-prod-state-init"
+      ],
+      "goal": "V2-019 \u2014 Ledger tip anchor and feed floor hardening: runbook documents tail-truncation; feed exporter reconciles metadata floor against on-disk JSONL.",
+      "scope": "Ledger/feed integrity limits and operator visibility only. Do not run V2 Gate 3 exit.",
+      "files_allowed": [
+        "src/praetor/ledger/",
+        "src/praetor/revocation/exporter.py",
+        "docs/contracts.md",
+        "docs/operator_runbook.md",
+        "tests/ledger/",
+        "tests/revocation/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Runbook documents tail-truncation limitation and an out-of-band tip-anchor procedure.",
+        "Optional verifier hook compares current ledger tip against an operator-supplied anchor.",
+        "Feed exporter reconciles metadata floor against the on-disk JSONL artifact and marks stale metadata unhealthy.",
+        "The verifier checks only V2-019 acceptance, not V2 Gate 3 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/ledger/ tests/revocation/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-019-ledger-feed-floor",
+      "attempts": 1,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-019-ledger-feed-floor/results/verifier-result.md",
+        ".workflow/v2-019-ledger-feed-floor/results/lint-remediation-result.md"
+      ]
+    },
+    {
+      "id": "v2-020-metrics-completeness",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-017-prod-state-init",
+        "v2-016-fault-flag-guard"
+      ],
+      "goal": "V2-020 \u2014 Metrics production completeness: feed export lag on completion; record_llm_failure uses only LLM_FAILURE_FAULT_FLAGS; metrics thread-safety documented or guarded.",
+      "scope": "Metrics wiring and production call sites only. Do not run V2 Gate 3 exit.",
+      "files_allowed": [
+        "src/praetor/metrics/",
+        "src/praetor/engine/orchestrator.py",
+        "src/praetor/revocation/exporter.py",
+        "evals/harness.py",
+        "evals/scenarios/",
+        "docs/operator_runbook.md",
+        "tests/metrics/",
+        "tests/evals/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Feed export lag is recorded on export completion, not guessed at intake.",
+        "record_llm_failure production call sites pass only LLM_FAILURE_FAULT_FLAGS.",
+        "MetricsCollector thread-safety is documented as single-writer or guarded with locking and a concurrency test.",
+        "The verifier checks only V2-020 acceptance, not V2 Gate 3 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/metrics/ tests/evals/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-020-metrics-completeness",
+      "attempts": 1,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-020-metrics-completeness/results/verifier-result.md",
+        ".workflow/v2-020-metrics-completeness/results/lint-remediation-result.md"
+      ]
+    },
+    {
+      "id": "v2-023-scope-guard",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-021-evidence-id",
+        "v2-016-fault-flag-guard"
+      ],
+      "goal": "V2-023 \u2014 Contract scope guard and generated artifact hygiene: scope guard allowlist strict; generators expose --check and --write.",
+      "scope": "Scope guard and artifact hygiene only. Do not run V2 Gate 3 exit.",
+      "files_allowed": [
+        "tests/contracts/test_scope_guard.py",
+        "schemas/",
+        "tools/",
+        "docs/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Scope guard allowlist covers sanctioned V2 docs and source packages only.",
+        "Generated schema artifacts remain deterministic after schema changes.",
+        "Any generator touched by V2 exposes --check and --write where applicable.",
+        "The verifier checks only V2-023 acceptance, not V2 Gate 3 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/contracts/test_scope_guard.py -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-023-scope-guard",
+      "attempts": 1,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-023-scope-guard/results/verifier-result.md",
+        ".workflow/v2-023-scope-guard/results/verifier-result-remediation.md"
+      ]
+    },
+    {
+      "id": "v2-gate-3-exit",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-017-prod-state-init",
+        "v2-018-revocation-feed",
+        "v2-019-ledger-feed-floor",
+        "v2-020-metrics-completeness",
+        "v2-021-evidence-id",
+        "v2-022-sid-normalizer",
+        "v2-023-scope-guard"
+      ],
+      "goal": "V2 Gate 3 exit (PASS-only): production hardening sprint complete per docs/proposals/v2_implementation_plan.md \u00a7 V2 Gate 3.",
+      "scope": "Full V2 Gate 3 exit verification only. No new implementation; confirm pass criteria for V2-017 through V2-023.",
+      "files_allowed": [
+        ".workflow/v2-gate-3-exit/",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md",
+        "memory-bank/tasks.md"
+      ],
+      "acceptance_criteria": [
+        "Production startup initializes required tables (V2-017).",
+        "Revocation/feed semantics are consumer-verifiable (V2-018).",
+        "Ledger/feed integrity limits are guarded or operator-visible (V2-019).",
+        "Metrics are wired from real completion points (V2-020).",
+        "Evidence IDs are contract-pinned (V2-021).",
+        "SID/normalizer conformance is tested (V2-022).",
+        "Scope/schema guards remain strict (V2-023).",
+        "Full pytest, ruff, and mypy pass."
+      ],
+      "verification": {
+        "scope": "phase_exit",
+        "commands": [
+          "pytest -q",
+          "ruff check .",
+          "mypy ."
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "skeptic-verifier",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-gate-3-exit",
+      "attempts": 2,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-gate-3-exit/results/verifier-result-final.md",
+        ".workflow/v2-gate-3-exit/results/verifier-result.md"
+      ],
+      "run_mode": "chat_gate"
+    },
+    {
+      "id": "v2-024-account-containment",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-3-exit",
+        "v2-011-host-corroboration",
+        "v2-016-fault-flag-guard",
+        "v2-022-sid-normalizer"
+      ],
+      "goal": "V2-024 \u2014 Account containment production enablement: account_auto_contain_enabled passes preflight only when identity gates are satisfied; corroborated SID-backed account auto_contain harness scenario passes; disabled configs still escalate account_containment_disabled.",
+      "scope": "Account containment enablement and identity gating only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "src/praetor/config/preflight.py",
+        "src/praetor/policy/gate.py",
+        "evals/",
+        "tests/config/",
+        "tests/policy/",
+        "tests/correlation/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "account_auto_contain_enabled=true passes preflight only when identity gates are satisfied by local deterministic tests.",
+        "Production account auto_contain harness scenario passes with SID-backed, corroborated identity.",
+        "Feature-disabled configs still escalate account_containment_disabled.",
+        "The verifier checks only V2-024 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/config/ tests/policy/ tests/correlation/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-024-account-containment",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-024-account-containment/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "v2-025-policygate-boundary",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-024-account-containment"
+      ],
+      "goal": "V2-025 \u2014 All containment through PolicyGate: no production caller authorizes account or host containment via lower eligibility helpers; static guard catches direct calls; integration tests prove the feature gate cannot be bypassed.",
+      "scope": "PolicyGate authorization boundary enforcement only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "src/praetor/policy/identity.py",
+        "src/praetor/policy/gate.py",
+        "tests/contracts/",
+        "tests/policy/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "No production caller authorizes account or host containment by calling lower eligibility helpers directly.",
+        "Static grep/AST guard catches direct calls to evaluate_account_containment_eligibility outside approved tests/policy code.",
+        "Integration tests prove the feature gate cannot be bypassed.",
+        "The verifier checks only V2-025 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/contracts/ tests/policy/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-025-policygate-boundary",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-025-policygate-boundary/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "v2-026-rate-ceilings",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-3-exit",
+        "v2-012-default-action"
+      ],
+      "goal": "V2-026 \u2014 Org-config numeric rate ceilings: org config declares numeric per-scope ceilings with strict integer validation; gate enforces ceilings for host, subnet, and asset-group scopes; missing/invalid ceilings fail preflight or apply documented defaults consistently.",
+      "scope": "Org-config rate ceilings and enforcement only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "src/praetor/contracts/org_config_sections.py",
+        "src/praetor/config/preflight.py",
+        "src/praetor/policy/rate_limit.py",
+        "tests/config/",
+        "tests/policy/test_rate_limits.py",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Org config declares numeric per-scope ceilings with strict integer validation.",
+        "Gate enforces configured ceilings for host, subnet, and asset-group scopes.",
+        "Missing or invalid ceilings fail preflight, or documented defaults are applied consistently.",
+        "The verifier checks only V2-026 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/config/ tests/policy/test_rate_limits.py -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-026-rate-ceilings",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-026-rate-ceilings/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "v2-027-sweep-cli",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-3-exit"
+      ],
+      "goal": "V2-027 \u2014 Org-config sweep CLI: CLI runs sweep, writes proposed YAML and markdown report, exits non-zero on invalid inputs; proposed artifacts still fail activation preflight; docs state sweep does not infer never-contain, subnet membership, or containment policy.",
+      "scope": "Sweep CLI and operator docs only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "src/praetor/codification/",
+        "docs/operator_runbook.md",
+        "tests/codification/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "CLI runs sweep, writes proposed YAML and markdown report, and exits non-zero on invalid inputs.",
+        "Proposed artifacts still fail activation preflight.",
+        "CLI docs state sweep does not infer never-contain, subnet membership, or containment policy.",
+        "The verifier checks only V2-027 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/codification/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-027-sweep-cli",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-027-sweep-cli/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "v2-028-vertex-provider",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-3-exit"
+      ],
+      "goal": "V2-028 \u2014 Real Vertex provider implementation: Vertex/Gemini provider implements the existing Protocol; canary probe is rate-limited by provider-health breaker; network tests are marker-gated; unavailable/timeout/malformed/refusal map to documented faults.",
+      "scope": "Real provider implementation with deterministic CI only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "src/praetor/judgment/vertex_provider.py",
+        "src/praetor/judgment/provider.py",
+        "tests/judgment/",
+        "evals/real_provider_adversarial.py",
+        "tests/evals/test_real_provider_adversarial.py",
+        "docs/eval_gates.md",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Vertex/Gemini provider implements the existing Protocol.",
+        "Synthetic canary probe is supported and rate-limited by the provider-health breaker.",
+        "Network tests are marker-gated; the default suite uses fakes/mocks.",
+        "Unavailable, timeout, malformed response, and refusal map to documented faults.",
+        "The verifier checks only V2-028 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/judgment/ tests/evals/test_real_provider_adversarial.py -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-028-vertex-provider",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-028-vertex-provider/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "v2-029-detection-splunk",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-3-exit"
+      ],
+      "goal": "V2-029 \u2014 Detection and Splunk demo durability: Sigma matcher set equals SPL matcher set per rule; Splunk saved searches use a fixture-stable window or documented override; live Splunk Free demo test is env-gated; tools/ is in the mypy gate or its exclusion is documented.",
+      "scope": "Detection parity and Splunk demo durability only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "tests/splunk/",
+        "tests/detections/",
+        "tools/spl_match.py",
+        "tools/compile_sigma.py",
+        "splunk/savedsearches.conf",
+        "splunk/README.md",
+        "docs/eval_gates.md",
+        "pyproject.toml",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Sigma matcher set equals SPL matcher set per rule over manifest fixtures.",
+        "Splunk saved searches use a fixture-stable time window or docs require an explicit time-range override.",
+        "Live Splunk Free demo test is env-gated and executable when HEC settings exist.",
+        "tools/ is either in the mypy gate or its exclusion is documented.",
+        "The verifier checks only V2-029 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/detections/ tests/splunk/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-029-detection-splunk",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-029-detection-splunk/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "v2-030-benchmark-runbook",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-3-exit",
+        "v2-020-metrics-completeness"
+      ],
+      "goal": "V2-030 \u2014 Benchmark burst measurement and runbook pins: burst rate measured in a separate window or reported with burst_separately_measured=False; hardware/context metadata always emitted; operator docs numerical claims pinned by doc tests.",
+      "scope": "Benchmark measurement and operator doc pins only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "benchmarks/serialized_path.py",
+        "tests/benchmarks/",
+        "docs/operator_runbook.md",
+        "tests/docs/test_docs.py",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Burst rate is measured in a separate window or reported with an explicit burst_separately_measured=False flag.",
+        "Hardware/context metadata is always emitted with benchmark results.",
+        "Operator docs numerical claims are pinned by doc tests.",
+        "The verifier checks only V2-030 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/benchmarks/ tests/docs/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-030-benchmark-runbook",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-030-benchmark-runbook/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "v2-031-consumer-boundary",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-018-revocation-feed",
+        "v2-019-ledger-feed-floor"
+      ],
+      "goal": "V2-031 \u2014 Consumer policy and feed roadmap boundary: reference verifier documents local consumer policy ownership; JSONL append-only/no-rotation/no-registry boundaries preserved or promoted to roadmap; consumer residual risk appears in operator docs.",
+      "scope": "Consumer verification boundary and feed roadmap docs only. Do not run V2 Gate 4 exit.",
+      "files_allowed": [
+        "consumer_sdk/reference_verifier.py",
+        "docs/contracts.md",
+        "docs/operator_runbook.md",
+        "docs/proposals/delivery_backlog.md",
+        "tests/consumer_sdk/",
+        "tests/docs/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Reference verifier documents local consumer policy ownership for contracts section 10.6.",
+        "JSONL append-only, no rotation, no feed registry, and no multi-feed directives are preserved as V2 boundaries or promoted to explicit roadmap tasks.",
+        "Consumer residual risk appears in operator docs.",
+        "The verifier checks only V2-031 acceptance, not V2 Gate 4 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/consumer_sdk/ tests/docs/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-031-consumer-boundary",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-031-consumer-boundary/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "v2-gate-4-exit",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-024-account-containment",
+        "v2-025-policygate-boundary",
+        "v2-026-rate-ceilings",
+        "v2-027-sweep-cli",
+        "v2-028-vertex-provider",
+        "v2-029-detection-splunk",
+        "v2-030-benchmark-runbook",
+        "v2-031-consumer-boundary"
+      ],
+      "goal": "V2 Gate 4 exit (PASS-only): feature enablement and operator readiness sprint complete per docs/proposals/v2_implementation_plan.md \u00a7 V2 Gate 4.",
+      "scope": "Full V2 Gate 4 exit verification only. No new implementation; confirm pass criteria for V2-024 through V2-031.",
+      "files_allowed": [
+        ".workflow/v2-gate-4-exit/",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md",
+        "memory-bank/tasks.md"
+      ],
+      "acceptance_criteria": [
+        "Account containment can be deliberately enabled through preflight (V2-024).",
+        "All production containment authorization flows through PolicyGate (V2-025).",
+        "Org-config rate ceilings are implemented or intentionally waived (V2-026).",
+        "Sweep has an operator CLI (V2-027).",
+        "Provider integration is real but deterministic CI remains stable (V2-028).",
+        "Splunk demo conditions are resolved (V2-029).",
+        "Benchmark/operator docs are pinned (V2-030, V2-031).",
+        "Full pytest, ruff, and mypy pass."
+      ],
+      "verification": {
+        "scope": "phase_exit",
+        "commands": [
+          "pytest -q",
+          "ruff check .",
+          "mypy ."
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "skeptic-verifier",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-gate-4-exit",
+      "attempts": 2,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-gate-4-exit/results/verifier-result.md",
+        ".workflow/v2-gate-4-exit/results/verifier-result-final.md"
+      ],
+      "run_mode": "chat_gate"
+    },
+    {
+      "id": "v2-032-progressive-reporting",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-4-exit",
+        "v2-020-metrics-completeness",
+        "v2-026-rate-ceilings"
+      ],
+      "goal": "V2-032 \u2014 Progressive authorization reporting: reporting view aggregates PolicyGate override rate and analyst annotation outcomes by target type and asset class over a window; reports are read-only decision support with no self-tuning; runbook documents SOC-led promotion/reversal workflow.",
+      "scope": "Progressive authorization reporting and operator docs only. Do not run V2 Gate 5 exit.",
+      "files_allowed": [
+        "src/praetor/metrics/",
+        "src/praetor/annotations/",
+        "src/praetor/reporting/",
+        "docs/operator_runbook.md",
+        "tests/metrics/",
+        "tests/annotations/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Reporting view aggregates PolicyGate override rate and analyst annotation outcomes by target type and asset class over a window.",
+        "Reports are read-only decision support; no self-tuning or automatic config promotion occurs.",
+        "Runbook documents SOC-led promotion/reversal workflow.",
+        "The verifier checks only V2-032 acceptance, not V2 Gate 5 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/metrics/ tests/annotations/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-032-progressive-reporting",
+      "attempts": 1,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-032-progressive-reporting/results/verifier-result.md",
+        ".workflow/v2-032-progressive-reporting/results/verifier-result-remediation.md"
+      ]
+    },
+    {
+      "id": "v2-033-prompt-exemplar",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-gate-4-exit"
+      ],
+      "goal": "V2-033 \u2014 Judgment prompt exemplar slot: prompt template accepts an optional exemplar block; exemplar rendering is bounded, auditable, and clearly separated from cited evidence; evidence hash and PromptExcerptSet behavior are unchanged.",
+      "scope": "Prompt exemplar slot and isolation only. Do not run V2 Gate 5 exit.",
+      "files_allowed": [
+        "src/praetor/judgment/prompt.py",
+        "src/praetor/judgment/excerpt.py",
+        "tests/judgment/test_prompt_isolation.py",
+        "evals/scenarios/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Prompt template accepts an optional exemplar block.",
+        "Exemplar rendering is bounded, auditable, and clearly separated from cited evidence.",
+        "Evidence hash and PromptExcerptSet behavior are unchanged.",
+        "The verifier checks only V2-033 acceptance, not V2 Gate 5 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/judgment/test_prompt_isolation.py -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-033-prompt-exemplar",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-033-prompt-exemplar/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "v2-034-similar-case-retrieval",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-032-progressive-reporting",
+        "v2-033-prompt-exemplar"
+      ],
+      "goal": "V2-034 \u2014 Similar-case retrieval: retrieval selects only human-confirmed cases that satisfy a documented ranking contract; exemplar payloads are bounded and excluded from evidence hash derivation; contract eval proves retrieval is wired without changing citation validity or raw-source exclusion.",
+      "scope": "Similar-case retrieval and judgment wiring only. Do not run V2 Gate 5 exit.",
+      "files_allowed": [
+        "src/praetor/retrieval/",
+        "src/praetor/judgment/prompt.py",
+        "src/praetor/annotations/",
+        "tests/judgment/",
+        "tests/annotations/",
+        "docs/eval_gates.md",
+        "evals/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Retrieval selects only human-confirmed cases that satisfy a documented ranking contract.",
+        "Exemplar payloads are bounded and excluded from evidence hash derivation.",
+        "A/B or contract eval proves retrieval is wired without changing citation validity or raw-source exclusion.",
+        "The verifier checks only V2-034 acceptance, not V2 Gate 5 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/judgment/ tests/annotations/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-034-similar-case-retrieval",
+      "attempts": 1,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-034-similar-case-retrieval/results/verifier-result.md",
+        ".workflow/v2-034-similar-case-retrieval/results/verifier-result-remediation.md"
+      ]
+    },
+    {
+      "id": "v2-035-statute-curation",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-027-sweep-cli",
+        "v2-032-progressive-reporting"
+      ],
+      "goal": "V2-035 \u2014 Statute curation workflow: annotation-to-proposed-statute artifact is review-only and not activatable; SOC-lead promotion runs full preflight and records activation audit trail; workflow artifact captures source annotations, proposed edits, reviewer, and activation result.",
+      "scope": "Statute curation workflow and activation audit only. Do not run V2 Gate 5 exit.",
+      "files_allowed": [
+        ".workflow/",
+        "src/praetor/codification/",
+        "src/praetor/config/activation.py",
+        "docs/operator_runbook.md",
+        "tests/codification/",
+        "tests/config/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Annotation-to-proposed-statute artifact is review-only and not activatable.",
+        "SOC-lead promotion runs full preflight and records activation audit trail.",
+        "Workflow artifact captures source annotations, proposed edits, reviewer, and activation result.",
+        "The verifier checks only V2-035 acceptance, not V2 Gate 5 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/codification/ tests/config/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-035-statute-curation",
+      "attempts": 1,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-035-statute-curation/results/verifier-result.md",
+        ".workflow/v2-035-statute-curation/results/verifier-result-remediation.md"
+      ]
+    },
+    {
+      "id": "v2-036-eval-regression",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-034-similar-case-retrieval",
+        "v2-035-statute-curation"
+      ],
+      "goal": "V2-036 \u2014 Eval regression locking discipline: workflow template requires every confirmed model error to identify a harness scenario or explicit waiver; eval gate docs define minimum scenario quality and expectation-key validation; CI catches stale or unknown expectation keys.",
+      "scope": "Eval regression discipline and workflow template only. Do not run V2 Gate 5 exit.",
+      "files_allowed": [
+        ".workflow/_template/",
+        "evals/",
+        "docs/eval_gates.md",
+        "tests/evals/",
+        "specs/",
+        "IMPLEMENTATION_PLAN.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Workflow template requires every confirmed model error to identify a harness scenario or explicit waiver.",
+        "Eval gate docs define minimum scenario quality and expectation-key validation.",
+        "CI catches stale or unknown expectation keys.",
+        "The verifier checks only V2-036 acceptance, not V2 Gate 5 completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/ -q"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-036-eval-regression",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-036-eval-regression/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "v2-gate-5-exit",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "v2-032-progressive-reporting",
+        "v2-033-prompt-exemplar",
+        "v2-034-similar-case-retrieval",
+        "v2-035-statute-curation",
+        "v2-036-eval-regression"
+      ],
+      "goal": "V2 Gate 5 exit (PASS-only): feedback and progressive authorization sprint complete per docs/proposals/v2_implementation_plan.md \u00a7 V2 Gate 5.",
+      "scope": "Full V2 Gate 5 exit verification only. No new implementation; confirm pass criteria for V2-032 through V2-036.",
+      "files_allowed": [
+        ".workflow/v2-gate-5-exit/",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md",
+        "memory-bank/tasks.md"
+      ],
+      "acceptance_criteria": [
+        "Promotion reporting is read-only and human-led (V2-032).",
+        "Prompt exemplars are bounded and outside the evidence hash path (V2-033).",
+        "Similar-case retrieval uses only human-confirmed cases (V2-034).",
+        "Statute curation is review-only until activation (V2-035).",
+        "Confirmed model errors become eval scenarios or documented waivers (V2-036).",
+        "Full pytest, ruff, and mypy pass."
+      ],
+      "verification": {
+        "scope": "phase_exit",
+        "commands": [
+          "pytest -q",
+          "ruff check .",
+          "mypy ."
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "skeptic-verifier",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-gate-5-exit",
+      "attempts": 2,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/v2-gate-5-exit/results/verifier-result-final.md",
+        ".workflow/v2-gate-5-exit/results/verifier-result.md"
+      ],
+      "run_mode": "chat_gate"
+    }
+  ]
+}

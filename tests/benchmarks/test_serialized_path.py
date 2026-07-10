@@ -14,8 +14,10 @@ from benchmarks.serialized_path import (
     BURST_SEPARATELY_MEASURED_V1,
     PRODUCTION_MEASURED_SUBSYSTEMS,
     PRODUCTION_PATH_CRITICAL_TRANSACTIONS_PER_ITERATION,
+    BenchmarkMeasurementContext,
     SerializedPathBenchmarkResult,
     benchmark_result_from_timing,
+    collect_benchmark_measurement_context,
     run_contended_production_path_pair,
     run_one_production_serialized_path_operation,
     run_one_serialized_path_operation,
@@ -81,6 +83,37 @@ def test_serialized_path_benchmark_uses_active_org_config_targets(
     assert result.elapsed_seconds > 0
     assert result.sustained_alerts_per_minute > 0
     assert result.burst_separately_measured is False
+
+
+def test_benchmark_result_always_emits_measurement_context(
+    activated_store: StateStore,
+) -> None:
+    result = run_serialized_path_for_store(activated_store, operations=2)
+    context = result.measurement_context
+    assert isinstance(context, BenchmarkMeasurementContext)
+    assert context.scenario == "uncontended_distinct_host"
+    assert context.informational_only is True
+    assert context.platform
+    assert context.machine
+    assert context.python_version
+
+
+def test_benchmark_measurement_context_hardware_fields_present() -> None:
+    context = collect_benchmark_measurement_context()
+    assert context.processor
+    assert context.cpu_count is None or context.cpu_count >= 1
+
+
+def test_benchmark_burst_not_measured_in_separate_window() -> None:
+    result = benchmark_result_from_timing(
+        operations=60,
+        elapsed=1.0,
+        target_sustained=30,
+        target_burst=60,
+    )
+    assert result.burst_separately_measured is False
+    assert result.meets_burst_target_informational is True
+    assert not hasattr(result, "burst_alerts_per_minute")
 
 
 def test_benchmark_target_comparison_semantics() -> None:

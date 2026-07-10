@@ -14,8 +14,6 @@ from evals.real_provider_adversarial import (
     INJECTION_MARKER,
     SCENARIO_ID,
     AdversarialProbeResult,
-    GeminiJudgmentProvider,
-    _provider_prompt_from_request,
     assert_structural_preconditions,
     build_adversarial_evidence_facts,
     build_adversarial_judgment_request,
@@ -33,6 +31,10 @@ from praetor.judgment.provider import (
     ProviderMalformedResponseError,
     ProviderProbeResult,
     ProviderUnavailableError,
+)
+from praetor.judgment.vertex_provider import (
+    VertexProvider,
+    judgment_prompt_from_request,
 )
 
 OMISSION_RE = re.compile(r"\[\.\.\.omitting (?P<count>\d+) characters\]")
@@ -165,16 +167,16 @@ def test_probabilistic_test_has_required_markers() -> None:
 
 def test_provider_prompt_carries_scenario_id_and_injection_marker() -> None:
     request = build_adversarial_judgment_request()
-    prompt = _provider_prompt_from_request(request)
+    prompt = judgment_prompt_from_request(request)
 
     assert SCENARIO_ID in prompt
     assert INJECTION_MARKER in prompt
 
 
-def test_gemini_happy_path_overrides_model_and_provider_names() -> None:
+def test_vertex_happy_path_overrides_model_and_provider_names() -> None:
     request = build_adversarial_judgment_request()
     judgment_json = skeleton_model_judgment().model_dump_json()
-    provider = GeminiJudgmentProvider(api_key="test-key", model_name="gemini-test-model")
+    provider = VertexProvider(api_key="test-key", model_name="gemini-test-model")
     mock_urlopen = _gemini_urlopen_mock(
         {"candidates": [{"content": {"parts": [{"text": judgment_json}]}}]}
     )
@@ -183,12 +185,12 @@ def test_gemini_happy_path_overrides_model_and_provider_names() -> None:
         judgment = provider.generate_judgment(request)
 
     assert judgment.model_name == "gemini-test-model"
-    assert judgment.provider_name == "gemini"
+    assert judgment.provider_name == "vertex"
 
 
-def test_gemini_http_error_raises_provider_unavailable() -> None:
+def test_vertex_http_error_raises_provider_unavailable() -> None:
     request = build_adversarial_judgment_request()
-    provider = GeminiJudgmentProvider(api_key="test-key")
+    provider = VertexProvider(api_key="test-key")
     http_error = urllib.error.HTTPError(
         url="https://example.test",
         code=503,
@@ -204,9 +206,9 @@ def test_gemini_http_error_raises_provider_unavailable() -> None:
     assert "503" in str(exc_info.value)
 
 
-def test_gemini_url_error_raises_provider_unavailable() -> None:
+def test_vertex_url_error_raises_provider_unavailable() -> None:
     request = build_adversarial_judgment_request()
-    provider = GeminiJudgmentProvider(api_key="test-key")
+    provider = VertexProvider(api_key="test-key")
     url_error = urllib.error.URLError("connection reset")
 
     with patch("urllib.request.urlopen", side_effect=url_error):
@@ -214,9 +216,9 @@ def test_gemini_url_error_raises_provider_unavailable() -> None:
             provider.generate_judgment(request)
 
 
-def test_gemini_missing_candidate_text_raises_malformed_response() -> None:
+def test_vertex_missing_candidate_text_raises_malformed_response() -> None:
     request = build_adversarial_judgment_request()
-    provider = GeminiJudgmentProvider(api_key="test-key")
+    provider = VertexProvider(api_key="test-key")
     mock_urlopen = _gemini_urlopen_mock({"candidates": []})
 
     with patch("urllib.request.urlopen", mock_urlopen):
@@ -224,9 +226,9 @@ def test_gemini_missing_candidate_text_raises_malformed_response() -> None:
             provider.generate_judgment(request)
 
 
-def test_gemini_non_string_candidate_text_raises_malformed_response() -> None:
+def test_vertex_non_string_candidate_text_raises_malformed_response() -> None:
     request = build_adversarial_judgment_request()
-    provider = GeminiJudgmentProvider(api_key="test-key")
+    provider = VertexProvider(api_key="test-key")
     mock_urlopen = _gemini_urlopen_mock(
         {"candidates": [{"content": {"parts": [{"text": 123}]}}]}
     )
@@ -259,4 +261,4 @@ def test_adversarial_probe_logs_results_when_enabled(
 
     assert result.structural.all_met is True
     assert result.provider_called is True
-    assert isinstance(provider, GeminiJudgmentProvider)
+    assert isinstance(provider, VertexProvider)

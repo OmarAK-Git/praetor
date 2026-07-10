@@ -18,4 +18,8 @@ def open_production_state_store(
     if not singleton.is_held:
         msg = "production startup requires a held singleton lock"
         raise StartupGuardError(msg)
-    return open_state_store(db_path, singleton=singleton)
+    store = open_state_store(db_path, singleton=singleton)
+    from praetor.policy.state import assert_production_policy_tables
+
+    assert_production_policy_tables(store.conn)
+    return store

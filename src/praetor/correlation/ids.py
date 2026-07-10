@@ -7,6 +7,7 @@ from praetor.hashing.domains import DOMAIN_EVIDENCE_ID
 
 
 def derive_evidence_id(*, provenance_path: str, source_event_reference: str) -> str:
+    """Three-part SHA-256 per docs/contracts.md §3b; returns ``ev-`` + first 32 hex."""
     digest = sha256_hex(
         delimited([DOMAIN_EVIDENCE_ID, provenance_path, source_event_reference])
     )

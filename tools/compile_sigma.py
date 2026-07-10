@@ -23,6 +23,10 @@ DEFAULT_SAVEDSEARCHES = REPO_ROOT / "splunk" / "savedsearches.conf"
 
 ALLOWED_MODIFIERS = frozenset({"contains", "endswith"})
 
+# Committed fixture telemetry is pinned to 2026-06-08 (see tests/fixtures/).
+FIXTURE_DISPATCH_EARLIEST = "2026-06-08T00:00:00"
+FIXTURE_DISPATCH_LATEST = "2026-06-08T23:59:59"
+
 
 class UnsupportedSigmaFeatureError(ValueError):
     """Raised when a rule uses Sigma features this compiler does not support."""
@@ -48,6 +52,21 @@ class CompileOutputs:
 
 def _normalize_newlines(text: str) -> str:
     return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def _apply_fixture_stable_dispatch_window(savedsearches_conf: str) -> str:
+    """Replace pySigma's relative default window with fixture-stable absolute bounds."""
+    lines: list[str] = []
+    for line in savedsearches_conf.splitlines():
+        if line.strip() == "dispatch.earliest_time = -30d":
+            lines.append(f"dispatch.earliest_time = {FIXTURE_DISPATCH_EARLIEST}")
+            continue
+        if line.strip() == "dispatch.latest_time = now":
+            lines.append(f"dispatch.latest_time = {FIXTURE_DISPATCH_LATEST}")
+            continue
+        lines.append(line)
+    normalized = _normalize_newlines("\n".join(lines)).strip()
+    return normalized + "\n"
 
 
 def _spl_file_name(rule_path: Path) -> str:
@@ -184,7 +203,7 @@ def compile_outputs(sigma_dir: Path = DEFAULT_SIGMA_DIR) -> CompileOutputs:
 
     return CompileOutputs(
         rules=tuple(compiled),
-        savedsearches_conf=_normalize_newlines(savedsearches_conf).strip() + "\n",
+        savedsearches_conf=_apply_fixture_stable_dispatch_window(savedsearches_conf),
     )
 
 

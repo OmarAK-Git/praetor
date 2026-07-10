@@ -1,5 +1,100 @@
 # Progress Log
 
+## 2026-07-10 — V2 Gate 5 exit CLOSED (Feedback and Progressive Authorization)
+
+- **PASS-only phase gate** (`v2-gate-5-exit`, attempt 2, in-chat Chat B): full-suite verification of V2-032–V2-036.
+- Fresh gate green: pytest **1029** passed (2 deselected) in 88.30s, `ruff check .` clean, `mypy .` clean (**134** source files).
+- Attempt-1 failed on scope-guard (`reporting`/`retrieval`) + 17 ruff + 8 mypy; remediated without behavioral change; attempt-2 re-confirmed.
+- Flight Recorder: `.workflow/v2-gate-5-exit/results/verifier-result-final.md`.
+- **Sprint V2-5 closed. Autopilot queue drained through Gate 5.**
+
+## 2026-07-10 — V2 Gate 5 exit attempt 1 FAILED (retry)
+
+- **PASS-only phase gate** (`v2-gate-5-exit`, in-chat Chat B): criteria 1–5 have prior task PASS evidence; criterion 6 failed.
+- Fresh runs: pytest **1 failed** / 1028 passed / 2 deselected (`reporting`+`retrieval` missing from scope-guard allowlist); ruff **17** errors; mypy **8** errors (reporting row typing + ranking return type).
+- Queue: `v2-gate-5-exit` → `retry` (attempts=1). Evidence: `.workflow/v2-gate-5-exit/results/verifier-result.md`.
+- Remediation blocked on approval (edits outside gate `files_allowed`).
+
+## 2026-07-10 — Sprint V2-5 implementation complete (autopilot loop; gate pending)
+
+- **V2-032 – V2-036** drained via `/gsd-autopilot-loop --stop-before-gate`; all task verifiers **pass**.
+- V2-032: progressive authorization reporting (`src/praetor/reporting/`); pytest **55** (metrics+annotations). Scope-guard allowlist + engine wiring deferred.
+- V2-033: prompt exemplar slot; pytest **9** (prompt isolation).
+- V2-034: similar-case retrieval; pytest **76** (judgment+annotations).
+- V2-035: statute curation workflow; pytest **109** (codification+config). Minor ruff on new test files noted for gate.
+- V2-036: eval regression locking discipline; pytest **132** (evals).
+- Flight Recorder: `.workflow/v2-032-progressive-reporting/` through `.workflow/v2-036-eval-regression/`.
+- **Next runnable:** `v2-gate-5-exit` (fresh Chat B, Claude, full pytest/ruff/mypy).
+
+## 2026-07-10 — V2 Gate 4 exit RE-CONFIRMED (Feature Enablement)
+
+- **PASS-only phase gate re-run** (`v2-gate-4-exit`, `/gsd-autopilot-loop --task-id v2-gate-4-exit`, in-chat Chat B).
+- Fresh gate green: pytest **970** passed (2 deselected) in 81.74s, `ruff check .` clean, `mypy .` clean (**126** source files).
+- Dependency task verifiers V2-024–V2-031 still present and previously passed.
+- Flight Recorder: `.workflow/v2-gate-4-exit/results/verifier-result.md` (+ updated `verifier-result-final.md`).
+- **Sprint V2-4 remains closed; Gate 4 re-confirmed.**
+
+## 2026-07-10 — V2-030 implementer complete (benchmark metadata + runbook pins)
+
+- **Benchmark measurement context:** `BenchmarkMeasurementContext` on every `SerializedPathBenchmarkResult` (hardware + `uncontended_distinct_host` scenario + `informational_only=true`); `burst_separately_measured=False` unchanged.
+- **Runbook pins:** doc tests assert example-org 30/60 targets, burst honesty flag, and measurement-context wording.
+- Flight Recorder: `.workflow/v2-030-benchmark-runbook/`.
+- Verification: `pytest tests/benchmarks/ tests/docs/ -q` → **25** passed.
+- Queue item not marked done per packet.
+
+## 2026-07-10 — V2-025 implementer complete (PolicyGate boundary)
+
+- **PolicyGate authorization boundary:** AST guard in `policy/identity.py` ensures production calls to `evaluate_account_containment_eligibility` and `meets_host_cited_corroboration` route only through `policy/gate.py`; legacy test callers grandfathered via stable-set guard.
+- **Integration tests:** direct eligibility helper returns AUTO_CONTAIN but PolicyGate escalates `account_containment_disabled`; host corroboration helper True does not authorize without gate.
+- Flight Recorder: `.workflow/v2-025-policygate-boundary/`.
+- Verification: `pytest tests/contracts/ tests/policy/ -q` → **128** passed.
+- Queue item not marked done per packet.
+
+## 2026-07-10 — V2 Gate 3 exit CLOSED (Production Hardening)
+
+- **PASS-only phase gate** (`v2-gate-3-exit`, in-chat Chat B): full-suite verification of V2-017–V2-023.
+- Full gate green: pytest **914** passed (2 deselected) in 68.67s, `ruff check .` clean, `mypy .` clean (**124** source files).
+- Attempt 1 FAILED criterion 8 on 10 ruff findings (import ordering, 2 unused imports, 2 line wraps); remediated with no behavioral change. Attempt 2 re-ran all three commands fresh → PASS.
+- Flight Recorder: `.workflow/v2-gate-3-exit/` (plan, results: verifier-result FAIL → verifier-result-final PASS).
+- **Sprint V2-3 (State, Ledger, Feed, Metrics Hardening) complete; V2 Gate 3 closed.**
+
+## 2026-07-09 — Sprint V2-3 implementation complete (autopilot loop; gate pending)
+
+- **V2-017 – V2-023** drained via `/gsd-autopilot-loop --stop-before-gate`; all task verifiers **pass** (V2-021 required 1 retry for DEC-051 docs closure).
+- Flight Recorder: `.workflow/v2-017-prod-state-init/` through `.workflow/v2-023-scope-guard/`.
+- **Next runnable:** `v2-gate-3-exit` (fresh Chat B, Claude, full pytest/ruff/mypy).
+
+## 2026-07-09 — V2-023 complete (scope guard + schema CLI)
+
+- **Scope guard hardened:** explicit `ALLOWED_PACKAGES` / `SANCTIONED_V2_DOC_PATHS`; exact package match; `docs/spec.md` blocked.
+- **Schema artifact hygiene:** `tools/schema_export.py` with `--check` / `--write`; committed schemas drift-checked in scope guard tests.
+- Flight Recorder: `.workflow/v2-023-scope-guard/`.
+- Verification: `pytest tests/contracts/test_scope_guard.py -q` → **9** passed.
+- Verifier: `.workflow/v2-023-scope-guard/results/verifier-result.md` (**pass**).
+
+## 2026-07-09 — V2 Gate 2 exit CLOSED (Authorization Rewire)
+
+- **PASS-only phase gate** (`v2-gate-2-exit`): full-suite verification of V2-011–V2-016.
+- Full gate green: pytest **856** passed (2 deselected), `ruff check .` clean, `mypy .` clean (**122** source files; bare `mypy` **123**).
+- **Remediation (user-approved scope widening):** first gate run failed criterion 6 — fixed all **40** ruff findings (import order, unused imports/vars, 31 E501 wraps across `src/praetor/contracts/fault_flags.py`, `tests/policy/test_edict_fault_flags.py`, `.claude/hooks/`, `.workflow/_dream/bin/`, notebook cells); resolved the `mypy .` "duplicate conftest" abort via `[tool.mypy]` `mypy_path`/`explicit_package_bases` + `exclude` of non-source trees (tests/tools/tooling). No source type annotations changed; `packages` + `strict` intact.
+- Fresh-context verifier confirmed PASS and that source type coverage is preserved (not hidden by excludes).
+- Flight Recorder: `.workflow/v2-gate-2-exit/` (plan, packets, results: implementer FAIL → remediation → verifier-result-final PASS).
+- **Sprint V2-2 (Authorization Rewire Foundations) complete; V2 Gate 2 closed.** Next: Sprint V2-3 (V2-017–V2-023, state/ledger/feed/metrics hardening).
+
+## 2026-07-09 — V2-016 complete (Gate 2 continued)
+
+- **Static fault-flag guard:** `contracts/fault_flags.py` validates edict flags/SFE; policy/engine literal scanner; evals SFE map aligned to contracts.
+- Flight Recorder: `.workflow/v2-016-fault-flag-guard/`.
+- Verification: pytest **208** passed (`tests/contracts/` + `tests/policy/` + `tests/evals/`).
+- Follow-on: explicit `v2-gate-2-exit` phase verification queue item.
+
+## 2026-07-09 — V2-015 complete (Gate 2 continued)
+
+- **Gate target ownership (AG-0080):** `PolicyGateEvaluation.resolved_target`; intake persist uses `gate_resolved_containment_target()`; static AST guard + two-host intake integration test.
+- Flight Recorder: `.workflow/v2-015-gate-target/`.
+- Verification: pytest **125** passed (`tests/engine/` + `tests/policy/`).
+- Follow-on: V2-016 static fault-flag guard.
+
 ## 2026-06-30 — V2-014 complete (Gate 2 continued)
 
 - **Correlator host isolation (AG-0080):** `correlate_telemetry` filters in-window events to anchor host (Security-first, then Sysmon plurality); cross-host record 1004 dropped; same-host noise 1003 retained.
@@ -195,6 +290,13 @@
 - Tests: `tests/evals/test_correlation_gate.py` — **19**; CLI `python -m evals.correlation_gate` — 4/4 PASS.
 - Verification: gate **19/19**, suite **685**, mypy **111** files, ruff OK.
 - Flight Recorder: `.workflow/TASK-030/`.
+
+## 2026-07-10 — V2-024 implementer
+
+- Preflight: `account_auto_contain_enabled=true` allowed only when `test_correlator_identity_compliance.py` passes via subprocess; org-config self-attest ignored.
+- Harness: `evals/scenarios/account_containment_enabled.yaml` — corroborated SID account `auto_contain` with gate enabled.
+- Phase3 gate: `check_account_containment_prerequisite` inverted to require preflight pass when identity gates satisfied.
+- Verification: `pytest tests/config/ tests/policy/ tests/correlation/ -q` — **177 passed** in 16.87s.
 
 ## 2026-06-15 — TASK-029 reopen (gatekeeper)
 

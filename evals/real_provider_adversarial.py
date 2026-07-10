@@ -32,8 +32,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import urllib.error
-import urllib.request
 from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any, cast
@@ -46,10 +44,10 @@ from praetor.judgment.provider import (
     JudgmentProvider,
     JudgmentRequest,
     ProviderError,
-    ProviderMalformedResponseError,
-    ProviderProbeResult,
-    ProviderUnavailableError,
-    parse_model_judgment_json,
+)
+from praetor.judgment.vertex_provider import (
+    DEFAULT_GEMINI_MODEL,
+    VertexProvider,
 )
 
 logger = logging.getLogger(__name__)
@@ -66,7 +64,6 @@ PROBE_ENV_FLAG = "PRAETOR_REAL_PROVIDER_PROBE"
 GEMINI_API_KEY_ENV = "PRAETOR_GEMINI_API_KEY"
 GOOGLE_API_KEY_ENV = "GOOGLE_API_KEY"
 GEMINI_MODEL_ENV = "PRAETOR_GEMINI_MODEL"
-DEFAULT_GEMINI_MODEL = "gemini-2.0-flash"
 
 
 @dataclass(frozen=True)
@@ -280,109 +277,7 @@ def resolve_real_provider() -> JudgmentProvider | None:
     model_name = os.environ.get(GEMINI_MODEL_ENV, DEFAULT_GEMINI_MODEL).strip()
     if not model_name:
         model_name = DEFAULT_GEMINI_MODEL
-    return GeminiJudgmentProvider(api_key=api_key, model_name=model_name)
-
-
-@dataclass(frozen=True)
-class GeminiJudgmentProvider:
-    api_key: str
-    model_name: str = DEFAULT_GEMINI_MODEL
-    provider_name: str = "gemini"
-
-    def generate_judgment(self, request: JudgmentRequest) -> ModelJudgment:
-        prompt = _provider_prompt_from_request(request)
-        raw_json = self._call_generate_content(prompt)
-        judgment = parse_model_judgment_json(raw_json)
-        return judgment.model_copy(
-            update={
-                "model_name": self.model_name,
-                "provider_name": self.provider_name,
-            }
-        )
-
-    def probe(self, canary_payload: Mapping[str, Any]) -> ProviderProbeResult:
-        return ProviderProbeResult(
-            success=True,
-            provider_name=self.provider_name,
-            model_name=self.model_name,
-            metadata={"canary_seen": bool(canary_payload)},
-        )
-
-    def _call_generate_content(self, prompt: str) -> str:
-        url = (
-            "https://generativelanguage.googleapis.com/v1beta/models/"
-            f"{self.model_name}:generateContent?key={self.api_key}"
-        )
-        body = json.dumps(
-            {
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"responseMimeType": "application/json"},
-            }
-        ).encode("utf-8")
-        req = urllib.request.Request(
-            url,
-            data=body,
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        try:
-            with urllib.request.urlopen(req, timeout=60) as response:
-                payload_raw = json.loads(response.read().decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            detail = exc.read().decode("utf-8", errors="replace")
-            msg = f"gemini HTTP {exc.code}: {detail[:500]}"
-            raise ProviderUnavailableError(msg) from exc
-        except urllib.error.URLError as exc:
-            msg = f"gemini transport error: {exc.reason}"
-            raise ProviderUnavailableError(msg) from exc
-
-        if not isinstance(payload_raw, dict):
-            msg = "gemini response was not a JSON object"
-            raise ProviderMalformedResponseError(msg)
-
-        return _extract_candidate_text(payload_raw)
-
-
-def _extract_candidate_text(payload: Mapping[str, Any]) -> str:
-    candidates = payload.get("candidates")
-    if not isinstance(candidates, list) or not candidates:
-        msg = "gemini response missing candidate text"
-        raise ProviderMalformedResponseError(msg)
-    first = candidates[0]
-    if not isinstance(first, Mapping):
-        msg = "gemini response missing candidate text"
-        raise ProviderMalformedResponseError(msg)
-    content = first.get("content")
-    if not isinstance(content, Mapping):
-        msg = "gemini response missing candidate text"
-        raise ProviderMalformedResponseError(msg)
-    parts = content.get("parts")
-    if not isinstance(parts, list) or not parts:
-        msg = "gemini response missing candidate text"
-        raise ProviderMalformedResponseError(msg)
-    first_part = parts[0]
-    if not isinstance(first_part, Mapping):
-        msg = "gemini response missing candidate text"
-        raise ProviderMalformedResponseError(msg)
-    text = first_part.get("text")
-    if not isinstance(text, str):
-        msg = "gemini candidate text was not a string"
-        raise ProviderMalformedResponseError(msg)
-    return text.strip()
-
-
-def _provider_prompt_from_request(request: JudgmentRequest) -> str:
-    return json.dumps(
-        {
-            "scenario_id": request.scenario_id,
-            "payload": request.payload,
-            "task": (
-                "Return JSON validating as praetor.contracts.judgment.ModelJudgment. "
-                "Use only evidence IDs and field paths present in prompt_excerpt_set."
-            ),
-        },
-        sort_keys=True,
-    )
+    return VertexProvider(api_key=api_key, model_name=model_name)
 
 
 def _observe_judgment(judgment: ModelJudgment) -> list[str]:

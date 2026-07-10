@@ -98,14 +98,14 @@ def test_fake_provider_probe_uses_canary_payload() -> None:
     assert result.metadata == {"canary_seen": True}
 
 
-def test_vertex_provider_stub_implements_protocol() -> None:
+def test_vertex_provider_implements_protocol_unconfigured() -> None:
     provider: JudgmentProvider = VertexProvider(model_name="gemini-test")
 
     assert isinstance(provider, JudgmentProvider)
     result = provider.probe({"canary": "synthetic"})
     assert result.success is False
     assert result.provider_name == "vertex"
-    assert result.metadata["status"] == "stub"
+    assert result.metadata["status"] == "unconfigured"
 
 
 def test_provider_timeout_escalates_after_bounded_retry(

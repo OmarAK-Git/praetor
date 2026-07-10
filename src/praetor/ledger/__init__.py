@@ -24,6 +24,10 @@ from praetor.ledger.store import (
     fetch_ledger_tip_hash,
     init_ledger_schema,
 )
+from praetor.ledger.tip_anchor import (
+    LedgerTipAnchorMismatchError,
+    verify_ledger_tip_against_anchor,
+)
 
 __all__ = [
     "KNOWN_LEDGER_RECORD_TYPES",
@@ -32,6 +36,7 @@ __all__ = [
     "LedgerChainIntegrityError",
     "LedgerChainRow",
     "LedgerStartupError",
+    "LedgerTipAnchorMismatchError",
     "append_ledger_record",
     "fetch_ledger_rows",
     "fetch_ledger_tip_hash",
@@ -44,4 +49,5 @@ __all__ = [
     "verify_edict_never_contain_audit_link",
     "verify_ledger_chain",
     "verify_ledger_chain_at_startup",
+    "verify_ledger_tip_against_anchor",
 ]

@@ -46,6 +46,7 @@ from praetor.judgment.fake_provider import FakeProvider, FakeProviderMode
 from praetor.judgment.prompt import build_judgment_prompt_payload
 from praetor.judgment.provider import JudgmentProvider, ProviderRetryPolicy
 from praetor.ledger.store import fetch_ledger_rows
+from praetor.metrics.collector import MetricsCollector
 from praetor.metrics.events import OutcomeMatrixFaultFlag
 from praetor.policy.gate import evaluate_policy_gate
 from praetor.policy.state import (
@@ -71,6 +72,62 @@ SOC_LEAD_TOKEN = "soc-lead-token"
 FIXED_NOW = datetime(2026, 6, 8, 12, 0, 0, tzinfo=UTC)
 
 OMISSION_RE = re.compile(r"\[\.\.\.omitting (?P<count>\d+) characters\]")
+
+RUNNER_EXPECTATION_KEYS: dict[str, frozenset[str]] = {
+    "engine_intake": frozenset(
+        {
+            "final_disposition",
+            "fault_flags",
+            "system_fault_escalation",
+            "judgment_provider_calls",
+            "no_policy_override",
+            "candidate_disposition_preserved",
+            "proposed_disposition",
+            "directive_emitted",
+            "containment_target_type",
+            "containment_target_id",
+            "metrics",
+        }
+    ),
+    "policy_gate": frozenset(
+        {
+            "final_disposition",
+            "fault_flags",
+            "system_fault_escalation",
+            "directive_emitted",
+            "containment_target_type",
+            "containment_target_id",
+            "idempotency_suppressed_on_repeat",
+            "ledger_record_type",
+        }
+    ),
+    "duplicate_retry": frozenset(
+        {
+            "second_intake_edict_none",
+            "ledger_edict_count_unchanged",
+        }
+    ),
+    "prompt_isolation": frozenset(
+        {
+            "raw_source_excluded",
+            "excerpt_max_chars",
+        }
+    ),
+    "revocation_feed_degraded_mode": frozenset(
+        {
+            "auto_contain",
+            "standard_review",
+        }
+    ),
+}
+ALL_EXPECTATION_KEYS = frozenset().union(*RUNNER_EXPECTATION_KEYS.values())
+REVOCATION_OUTCOME_BLOCK_KEYS = frozenset(
+    {
+        "final_disposition",
+        "fault_flags",
+        "system_fault_escalation",
+    }
+)
 
 
 @dataclass(frozen=True)
@@ -203,6 +260,11 @@ def _validate_expectations(
             block = expectations.get(key)
             if isinstance(block, Mapping):
                 _check_escalate_block(block, f"{key}: ")
+                for nested_key in block:
+                    if nested_key not in REVOCATION_OUTCOME_BLOCK_KEYS:
+                        errors.append(
+                            f"{key}: unknown nested expectation key: {nested_key!r}"
+                        )
     else:
         _check_escalate_block(expectations, "")
 
@@ -218,59 +280,12 @@ def _validate_expectations(
         # pairs only include escalate rows; SFE checked at runtime in _assert_outcome
         _ = expected_sfe
 
-    _RUNNER_EXPECTATION_KEYS: dict[str, frozenset[str]] = {
-        "engine_intake": frozenset(
-            {
-                "final_disposition",
-                "fault_flags",
-                "system_fault_escalation",
-                "judgment_provider_calls",
-                "no_policy_override",
-                "candidate_disposition_preserved",
-                "proposed_disposition",
-                "directive_emitted",
-                "containment_target_type",
-                "containment_target_id",
-            }
-        ),
-        "policy_gate": frozenset(
-            {
-                "final_disposition",
-                "fault_flags",
-                "system_fault_escalation",
-                "directive_emitted",
-                "containment_target_type",
-                "containment_target_id",
-                "idempotency_suppressed_on_repeat",
-                "ledger_record_type",
-            }
-        ),
-        "duplicate_retry": frozenset(
-            {
-                "second_intake_edict_none",
-                "ledger_edict_count_unchanged",
-            }
-        ),
-        "prompt_isolation": frozenset(
-            {
-                "raw_source_excluded",
-                "excerpt_max_chars",
-            }
-        ),
-        "revocation_feed_degraded_mode": frozenset(
-            {
-                "auto_contain",
-                "standard_review",
-            }
-        ),
-    }
-    _ALL_EXPECTATION_KEYS = frozenset().union(*_RUNNER_EXPECTATION_KEYS.values())
-    consumed = _RUNNER_EXPECTATION_KEYS.get(runner)
+    consumed = RUNNER_EXPECTATION_KEYS.get(runner)
     if consumed is None:
         errors.append(f"unknown runner for expectation validation: {runner!r}")
     else:
         for key in expectations:
-            if key not in _ALL_EXPECTATION_KEYS:
+            if key not in ALL_EXPECTATION_KEYS:
                 errors.append(f"unknown expectation key: {key!r}")
             elif key not in consumed:
                 errors.append(
@@ -659,6 +674,20 @@ def _serialized_prompt_value(value: Any) -> str:
     return json.dumps(value, sort_keys=True)
 
 
+def _assert_metrics_expectations(
+    snap: object,
+    expectations: Mapping[str, Any],
+    errors: list[str],
+) -> None:
+    metrics_exp = expectations.get("metrics")
+    if not isinstance(metrics_exp, Mapping):
+        return
+    for key, expected in metrics_exp.items():
+        actual = getattr(snap, key, None)
+        if actual != expected:
+            errors.append(f"metrics.{key} expected {expected!r}, got {actual!r}")
+
+
 def _run_engine_intake(
     scenario: ScenarioDocument,
     store: StateStore,
@@ -723,6 +752,11 @@ def _run_engine_intake(
     kwargs["provider_retry_policy"] = retry
 
     stamp_backend = _stamp_backend(setup)
+    metrics = MetricsCollector()
+    intake_kwargs: dict[str, Any] = {
+        **kwargs,
+        "metrics_collector": metrics,
+    }
     if setup.get("config_over_budget"):
         huge = "x" * 500_000
         with patch(
@@ -733,14 +767,14 @@ def _run_engine_intake(
                 store,
                 judgment_provider=provider,
                 stamp_backend=stamp_backend,
-                **kwargs,
+                **intake_kwargs,
             )
     else:
         result = process_alert_intake(
             store,
             judgment_provider=provider,
             stamp_backend=stamp_backend,
-            **kwargs,
+            **intake_kwargs,
         )
 
     if "judgment_provider_calls" in expectations:
@@ -789,6 +823,7 @@ def _run_engine_intake(
         expectations=expectations,
         errors=errors,
     )
+    _assert_metrics_expectations(metrics.snapshot(), expectations, errors)
 
 
 def _resolve_policy_bundle(setup: Mapping[str, Any]) -> EvidenceBundle:
@@ -906,6 +941,22 @@ def _apply_policy_setup(store: StateStore, setup: Mapping[str, Any], verifier: T
     )
     if allowlist is not None:
         snapshot_override = allowlist
+
+    if isinstance(preconditions, Mapping) and preconditions.get(
+        "account_auto_contain_enabled"
+    ):
+        current = snapshot_override or base
+        overrides: dict[str, object] = {"account_auto_contain_enabled": True}
+        if str(preconditions.get("containment_default_action", "")) == "auto_contain":
+            overrides["containment_policy"] = ContainmentPolicy(
+                default_action="auto_contain",
+                rules=[],
+            )
+        snapshot_override = _persist_snapshot_with_overrides(
+            store,
+            current,
+            **overrides,
+        )
 
     return snapshot_override
 

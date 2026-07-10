@@ -21,6 +21,7 @@ from praetor.revocation.exporter import (
     export_next_pending_row,
     export_pending_feed_rows,
     is_feed_actuation_blocked,
+    reconcile_feed_metadata_against_jsonl,
     run_feed_startup_hook,
 )
 from praetor.revocation.feed import (
@@ -480,3 +481,48 @@ class TestFeedExporter:
         forbidden = {"rotate", "truncate", "rollover", "archive_feed"}
         assert forbidden.isdisjoint(names)
         assert "open(" in source and "'a'" in source or '"a"' in source
+
+    def test_fresh_db_metadata_floor_is_zero_and_reconciles(
+        self, store: StateStore, feed_path: Path
+    ) -> None:
+        assert read_last_verified_exported_sequence(store.conn) == 0
+        assert reconcile_feed_metadata_against_jsonl(store.conn, feed_path)
+        assert not is_feed_unhealthy(store.conn)
+
+    def test_reconcile_marks_unhealthy_on_stale_metadata(
+        self, store: StateStore, feed_path: Path
+    ) -> None:
+        store.write_automated_revocation(_revocation(revocation_id="rev-stale-meta"))
+        with critical_transaction(store.conn):
+            mark_feed_row_exported(store.conn, sequence_number=1)
+        store.conn.commit()
+        assert not feed_path.exists()
+
+        assert not reconcile_feed_metadata_against_jsonl(store.conn, feed_path)
+        assert is_feed_unhealthy(store.conn)
+        alert = store.conn.execute(
+            """
+            SELECT alert_code FROM system_health_alert_outbox
+            WHERE alert_code = ?
+            """,
+            ("revocation_feed_unhealthy",),
+        ).fetchone()
+        assert alert is not None
+
+    def test_startup_hook_reconciles_before_export(
+        self, store: StateStore, feed_path: Path
+    ) -> None:
+        store.write_automated_revocation(_revocation(revocation_id="rev-startup-rec"))
+        with critical_transaction(store.conn):
+            mark_feed_row_exported(store.conn, sequence_number=1)
+        store.conn.commit()
+
+        result = run_feed_startup_hook(
+            store.conn,
+            feed_path=feed_path,
+            max_feed_export_retries=3,
+            propagation_delay_seconds=60,
+        )
+        assert result.exported_count == 0
+        assert result.feed_unhealthy
+        assert result.degraded_actuation

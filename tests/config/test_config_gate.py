@@ -278,10 +278,16 @@ def test_public_config_surface_excludes_unauthenticated_persist() -> None:
     assert "purge_expired_emergency_records" not in dir(config_pkg)
 
 
-def test_phase3_self_attest_does_not_bypass_account_gate() -> None:
+def test_phase3_self_attest_does_not_bypass_account_gate(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     doc = load_org_config_source(EXAMPLE_CONFIG).document
     doc["version_metadata"]["phase_3_identity_gates_passed"] = True
     doc["account_auto_contain_enabled"] = True
+    monkeypatch.setattr(
+        "praetor.config.preflight._identity_gates_satisfied",
+        lambda: False,
+    )
     with pytest.raises(PreflightError) as exc:
         preflight_document(doc)
     assert exc.value.code == "account_containment_prerequisite"

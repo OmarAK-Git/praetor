@@ -7,6 +7,14 @@ from datetime import datetime
 from typing import Any
 
 PROPOSED_ARTIFACT_KIND = "proposed_org_config"
+PROPOSED_STATUTE_ARTIFACT_KIND = "proposed_statute"
+STATUTE_CURATABLE_SECTIONS: frozenset[str] = frozenset(
+    {
+        "normal_admin_patterns",
+        "containment_exclusions",
+        "containment_policy",
+    }
+)
 UNOBSERVED_SUBNET_PLACEHOLDER = "UNOBSERVED-REQUIRES-HUMAN-REVIEW"
 REPLACE_BEFORE_ACTIVATION_NEVER_CONTAIN_TARGET = "REPLACE-BEFORE-ACTIVATION"
 ZERO_EVIDENCE_ACTIVATION_STATUS = "unusable_zero_evidence"

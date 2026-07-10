@@ -1,0 +1,19 @@
+schema_version: "1"
+scenario_id: account_containment_enabled
+description: Corroborated SID-backed account auto_contain when production gate enabled.
+runner: policy_gate
+setup:
+  alert_identity: account_containment_enabled
+  bundle: synthetic_fixture
+  synthetic_fixture: tests/fixtures/synthetic/account_eligible_valid.json
+  proposed_disposition: auto_contain
+  policy_preconditions:
+    account_auto_contain_enabled: true
+    containment_default_action: auto_contain
+expectations:
+  final_disposition: auto_contain
+  fault_flags: []
+  system_fault_escalation: false
+  directive_emitted: true
+  containment_target_type: account
+  containment_target_id: S-1-5-21-1234567890-123456789-123456789-1001

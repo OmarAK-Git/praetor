@@ -131,7 +131,7 @@ prioritization. Not ratified; does not modify `docs/spec.md` v1.
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P2 | V2 Rewire/Architecture | Contracts | **Pin `evidence_id` derivation in `docs/contracts.md`** (DEC-051, AG-0073). | Infra/Contracts | GR-0003 doc approval | `docs/contracts.md`, `hashing/domains.py`, `correlation/ids.py` | Contract § documents preimage; cross-module test matches `ids.py`. | Open |
+| P2 | V2 Rewire/Architecture | Contracts | **Pin `evidence_id` derivation in `docs/contracts.md`** (DEC-051, AG-0073). | Infra/Contracts | GR-0003 doc approval | `docs/contracts.md`, `hashing/domains.py`, `correlation/ids.py` | Contract § documents preimage; cross-module test matches `ids.py`. | **Done (DEC-051, V2-021)** — contracts §3b is authoritative |
 | P2 | V2 Rewire/Architecture | Contracts | **`ContainmentRule` aligns with AG-0005** — all contract models `extra="forbid"` (playbook vs current `extra="allow"`). | Config/Contracts | 2a typed scope | `contracts/org_config_sections.py`, `tests/contracts/` | Containment models forbid unknown keys; migration path for existing configs documented. | Open |
 
 ---
@@ -181,7 +181,7 @@ prioritization. Not ratified; does not modify `docs/spec.md` v1.
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P3 | Quality & Hardening | Consumer SDK | **§10.6 local consumer policy check** — intentional v1 out-of-scope (phase-2 D1). | Consumer SDK | Consumer product scope | `consumer_sdk/reference_verifier.py` | Reference verifier documents §10.6 as consumer-owned; no fail-open in §10.1–10.5. | Accepted Deferral |
+| P3 | Quality & Hardening | Consumer SDK | **§10.6 local consumer policy check** — intentional v1/V2 out-of-scope (phase-2 D1, V2-031). | Consumer SDK | Consumer product scope | `consumer_sdk/reference_verifier.py`, `docs/contracts.md` §10 | Reference verifier documents §10.6 as consumer-owned; implements §10.1–10.5 only; no fail-open in implemented items. | Accepted Deferral (V2-031 pinned) |
 
 ---
 

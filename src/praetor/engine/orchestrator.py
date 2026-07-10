@@ -55,12 +55,16 @@ from praetor.judgment.provider_health_breaker import (
     record_provider_production_failure_in_transaction,
 )
 from praetor.metrics.collector import MetricsCollector
-from praetor.metrics.events import BreakerMetricDomain, OutcomeMatrixFaultFlag
-from praetor.policy.containment_policy import ContainmentTarget
+from praetor.metrics.events import (
+    BreakerMetricDomain,
+    OutcomeMatrixFaultFlag,
+    is_llm_failure_fault_flag,
+)
 from praetor.policy.gate import (
     LATENCY_SLA_EXCEEDED,
     DeferredDirectivePersistConflict,
     evaluate_policy_gate,
+    gate_resolved_containment_target,
     persist_deferred_policy_gate_directive_in_transaction,
     skeleton_disposition_from_evaluation,
 )
@@ -153,7 +157,7 @@ def _record_intake_metrics_bypass_gate(
     if metrics is None:
         return
     metrics.record_disposition(disposition)
-    if fault_flag is not None:
+    if fault_flag is not None and is_llm_failure_fault_flag(fault_flag):
         metrics.record_llm_failure(fault_flag)
 
 
@@ -482,11 +486,7 @@ def process_alert_intake(
             if directive is None:
                 msg = "auto_contain gate evaluation missing containment directive"
                 raise RuntimeError(msg)
-            target = ContainmentTarget(
-                target_type=directive.target_type.value,
-                target_id=directive.target_id,
-                scope=directive.scope,
-            )
+            target = gate_resolved_containment_target(gate_evaluation)
             try:
                 persist_deferred_policy_gate_directive_in_transaction(
                     store.conn,

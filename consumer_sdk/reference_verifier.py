@@ -1,5 +1,9 @@
 """Reference consumer pre-actuation verifier (docs/contracts.md §10).
 
+Implements §10 items 1–5 in canonical order. §10 item 6 (local consumer
+policy) is **consumer-owned** and intentionally out of reference scope —
+integrators must wire their own local-policy checks before actuation.
+
 Lives outside ``src/praetor/`` so integrators can mirror the protocol without
 shipping Praetor production modules in their actuation binary.
 """
@@ -17,6 +21,12 @@ from praetor.hashing import (
     compute_feed_record_checksum,
     compute_never_contain_entries_hash,
 )
+
+IMPLEMENTS_PROTOCOL_ITEMS: tuple[int, ...] = (1, 2, 3, 4, 5)
+"""§10 items implemented by ``verify_directive_pre_actuation`` (canonical order)."""
+
+CONSUMER_OWNED_PROTOCOL_ITEM: int = 6
+"""§10 item 6 (local consumer policy) — consumer-owned; not implemented here."""
 
 
 class VerifierOutcome(StrEnum):
@@ -191,14 +201,26 @@ def _supersession_feed_covers(
     superseded_directive_id: str,
     feed: ConsumerFeedView,
 ) -> bool:
+    """Feed confirms supersession revocation for the superseded directive.
+
+    v1 feed projection omits ``superseded_by_directive_id`` (§8.4). The feed
+    proves the prior directive was revoked for supersession; consumers must
+    pair that signal with replacement-directive ``supersedes_directive_id`` from
+    their local directive store to verify the full chain.
+    """
     for record in feed.records:
         if record.directive_id != superseded_directive_id:
             continue
         if record.reason_code == "supersession":
-            # v1 feed projection cannot prove WHICH replacement the supersession
-            # record refers to (no superseded_by on the feed line).
             return True
     return False
+
+
+def _consumer_local_supersession_link(
+    superseded_directive_id: str,
+    replacement_directive: ContainmentDirective,
+) -> bool:
+    return replacement_directive.supersedes_directive_id == superseded_directive_id
 
 
 def _has_lineage_conflict(
@@ -233,8 +255,11 @@ def _has_lineage_conflict(
         ):
             continue
         if directive.supersedes_directive_id == other.directive_id:
-            if _supersession_feed_covers(other.directive_id, feed):
-                continue
+            if not _supersession_feed_covers(other.directive_id, feed):
+                return True
+            if not _consumer_local_supersession_link(other.directive_id, directive):
+                return True
+            continue
         return True
     return False
 
@@ -247,7 +272,12 @@ def verify_directive_pre_actuation(
     feed: ConsumerFeedView,
     known_directives: tuple[ContainmentDirective, ...] = (),
 ) -> ReferenceVerifierResult:
-    """Run the §10 consumer pre-actuation protocol checks in canonical order."""
+    """Run §10 items 1–5 of the consumer pre-actuation protocol in canonical order.
+
+    §10 item 6 (local consumer policy) is consumer-owned per ``docs/contracts.md``
+    and is not evaluated here. A compliant consumer must run local-policy checks
+    after these checks succeed and before actuation.
+    """
     last_seen = feed.feed_cursor
 
     if clock.clock_sync_uncertainty_seconds > config.max_consumer_clock_skew_seconds:

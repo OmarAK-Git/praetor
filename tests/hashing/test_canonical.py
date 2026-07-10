@@ -20,6 +20,7 @@ from praetor.hashing.canonical import (
 )
 from praetor.hashing.domains import (
     DOMAIN_DECISION_ID,
+    DOMAIN_EVIDENCE_ID,
     DOMAIN_IDEMPOTENCY_KEY,
     DOMAIN_STAMP_ID,
     compute_feed_record_checksum,
@@ -97,12 +98,14 @@ class TestCanonicalSerialize:
 class TestDomainConstants:
     def test_domain_constants_exact_bytes(self) -> None:
         assert DOMAIN_DECISION_ID == "praetor:v1:decision_id"
+        assert DOMAIN_EVIDENCE_ID == "praetor:v1:evidence_id"
         assert DOMAIN_IDEMPOTENCY_KEY == "praetor:v1:idempotency_key"
         assert DOMAIN_STAMP_ID == "praetor:v1:stamp_id"
 
     def test_no_inline_domain_literals_outside_domains_module(self) -> None:
         literals = (
             "praetor:v1:decision_id",
+            "praetor:v1:evidence_id",
             "praetor:v1:idempotency_key",
             "praetor:v1:stamp_id",
         )

@@ -10,6 +10,7 @@ from typing import Any
 
 from praetor.contracts.disposition import Disposition
 from praetor.contracts.edict import DecisionEdict
+from praetor.contracts.fault_flags import validate_decision_edict_fault_flags
 from praetor.contracts.judgment import ModelJudgment
 from praetor.contracts.ledger import NeverContainSnapshotRecord
 from praetor.contracts.policy import PolicyGateResult
@@ -80,6 +81,11 @@ def build_decision_edict(
     ledger_previous_hash: str | None = None,
     ledger_current_hash: str = "pending",
 ) -> DecisionEdict:
+    validate_decision_edict_fault_flags(
+        fault_flags=disposition.fault_flags,
+        system_fault_escalation=disposition.system_fault_escalation,
+        final_disposition=disposition.final_disposition,
+    )
     # Single EMPTY_BUNDLE substitution: this resolved value feeds both the
     # decision_id derivation and the stored evidence_bundle_hash field (§3.3).
     bundle_hash = resolved_evidence_bundle_hash(
