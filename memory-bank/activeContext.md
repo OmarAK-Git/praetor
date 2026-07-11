@@ -5,8 +5,11 @@
 **V2 COMPLETE** — Gates 0–5 closed; tasks V2-001–036 done. Correctness audit 2026-07-10:
 `.workflow/v2-correctness-audit/final-report.md` (pytest **1029**, walkthrough OK, docs refreshed).
 
-**Follow-ups (non-blocking):** wire `record_policy_gate_evaluation` + similar-case prompt builder into
-production intake; residual `delivery_backlog.md` Open-row reconcile.
+**V2-037 done** — Gate 5 intake wiring (evaluation recording + similar-case prompt injection) on
+live `process_alert_intake`. Evidence: `.workflow/v2-037-gate5-intake-wiring/results/verifier-result.md`.
+
+**Follow-ups:** deferred roadmap / Accepted Deferral / Partial rows only.
+Backlog reconcile **V2-038 done**; live Splunk HEC **V2-039 done**.
 
 **Sprint history (all closed):** V2-0 … V2-5 — see `memory-bank/progress.md` and `.workflow/v2-gate-*-exit/`.
 

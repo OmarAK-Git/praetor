@@ -68,7 +68,8 @@ function Test-FixtureManifest {
 }
 
 function ConvertTo-SplunkEvent {
-    param([hashtable]$Event)
+    # ConvertFrom-Json yields PSCustomObject; accept any object and re-serialize.
+    param([Parameter(Mandatory = $true)][object]$Event)
 
     $repoRoot = Get-RepoRoot -Override $RepoRoot
     $python = (Get-Command python -ErrorAction Stop).Source
@@ -76,7 +77,8 @@ function ConvertTo-SplunkEvent {
     $json = $Event | ConvertTo-Json -Depth 20 -Compress
     $flatJson = $json | & $python $flattenScript flatten
     if ($LASTEXITCODE -ne 0) {
-        throw "flatten_fixture_event failed for record_id=$($Event.record_id)"
+        $rid = $Event.record_id
+        throw "flatten_fixture_event failed for record_id=$rid"
     }
     return ($flatJson | ConvertFrom-Json)
 }
@@ -106,11 +108,12 @@ function Send-SplunkEvents {
         $payload = Get-Content -Path $fixturePath -Raw -Encoding UTF8 | ConvertFrom-Json
         foreach ($event in $payload.events) {
             $splunkEvent = ConvertTo-SplunkEvent -Event $event
+            $timestamp = [string]$splunkEvent.'@timestamp'
             $body = @{
                 index = $TargetIndex
                 sourcetype = "_json"
                 source = [string]$splunkEvent.source
-                time = [double][DateTimeOffset]::Parse([string]$splunkEvent["@timestamp"]).ToUnixTimeSeconds()
+                time = [double][DateTimeOffset]::Parse($timestamp).ToUnixTimeSeconds()
                 event = $splunkEvent
             } | ConvertTo-Json -Depth 20 -Compress
 

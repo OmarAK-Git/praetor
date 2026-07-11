@@ -1,0 +1,93 @@
+{
+  "sprint_id": "v2-followups-backlog-splunk",
+  "gate_item_id": null,
+  "prerequisite_done": [
+    "v2-037-gate5-intake-wiring"
+  ],
+  "items": [
+    {
+      "id": "v2-038-delivery-backlog-reconcile",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-037-gate5-intake-wiring"
+      ],
+      "goal": "V2-038 — Reconcile docs/proposals/delivery_backlog.md Open/Partial rows against V2 completion evidence (Gates 0–5 + V2-037); update banner; leave true residual Open / Accepted Deferral / Future rows honest.",
+      "scope": "Documentation reconcile of delivery_backlog.md only (plus memory-bank projections). No product code changes. No phase gate.",
+      "files_allowed": [
+        "docs/proposals/delivery_backlog.md",
+        "docs/proposals/v2_hardening.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md",
+        ".workflow/v2-038-delivery-backlog-reconcile/"
+      ],
+      "acceptance_criteria": [
+        "Banner no longer lists Gate 5 intake wiring as residual; reflects post-V2-037 state.",
+        "Every row closed by a V2 task / gate (including V2-029 T7/T9/T10, V2-016–023 quality items, V2-032–037 feature follow-ups) is marked Closed with the closing task id — no stale Open for completed work.",
+        "True residuals remain Open, Partial, or Accepted Deferral with accurate notes (including T11 live HEC if still pending; Future/Exploratory P5 rows stay Open).",
+        "No product/source code changes outside docs and memory-bank projections."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "python -c \"from pathlib import Path; t=Path('docs/proposals/delivery_backlog.md').read_text(encoding='utf-8'); assert 'Gate 5 intake wiring' not in t.split('Residual')[1].split('\\n')[0] if 'Residual' in t else True; assert 'PARTIALLY SUPERSEDED' in t or 'RECONCILED' in t or 'Status:' in t; print('banner_ok')\""
+        ],
+        "manual_checks": [
+          "Spot-check: T7/T9/T10 Closed (V2-029); progressive/similar-case intake Closed (V2-032/034/037); T11 status matches live-HEC task outcome or remains Open if HEC not yet run."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-038-delivery-backlog-reconcile",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    },
+    {
+      "id": "v2-039-live-splunk-hec-demo",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "v2-038-delivery-backlog-reconcile"
+      ],
+      "goal": "V2-039 — Live Splunk Free HEC demo end-to-end (T11): env-gated integration test passes once against a live Splunk instance; five saved searches return expected record_ids; README/runbook reconciled for HEC/cert/props.conf.",
+      "scope": "Execute live HEC demo path and any minimal doc/test fixes required for a green env-gated run. Stop with human_needed if PRAETOR_SPLUNK_HEC_HOST/TOKEN (and mgmt auth if required) are missing — do not fake a pass.",
+      "files_allowed": [
+        "tests/splunk/",
+        "splunk/",
+        "tools/splunk_ingest_demo.ps1",
+        "tools/fixture_events.py",
+        "tools/compile_sigma.py",
+        "docs/operator_runbook.md",
+        "docs/proposals/delivery_backlog.md",
+        "docs/eval_gates.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md",
+        ".workflow/v2-039-live-splunk-hec-demo/"
+      ],
+      "acceptance_criteria": [
+        "With HEC env set: pytest integration test for live Splunk demo passes (ingest + saved-search record_id expectations).",
+        "Without HEC env: task status is human_needed with exact required env vars listed — never claimed done.",
+        "splunk/README.md (and runbook if needed) documents HEC enablement, self-signed cert handling, and props.conf vs sourcetype=_json behavior.",
+        "delivery_backlog T11 row updated to Closed only after a real live pass."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/splunk/test_savedsearch_generation.py -q -m integration"
+        ],
+        "manual_checks": [
+          "Confirm either (a) integration test passed with HEC env, or (b) queue item is human_needed with env checklist — not done."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/v2-039-live-splunk-hec-demo",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": []
+    }
+  ]
+}

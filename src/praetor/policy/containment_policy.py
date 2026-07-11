@@ -213,6 +213,29 @@ def embedded_entries_for_target(
     return embedded
 
 
+@dataclass(frozen=True)
+class PolicyGateEvaluationDimensions:
+    target_type: str
+    asset_class: str
+
+
+def policy_gate_evaluation_dimensions(
+    snapshot: OrgConfigSnapshot,
+    resolved_target: ContainmentTarget | None,
+) -> PolicyGateEvaluationDimensions:
+    """Map a gate-resolved target to progressive-reporting dimensions."""
+    if resolved_target is None:
+        return PolicyGateEvaluationDimensions(
+            target_type="unknown",
+            asset_class="unknown",
+        )
+    groups = _asset_groups_for_target(snapshot, resolved_target)
+    return PolicyGateEvaluationDimensions(
+        target_type=resolved_target.target_type,
+        asset_class=groups[0] if groups else "ungrouped",
+    )
+
+
 def _asset_groups_for_target(
     snapshot: OrgConfigSnapshot,
     target: ContainmentTarget,

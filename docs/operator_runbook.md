@@ -263,7 +263,7 @@ Dimensions are `(target_type, asset_class)` — for example `host` + `eng-workst
 
 ### Generating a report
 
-Evaluation rows must be persisted via `record_policy_gate_evaluation` (see `src/praetor/metrics/evaluations.py`). Build a windowed report with:
+Evaluation rows are persisted automatically during `process_alert_intake` edict commit. Build a windowed report with:
 
 ```powershell
 python -c "

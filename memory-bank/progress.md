@@ -1,5 +1,44 @@
 # Progress Log
 
+## 2026-07-10 — V2-038 delivery backlog reconcile COMPLETE
+
+- Reconciled `docs/proposals/delivery_backlog.md`: banner reflects Gates 0–5 + V2-037; Gate 5 intake wiring removed from residuals.
+- **14** row updates (12 Open/Partial→Closed + 2 Closed-note refinements for V2-037 intake wiring).
+- T11 live Splunk HEC left Open for V2-039. No product code changes.
+- Flight Recorder: `.workflow/v2-038-delivery-backlog-reconcile/results/implementer-result.md`.
+
+## 2026-07-10 — V2-039 Live Splunk HEC demo COMPLETE
+
+- Live integration: `1 passed` (HEC ingest + SPL record_id assertions).
+- Fixes: ingest PSCustomObject/`@timestamp`; search POST body; user/password login;
+  Splunk time format for oneshot earliest/latest.
+- T11 Closed in delivery_backlog. Verifier PASS.
+- Flight Recorder: `.workflow/v2-039-live-splunk-hec-demo/`.
+- Security: rotate operator-pasted HEC token + admin password (exposed in chat).
+
+## 2026-07-10 — V2-039 Live Splunk HEC demo → human_needed
+
+- Env gate: `PRAETOR_SPLUNK_HEC_HOST` / `PRAETOR_SPLUNK_HEC_TOKEN` unset; no live run.
+- Queue: `v2-039-live-splunk-hec-demo` → `human_needed`.
+- Evidence: `.workflow/v2-039-live-splunk-hec-demo/results/implementer-result.md`.
+- T11 remains Open in delivery_backlog.
+
+## 2026-07-10 — V2-038 Delivery backlog reconcile COMPLETE
+
+- Reconciled stale Open/Partial rows against V2 Gates 0–5 + V2-037 evidence.
+- Banner: RECONCILED; residual = T11/V2-039 + deferrals/roadmap.
+- Verifier PASS. Queue `v2-038-delivery-backlog-reconcile` → `done`.
+- Flight Recorder: `.workflow/v2-038-delivery-backlog-reconcile/`.
+
+## 2026-07-10 — V2-037 Gate 5 intake wiring COMPLETE
+
+- Wired `record_policy_gate_evaluation` into edict critical_transaction; schema ensure creates
+  `policy_gate_evaluations`; similar-case exemplars inject into judgment prompt before provider call.
+- `asset_class`: first matching asset group, else `ungrouped`; `unknown` when no resolved target.
+- Fresh verify: pytest **17** passed (task-scoped). Verifier PASS.
+- Flight Recorder: `.workflow/v2-037-gate5-intake-wiring/`.
+- Queue item `v2-037-gate5-intake-wiring` → `done`.
+
 ## 2026-07-10 — Spec + V2 plan status updates (owner-approved)
 
 - `docs/spec.md`: V2 mirrors — Outcome Matrix rows (`provider_unavailable`, `insufficient_corroboration`, `ambiguous_containment_target`), DEC-058 posture, DEC-059 host corroboration, DEC-062 SID waiver note, account feature-gate wording.

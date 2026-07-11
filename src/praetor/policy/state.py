@@ -45,6 +45,7 @@ REQUIRED_PRODUCTION_POLICY_TABLES = frozenset(
         "analyst_annotations",
         "containment_rate_counters",
         "circuit_breaker_state",
+        "policy_gate_evaluations",
         "provider_health_metrics",
         "revocation_feed_export_meta",
     }
@@ -83,8 +84,10 @@ def ensure_production_policy_tables(conn: sqlite3.Connection) -> None:
     from praetor.judgment.provider_health_breaker import (
         init_provider_health_breaker_schema,
     )
+    from praetor.metrics.evaluations import init_policy_gate_evaluation_schema
 
     init_provider_health_breaker_schema(conn)
+    init_policy_gate_evaluation_schema(conn)
 
 
 def assert_production_policy_tables(conn: sqlite3.Connection) -> None:

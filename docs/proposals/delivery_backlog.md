@@ -1,10 +1,9 @@
 # Praetor Delivery Backlog
 
-**Status:** PARTIALLY SUPERSEDED — V2 Gates 0–5 closed 2026-07-10 (tasks V2-001–036).
-Many rows below still say `Open` from the pre-build harvest; treat them as **stale until
-reconciled**. Prefer `docs/proposals/v2_implementation_plan.md` + `.workflow/v2-*-exit/` for
-completion evidence. Residual true follow-ups: Gate 5 intake wiring (progressive evaluation
-recording + similar-case prompt injection), live Splunk HEC demo, and deferred roadmap items.
+**Status:** RECONCILED 2026-07-10 (V2-038/V2-039) — V2 Gates 0–5 + V2-037–039 complete.
+Prefer `docs/proposals/v2_implementation_plan.md` + `.workflow/v2-*-exit/` for completion evidence.
+Residual true follow-ups: deferred roadmap / Future rows, and Accepted Deferral items
+(rate-limit DEC-030 scope, recovery semantics, etc.). Live Splunk HEC demo (T11) closed by V2-039.
 
 **Purpose:** Single taxonomy-sorted backlog harvested for V1 gap closure and V2 planning.
 Does not modify `docs/spec.md` v1. Correctness audit: `.workflow/v2-correctness-audit/final-report.md`.
@@ -98,8 +97,8 @@ Does not modify `docs/spec.md` v1. Correctness audit: `.workflow/v2-correctness-
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P2 | V1 Gap Closure | Metrics | **`record_feed_export_lag` not called from intake** — no export completion event at intake time (TASK-028a gap). | Engine/Metrics | Export hook design | `metrics/`, `engine/orchestrator.py`, `revocation/exporter.py` | Feed export lag metric populated on export completion path; documented if intentionally export-only. | Open |
-| P2 | V1 Gap Closure | Metrics | **`record_llm_failure` production wiring** should restrict to `LLM_FAILURE_FAULT_FLAGS` only. | Engine/Metrics | TASK-028a metrics wiring | `metrics/`, `judgment/`, `engine/orchestrator.py` | Production call sites pass only §13 flags; test asserts rejection of policy flags. | Open |
+| P2 | V1 Gap Closure | Metrics | **`record_feed_export_lag` not called from intake** — no export completion event at intake time (TASK-028a gap). | Engine/Metrics | Export hook design | `metrics/`, `engine/orchestrator.py`, `revocation/exporter.py` | Feed export lag metric populated on export completion path; documented if intentionally export-only. | **Closed (V2-020)** — lag recorded on export completion in `revocation/exporter.py` |
+| P2 | V1 Gap Closure | Metrics | **`record_llm_failure` production wiring** should restrict to `LLM_FAILURE_FAULT_FLAGS` only. | Engine/Metrics | TASK-028a metrics wiring | `metrics/`, `judgment/`, `engine/orchestrator.py` | Production call sites pass only §13 flags; test asserts rejection of policy flags. | **Closed (V2-020)** — intake bypass gate restricts to `LLM_FAILURE_FAULT_FLAGS` |
 
 ---
 
@@ -146,36 +145,36 @@ Does not modify `docs/spec.md` v1. Correctness audit: `.workflow/v2-correctness-
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
 | P2 | Quality & Hardening | Eval harness | **T1: Static guard — policy fault-flag literals ⊆ `OutcomeMatrixFaultFlag`** (phase-2/3/4 TRACK). | Engine | — | `tests/policy/`, `tests/contracts/`, `evals/outcome_matrix.py` | CI test fails on orphan gate/engine fault string not in enum. | **Closed (V2-016)** |
 | P2 | Quality & Hardening | State store | **T2: Production open path asserts five policy tables** under held singleton without manual `init_*`. | Engine | — | `tests/`, `state/store.py`, `policy/state.py` | `open_production_state_store` + `init_state_dir` test creates all required tables. | **Closed (V2-017)** |
-| P3 | Quality & Hardening | Eval harness | **T4: Optional `engine_intake` rate-counter assertion** on `auto_contain` path. | Engine | TASK-028a closed | `evals/harness.py`, `evals/scenarios/` | `engine_intake` scenario asserts rate counter row after gated contain. | Open |
+| P3 | Quality & Hardening | Eval harness | **T4: Optional `engine_intake` rate-counter assertion** on `auto_contain` path. | Engine | TASK-028a closed | `evals/harness.py`, `evals/scenarios/` | `engine_intake` scenario asserts rate counter row after gated contain. | **Closed (V2-020)** — harness optional `expectations.metrics` pins |
 | P3 | Quality & Hardening | Eval harness | **Eval-scenario regression locking discipline** — every confirmed model error becomes harness scenario (`v2_hardening` 4c). | SOC/Process | — | `evals/`, `.workflow/`, `docs/eval_gates.md` | Documented procedure; template in workflow; CI documents minimum scenario bar. | **Closed (V2-036)** |
 | P3 | Quality & Hardening | Eval harness | **`ledger_chain_integrity_failure` harness scenario** — startup-only; not fixture-runnable (phase-2 D2). | Engine | Production startup test harness | `tests/`, `ledger/`, `evals/` | Dedicated startup integration test OR permanent carve-out in completeness guard with rationale. | Accepted Deferral |
-| P3 | Quality & Hardening | Contracts | **T5: Widen `test_scope_guard.py` allowlist** for Phase 5 docs (`operator_runbook.md`, `architecture.md`, `eval_gates.md`). | Infra | Docs landing | `tests/contracts/test_scope_guard.py` | Allowlist includes sanctioned doc paths; guard still blocks `spec.md`. | Open |
-| P3 | Quality & Hardening | Outcome Matrix | **`DecisionEdict` model_validator** for fault_flag ↔ system_fault pairing (eval-only today). | Engine | — | `contracts/`, `engine/edict.py` | Pydantic validator enforces matrix polarity at edict construction. | Open |
+| P3 | Quality & Hardening | Contracts | **T5: Widen `test_scope_guard.py` allowlist** for Phase 5 docs (`operator_runbook.md`, `architecture.md`, `eval_gates.md`). | Infra | Docs landing | `tests/contracts/test_scope_guard.py` | Allowlist includes sanctioned doc paths; guard still blocks `spec.md`. | **Closed (V2-023)** — `SANCTIONED_V2_DOC_PATHS` includes Phase 5 docs |
+| P3 | Quality & Hardening | Outcome Matrix | **`DecisionEdict` model_validator** for fault_flag ↔ system_fault pairing (eval-only today). | Engine | — | `contracts/`, `engine/edict.py` | Pydantic validator enforces matrix polarity at edict construction. | **Closed (V2-016)** — `validate_decision_edict_fault_flags` at edict construction |
 
 ### Ledger & feed integrity
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P2 | Quality & Hardening | Ledger | **External tip anchor for tail truncation** — `verify_chain()` cannot detect silent tail removal (AG-0027). | Infra/Ledger | Production deployment design | `ledger/`, `docs/contracts.md`, `docs/operator_runbook.md` | Limitation documented; OOB tip anchor procedure in runbook; optional verifier hook. | Open |
+| P2 | Quality & Hardening | Ledger | **External tip anchor for tail truncation** — `verify_chain()` cannot detect silent tail removal (AG-0027). | Infra/Ledger | Production deployment design | `ledger/`, `docs/contracts.md`, `docs/operator_runbook.md` | Limitation documented; OOB tip anchor procedure in runbook; optional verifier hook. | **Closed (V2-019)** — runbook §tip anchor + optional `verify_ledger_tip_against_anchor` |
 | P2 | Quality & Hardening | Ledger | **DB schema migrations** — `open_state_store` rejects incompatible version; no migration path (DEC-021). | Infra | — | `state/store.py`, `docs/operator_runbook.md` | Migration strategy documented or explicit v1 single-version policy. | Accepted Deferral |
-| P3 | Quality & Hardening | Revocation feed | **Feed floor reconciles against on-disk file** — metadata must not outpace physical artifact (AG-0030, AG-0055). | Engine/Revocation | — | `revocation/exporter.py`, `tests/` | Crash-recovery test: stale meta → unhealthy; fresh DB → floor 0. | Partial |
-| P3 | Quality & Hardening | Metrics | **MetricsCollector thread-safety** when wired to concurrent call sites (DEC-046). | Engine/Metrics | Multi-threaded wiring | `metrics/collector.py`, `docs/operator_runbook.md` | Document single-writer assumption OR add locking + concurrency test. | Open |
+| P3 | Quality & Hardening | Revocation feed | **Feed floor reconciles against on-disk file** — metadata must not outpace physical artifact (AG-0030, AG-0055). | Engine/Revocation | — | `revocation/exporter.py`, `tests/` | Crash-recovery test: stale meta → unhealthy; fresh DB → floor 0. | **Closed (V2-019)** — `reconcile_feed_metadata_against_jsonl` + crash-recovery tests |
+| P3 | Quality & Hardening | Metrics | **MetricsCollector thread-safety** when wired to concurrent call sites (DEC-046). | Engine/Metrics | Multi-threaded wiring | `metrics/collector.py`, `docs/operator_runbook.md` | Document single-writer assumption OR add locking + concurrency test. | **Closed (V2-020)** — single-writer documented in runbook + collector docstring |
 | P3 | Quality & Hardening | Metrics | **Metrics SQLite persistence** — in-process only in v1 (DEC-044). | Engine/Metrics | — | `metrics/`, `state/` | Persistence design doc OR explicit non-goal for v1. | Accepted Deferral |
 
 ### Detection & demo quality
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P3 | Quality & Hardening | Detection | **T7: Pin Sigma↔SPL equivalence** — per rule, matcher sets equal over manifest (phase-4 F-3). | Detection | TASK-033 | `tests/splunk/`, `tools/spl_match.py`, `detections/` | Test fails if Sigma and SPL match sets diverge for any packaged rule. | Open |
-| P3 | Quality & Hardening | Detection | **T9: Splunk demo time window** — `dispatch.earliest_time = -30d` ages out 2026-06-08 fixtures. | Detection/Operator | — | `splunk/savedsearches.conf`, `splunk/README.md` | Fixture-stable window or documented refresh step; demo reproducible. | Open |
-| P3 | Quality & Hardening | Detection | **T10: `tools/` mypy gate** — 4 untyped-export errors uncaught. | Infra | — | `pyproject.toml`, `tools/` | Mypy covers `tools/` OR exclusion documented in CI docs. | Open |
+| P3 | Quality & Hardening | Detection | **T7: Pin Sigma↔SPL equivalence** — per rule, matcher sets equal over manifest (phase-4 F-3). | Detection | TASK-033 | `tests/splunk/`, `tools/spl_match.py`, `detections/` | Test fails if Sigma and SPL match sets diverge for any packaged rule. | **Closed (V2-029)** — `test_sigma_spl_matcher_sets_equal_per_rule` |
+| P3 | Quality & Hardening | Detection | **T9: Splunk demo time window** — `dispatch.earliest_time = -30d` ages out 2026-06-08 fixtures. | Detection/Operator | — | `splunk/savedsearches.conf`, `splunk/README.md` | Fixture-stable window or documented refresh step; demo reproducible. | **Closed (V2-029)** — fixture-stable dispatch window pinned in `savedsearches.conf` |
+| P3 | Quality & Hardening | Detection | **T10: `tools/` mypy gate** — 4 untyped-export errors uncaught. | Infra | — | `pyproject.toml`, `tools/` | Mypy covers `tools/` OR exclusion documented in CI docs. | **Closed (V2-029)** — `tools/` excluded; documented in `docs/eval_gates.md` |
 | P3 | Quality & Hardening | Detection | **T8: Optional `evals/run_phase4_gate.py`** single-command parity. | Detection | — | `evals/` | One command runs phase-4 checks with `--check` mode. | Open |
 
 ### Benchmark & runbook
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P3 | Quality & Hardening | Benchmark | **Burst rate measurement** in separate window (TASK-035 gap). | Engine | — | `benchmarks/serialized_path.py` | Burst metric reported separately from sustained; documented in runbook. | Open |
+| P3 | Quality & Hardening | Benchmark | **Burst rate measurement** in separate window (TASK-035 gap). | Engine | — | `benchmarks/serialized_path.py` | Burst metric reported separately from sustained; documented in runbook. | **Closed (V2-030)** — v1 honesty: `burst_separately_measured=false`; separate window deferred |
 | P3 | Quality & Hardening | Benchmark | **Benchmark hardware specificity** — sample runs are developer-machine dependent. | Operator | — | `docs/operator_runbook.md`, `benchmarks/` | Runbook states non-gating, informational-only interpretation. | Accepted Deferral |
 | P3 | Quality & Hardening | Runbook | **`init_state_dir` before `open_production_state_store`** — bootstrap WAL documented (REVIEW-005). | Operator | TASK-035 | `docs/operator_runbook.md`, `state/store.py` | Runbook prerequisite steps verified by operator checklist test topics. | Partial |
 
@@ -200,7 +199,7 @@ Does not modify `docs/spec.md` v1. Correctness audit: `.workflow/v2-correctness-
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P3 | Feature Enablers | Metrics | **Production metrics from real call sites** — collector built (TASK-24); feed lag at intake still open. | Engine | TASK-028a | `metrics/`, `engine/orchestrator.py` | `MetricsSnapshot` export reflects live intake/export counters; documented scrape path. | Partial |
+| P3 | Feature Enablers | Metrics | **Production metrics from real call sites** — collector built (TASK-24); feed lag at intake still open. | Engine | TASK-028a | `metrics/`, `engine/orchestrator.py` | `MetricsSnapshot` export reflects live intake/export counters; documented scrape path. | Partial — intake/export + eval recording wired (V2-020/V2-037); runtime MetricsCollector singleton on production feed loop still follow-up |
 
 ### Org-config rate limits
 
@@ -219,7 +218,7 @@ Does not modify `docs/spec.md` v1. Correctness audit: `.workflow/v2-correctness-
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P3 | Feature Enablers | Detection | **T11: Live Splunk Free demo end-to-end** — Phase 5 pass criterion (phase-4 F-4). | Operator/Detection | HEC env, T9 window | `tests/splunk/`, `splunk/`, `docs/operator_runbook.md` | Env-gated HEC test passes once; five saved searches return expected `record_id`s; README reconciled for cert/`props.conf`. | Open |
+| P3 | Feature Enablers | Detection | **T11: Live Splunk Free demo end-to-end** — Phase 5 pass criterion (phase-4 F-4). | Operator/Detection | HEC env, T9 window | `tests/splunk/`, `splunk/`, `docs/operator_runbook.md` | Env-gated HEC test passes once; five saved searches return expected `record_id`s; README reconciled for cert/`props.conf`. | **Closed (V2-039)** — live HEC ingest + SPL record_id assertions passed 2026-07-10 |
 
 ### Fixtures & telemetry
 
@@ -235,14 +234,14 @@ Does not modify `docs/spec.md` v1. Correctness audit: `.workflow/v2-correctness-
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P4 | V2 Features | PolicyGate | **Progressive authorization model** — narrow mandate, earned authority via SOC-led config promotion (`v2_hardening` Item 3). | Owner + Engine | 2b posture, override-rate metrics | `docs/decisions.md`, org config schema, runbook | Documented promotion workflow; reversible audited config changes only. | **Closed (V2-032)** — reporting + runbook; intake feed follow-up |
+| P4 | V2 Features | PolicyGate | **Progressive authorization model** — narrow mandate, earned authority via SOC-led config promotion (`v2_hardening` Item 3). | Owner + Engine | 2b posture, override-rate metrics | `docs/decisions.md`, org config schema, runbook | Documented promotion workflow; reversible audited config changes only. | **Closed (V2-032/V2-037)** — reporting + runbook; intake eval recording wired |
 | P4 | V2 Features | Metrics | **Per-asset-class / target-type promotion reporting view** — aggregates annotations + override-rate for promotion decisions. | SOC/Engine | TASK-25 annotations, TASK-24 metrics | `metrics/`, reporting module, `docs/operator_runbook.md` | SOC lead can query override rate by asset class over window; no self-tuning. | **Closed (V2-032)** |
 
 ### Feedback loop (human-in-the-middle)
 
 | priority | category | capability | item | owner | dependencies | files touched | acceptance criteria | status |
 |----------|----------|------------|------|-------|--------------|---------------|---------------------|--------|
-| P4 | V2 Features | Judgment | **Similar-case in-context exemplars (RAG)** — retrieve human-confirmed cases into judgment prompt (`v2_hardening` 4a; plan §Deferred Work). | Judgment | Prompt slot, retrieval contract | `judgment/prompt.py`, retrieval module, `tests/judgment/` | Exemplars injected bounded/auditable; excluded from evidence hash path; A/B eval shows retrieval contract met. | **Closed (V2-034)** — library; intake wiring follow-up |
+| P4 | V2 Features | Judgment | **Similar-case in-context exemplars (RAG)** — retrieve human-confirmed cases into judgment prompt (`v2_hardening` 4a; plan §Deferred Work). | Judgment | Prompt slot, retrieval contract | `judgment/prompt.py`, retrieval module, `tests/judgment/` | Exemplars injected bounded/auditable; excluded from evidence hash path; A/B eval shows retrieval contract met. | **Closed (V2-034/V2-037)** — library + intake exemplar injection wired |
 | P4 | V2 Features | Org config | **Statute curation workflow** — annotation → proposed statute edit → review → re-activate (`v2_hardening` 4b). | SOC/Operator | — | `.workflow/`, `codification/`, `config/activation.py` | Tracked workflow artifact; preflight on proposed edits; activation audit trail. | **Closed (V2-035)** |
 
 ### Judgment prompt

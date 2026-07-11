@@ -40,6 +40,7 @@ from praetor.engine.timeouts import (
     V1_DEFAULT_MAX_PROVIDER_JUDGMENT_LATENCY_SECONDS,
     call_provider_with_latency_tracking,
 )
+from praetor.judgment.excerpt import build_prompt_exemplar_block
 from praetor.judgment.prompt import build_judgment_prompt_payload_from_excerpt_set
 from praetor.judgment.provider import (
     JudgmentProvider,
@@ -55,11 +56,16 @@ from praetor.judgment.provider_health_breaker import (
     record_provider_production_failure_in_transaction,
 )
 from praetor.metrics.collector import MetricsCollector
+from praetor.metrics.evaluations import (
+    init_policy_gate_evaluation_schema,
+    record_policy_gate_evaluation,
+)
 from praetor.metrics.events import (
     BreakerMetricDomain,
     OutcomeMatrixFaultFlag,
     is_llm_failure_fault_flag,
 )
+from praetor.policy.containment_policy import policy_gate_evaluation_dimensions
 from praetor.policy.gate import (
     LATENCY_SLA_EXCEEDED,
     DeferredDirectivePersistConflict,
@@ -83,6 +89,7 @@ from praetor.tickets.contract import (
     stamp_status_allows_edict_append,
 )
 from praetor.tickets.outbox import StampStatus
+from praetor.retrieval.similar_cases import retrieve_similar_case_exemplars
 from praetor.tickets.stamp import (
     StampBackendOutcome,
     StampBackendResult,
@@ -320,6 +327,13 @@ def process_alert_intake(
         store.conn, alloc.attempt.processing_attempt_identity, AttemptState.ACTIVE
     )
 
+    decision_id = decision_id_for_attempt(
+        alert_identity=attempt.alert_identity,
+        evidence_bundle_hash_value=bundle_hash,
+        org_config_snapshot_hash=snap_hash,
+        processing_attempt_identity=attempt.processing_attempt_identity,
+    )
+
     verbatim = fetch_verbatim_render_text(store.conn, snap_hash)
     if enforce_config_budget:
         if (
@@ -333,11 +347,19 @@ def process_alert_intake(
                 metrics_collector=metrics_collector,
             )
 
+    evidence_facts = [fact.model_dump(mode="python") for fact in resolved_bundle.facts]
+    exemplars = retrieve_similar_case_exemplars(
+        store.conn,
+        evidence_facts=evidence_facts,
+        exclude_decision_id=decision_id,
+    )
+    exemplar_block = build_prompt_exemplar_block(exemplars) if exemplars else None
     prompt_payload = build_judgment_prompt_payload_from_excerpt_set(
         excerpt_set=excerpt_set,
         evidence_bundle_hash=bundle_hash,
         org_config_snapshot_hash=snap_hash,
         org_config_verbatim=verbatim or "",
+        exemplar_block=exemplar_block,
     )
     request = JudgmentRequest(
         scenario_id=alert_identity,
@@ -405,12 +427,6 @@ def process_alert_intake(
             metrics_collector=metrics_collector,
         )
 
-    decision_id = decision_id_for_attempt(
-        alert_identity=attempt.alert_identity,
-        evidence_bundle_hash_value=bundle_hash,
-        org_config_snapshot_hash=snap_hash,
-        processing_attempt_identity=attempt.processing_attempt_identity,
-    )
     gate_evaluation = evaluate_policy_gate(
         store.conn,
         judgment=judgment,
@@ -476,6 +492,7 @@ def process_alert_intake(
         ticket_stamp_payload=stamp_result.ticket_payload,
     )
     directive_persisted = False
+    init_policy_gate_evaluation_schema(store.conn)
     with critical_transaction(store.conn):
         if (
             gate_evaluation.final_disposition == Disposition.AUTO_CONTAIN
@@ -525,6 +542,19 @@ def process_alert_intake(
             never_contain_entries=never_contain,
         )
         _finalize_attempt_with_edict_in_transaction(store.conn, attempt, stored)
+        dimensions = policy_gate_evaluation_dimensions(
+            snapshot,
+            gate_evaluation.resolved_target,
+        )
+        record_policy_gate_evaluation(
+            store.conn,
+            decision_id=stored.decision_id,
+            target_type=dimensions.target_type,
+            asset_class=dimensions.asset_class,
+            proposed=stored.policy_gate_result.proposed_disposition,
+            final=stored.final_disposition,
+            evaluated_at=datetime.now(UTC),
+        )
     _record_intake_metrics_after_actuation(
         metrics_collector,
         store.conn,

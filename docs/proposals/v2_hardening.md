@@ -159,8 +159,8 @@ together against the statute and the eval scenarios.
 - **Promote deliberately.** SOC-led audited config change only — documented in
   `docs/operator_runbook.md`. No self-tuning.
 
-**Follow-up:** production intake does not yet call `record_policy_gate_evaluation` / schema init
-(library-complete; operational feed deferred — see V2 correctness audit).
+**Operational:** `process_alert_intake` persists evaluation rows on edict commit and initializes
+`policy_gate_evaluations` via production schema ensure.
 
 ---
 
@@ -171,7 +171,7 @@ authority"): feedback poisoning + loss of auditability. The sanctioned loop:
 
 1. **Similar-case in-context exemplars — [DONE V2-033/034].** Bounded `PromptExemplarBlock` +
    human-confirmed retrieval (`praetor.retrieval`). Exemplars stay outside the evidence hash path.
-   **Follow-up:** orchestrator still uses the non-retrieval prompt builder by default.
+   **Operational:** `process_alert_intake` retrieves human-confirmed precedents into the judgment prompt when matches exist.
 2. **Statute curation — [DONE V2-035].** Annotation → `proposed_statute` → review →
    `promote_statute_curation` with preflight + activation audit.
 3. **Eval-scenario regression locking — [DONE V2-036].** Workflow template + expectation-key CI

@@ -33,6 +33,7 @@ REQUIRED_PRODUCTION_TABLES = frozenset(
         "analyst_annotations",
         "containment_rate_counters",
         "circuit_breaker_state",
+        "policy_gate_evaluations",
         "provider_health_metrics",
         "revocation_feed_export_meta",
     }

@@ -82,6 +82,14 @@ This covers all committed fixture timestamps on `2026-06-08`. If you ingest fixt
 
 Discrimination spot-checks: encoded PowerShell must not match `1001`; 4624 must not match Sysmon records; calc must not match `1001`/`1002`/`1003`.
 
+### Live hit (encoded PowerShell)
+
+After HEC ingest, the encoded-PowerShell SPL resolves to fixture `record_id=1002` — Sysmon process create with `-enc` on `WORKSTATION1`:
+
+![Splunk live demo: encoded PowerShell event record_id=1002](../docs/images/splunk-demo-encoded-powershell-1002.png)
+
+That screenshot is the visual proof for the portability pitch: same committed fixture + compiled SPL, visible in a normal Splunk Free search UI.
+
 ## Troubleshooting
 
 - **Zero results:** confirm `source` and `EventCode` fields on ingested events (`source="WinEventLog:..."`).
@@ -99,14 +107,18 @@ Enable HEC on Splunk Free (`Settings → Data inputs → HTTP Event Collector`).
 Set environment variables before running the env-gated integration marker:
 
 ```powershell
-$env:PRAETOR_SPLUNK_HEC_HOST = "https://localhost:8088"
+$env:PRAETOR_SPLUNK_HEC_HOST = "http://localhost:8088"   # or https://...
 $env:PRAETOR_SPLUNK_HEC_TOKEN = "<hec-token>"
-# Optional when HEC token cannot query the management API (port 8089):
-# $env:PRAETOR_SPLUNK_MGMT_HOST = "https://localhost:8089"
-# $env:PRAETOR_SPLUNK_MGMT_TOKEN = "<mgmt-capable-token>"
+# Management API (port 8089) needs search auth — HEC tokens usually cannot:
+$env:PRAETOR_SPLUNK_MGMT_HOST = "https://localhost:8089"
+$env:PRAETOR_SPLUNK_USER = "<admin-user>"
+$env:PRAETOR_SPLUNK_PASSWORD = "<admin-password>"
+# Or set PRAETOR_SPLUNK_MGMT_TOKEN to a session/API token instead of user/password.
 pytest -m integration tests/splunk/test_savedsearch_generation.py::test_splunk_demo_integration_with_hec_env
 ```
 
-The integration test ingests all manifest fixtures via HEC, then runs each committed SPL query against Splunk with the fixture-stable time window and asserts expected `record_id` sets.
+`PRAETOR_SPLUNK_HEC_HOST` is the HEC base URL only (for example `http://localhost:8088`); the ingest script appends `/services/collector/event`.
+
+The integration test ingests all manifest fixtures via HEC, then runs each committed SPL query against Splunk with the fixture-stable time window and asserts expected `record_id` sets. Oneshot `earliest`/`latest` use Splunk's `MM/DD/YYYY:HH:MM:SS` form derived from the fixture ISO constants.
 
 Ingest uses `sourcetype=_json` with flattened `EventData` fields (`tools/splunk_ingest_demo.ps1`); `props.conf` applies to file/monitor ingest with `source::WinEventLog:...` — see step 3 above.

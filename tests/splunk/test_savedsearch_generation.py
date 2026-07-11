@@ -14,6 +14,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import pytest
@@ -420,6 +421,41 @@ def test_props_conf_parses_as_splunk_stanzas() -> None:
     assert "source::WinEventLog:Microsoft-Windows-Sysmon/Operational" in stanzas
 
 
+def _splunk_login_session_key(mgmt_host: str, username: str, password: str) -> str:
+    """Obtain a Splunk session key via ``/services/auth/login``."""
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    body = urllib.parse.urlencode(
+        {"username": username, "password": password}
+    ).encode()
+    request = urllib.request.Request(
+        f"{mgmt_host.rstrip('/')}/services/auth/login",
+        data=body,
+        method="POST",
+    )
+    with urllib.request.urlopen(request, context=ctx, timeout=30) as response:
+        xml_body = response.read().decode("utf-8")
+    root = ET.fromstring(xml_body)
+    key = root.findtext(".//{http://www.w3.org/2005/Atom}sessionKey") or root.findtext(
+        ".//sessionKey"
+    )
+    if not key:
+        pytest.fail("Splunk login succeeded but returned no sessionKey")
+    return key
+
+
+def _splunk_time_bound(iso_timestamp: str) -> str:
+    """Convert fixture ISO timestamps to Splunk ``earliest``/``latest`` form."""
+    # Splunk rejects bare ISO-8601 in oneshot earliest/latest; use MM/DD/YYYY:HH:MM:SS.
+    date_part, time_part = iso_timestamp.split("T", 1)
+    year, month, day = date_part.split("-")
+    clock = time_part.split(".")[0]
+    if len(clock) == 5:
+        clock = f"{clock}:00"
+    return f"{month}/{day}/{year}:{clock}"
+
+
 @pytest.mark.integration
 def test_splunk_demo_integration_with_hec_env() -> None:
     """Live Splunk Free demo: ingest fixtures via HEC and verify SPL match sets."""
@@ -434,11 +470,20 @@ def test_splunk_demo_integration_with_hec_env() -> None:
         pytest.skip("PowerShell ingest script requires Windows")
 
     index = os.environ.get("PRAETOR_SPLUNK_HEC_INDEX", "main")
-    mgmt_host = os.environ.get(
-        "PRAETOR_SPLUNK_MGMT_HOST",
-        hec_host.replace(":8088", ":8089"),
-    )
-    mgmt_token = os.environ.get("PRAETOR_SPLUNK_MGMT_TOKEN", hec_token)
+    mgmt_host = os.environ.get("PRAETOR_SPLUNK_MGMT_HOST")
+    if not mgmt_host:
+        # Management port is TLS by default even when HEC is plain HTTP.
+        mgmt_host = hec_host.replace(":8088", ":8089")
+        if mgmt_host.startswith("http://"):
+            mgmt_host = "https://" + mgmt_host[len("http://") :]
+    mgmt_token = os.environ.get("PRAETOR_SPLUNK_MGMT_TOKEN")
+    if not mgmt_token:
+        user = os.environ.get("PRAETOR_SPLUNK_USER")
+        password = os.environ.get("PRAETOR_SPLUNK_PASSWORD")
+        if user and password:
+            mgmt_token = _splunk_login_session_key(mgmt_host, user, password)
+        else:
+            mgmt_token = hec_token
 
     ingest = subprocess.run(
         [
@@ -465,24 +510,26 @@ def test_splunk_demo_integration_with_hec_env() -> None:
     time.sleep(3)
 
     def _run_oneshot_search(search: str) -> set[str]:
-        query = urllib.parse.urlencode(
+        form = urllib.parse.urlencode(
             {
                 "search": search,
                 "output_mode": "json",
                 "exec_mode": "oneshot",
             }
-        )
-        url = f"{mgmt_host.rstrip('/')}/services/search/jobs/export?{query}"
+        ).encode()
+        url = f"{mgmt_host.rstrip('/')}/services/search/jobs/export"
         ctx = ssl.create_default_context()
         ctx.check_hostname = False
         ctx.verify_mode = ssl.CERT_NONE
         last_error: str | None = None
+        # Session keys from /services/auth/login use ``Splunk <key>``.
         for auth_header in (
-            f"Bearer {mgmt_token}",
             f"Splunk {mgmt_token}",
+            f"Bearer {mgmt_token}",
         ):
             request = urllib.request.Request(
                 url,
+                data=form,
                 method="POST",
                 headers={"Authorization": auth_header},
             )
@@ -490,7 +537,10 @@ def test_splunk_demo_integration_with_hec_env() -> None:
                 with urllib.request.urlopen(request, context=ctx, timeout=120) as response:
                     body = response.read().decode("utf-8")
             except urllib.error.HTTPError as exc:
-                last_error = f"{auth_header.split()[0]} auth failed: HTTP {exc.code}"
+                err_body = exc.read().decode("utf-8", errors="replace")[:300]
+                last_error = (
+                    f"{auth_header.split()[0]} auth failed: HTTP {exc.code}; {err_body}"
+                )
                 continue
             except urllib.error.URLError as exc:
                 pytest.fail(f"Splunk management API unreachable at {mgmt_host}: {exc}")
@@ -506,11 +556,14 @@ def test_splunk_demo_integration_with_hec_env() -> None:
             return record_ids
         pytest.fail(
             f"Splunk search auth failed at {mgmt_host}; {last_error}. "
-            "Set PRAETOR_SPLUNK_MGMT_TOKEN if HEC token cannot query the management API."
+            "Set PRAETOR_SPLUNK_MGMT_TOKEN or PRAETOR_SPLUNK_USER/"
+            "PRAETOR_SPLUNK_PASSWORD if the HEC token cannot query the "
+            "management API."
         )
 
     time_bounds = (
-        f"earliest={FIXTURE_DISPATCH_EARLIEST} latest={FIXTURE_DISPATCH_LATEST}"
+        f"earliest={_splunk_time_bound(FIXTURE_DISPATCH_EARLIEST)} "
+        f"latest={_splunk_time_bound(FIXTURE_DISPATCH_LATEST)}"
     )
     for spl_name, expected_ids, _excluded in SPL_SEMANTIC_EXPECTATIONS:
         spl = (SPL_DIR / spl_name).read_text(encoding="utf-8").strip()

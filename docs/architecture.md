@@ -93,7 +93,7 @@ Sigma rules under `detections/sigma/` compile to SPL (`tools/compile_sigma.py`).
 
 - **Reporting** (`praetor.reporting`): read-only aggregation of PolicyGate overrides + annotations by asset class — SOC-led promotion signal, never auto-tunes config.
 - **Retrieval** (`praetor.retrieval`): ranks human-confirmed precedents into a bounded prompt exemplar block outside the evidence hash path.
-- Both modules are library-complete with tests; production intake wiring of evaluation recording / similar-case injection is a documented follow-up (see V2 correctness audit).
+- Both modules are wired into `process_alert_intake`: evaluation rows persist on edict commit; similar-case exemplars inject into the judgment prompt when precedents exist.
 
 ## Benchmarks
 
