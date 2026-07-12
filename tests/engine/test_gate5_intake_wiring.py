@@ -26,7 +26,6 @@ from praetor.engine.orchestrator import (
     process_alert_intake,
 )
 from praetor.judgment.provider import (
-    JudgmentProvider,
     JudgmentRequest,
     ProviderProbeResult,
 )

@@ -75,6 +75,7 @@ from praetor.policy.gate import (
     skeleton_disposition_from_evaluation,
 )
 from praetor.policy.state import BreakerDomain, is_breaker_open
+from praetor.retrieval.similar_cases import retrieve_similar_case_exemplars
 from praetor.state.attempts import (
     AttemptState,
     ProcessingAttempt,
@@ -89,7 +90,6 @@ from praetor.tickets.contract import (
     stamp_status_allows_edict_append,
 )
 from praetor.tickets.outbox import StampStatus
-from praetor.retrieval.similar_cases import retrieve_similar_case_exemplars
 from praetor.tickets.stamp import (
     StampBackendOutcome,
     StampBackendResult,
