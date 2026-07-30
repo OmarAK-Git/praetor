@@ -30,12 +30,52 @@ def _sysmon_unsupported(record_id: int) -> dict[str, object]:
     return event
 
 
+def _security_successful_logon(record_id: int) -> dict[str, object]:
+    return {
+        "record_id": str(record_id),
+        "@timestamp": ANCHOR.isoformat().replace("+00:00", "Z"),
+        "EventID": 4624,
+        "Channel": "Security",
+        "Computer": "HOST-1",
+        "EventData": {
+            "TargetUserName": "jdoe",
+            "TargetDomainName": "CORP",
+            "TargetSid": "S-1-5-21-1234567890-123456789-123456789-1001",
+            "LogonType": "2",
+            "IpAddress": "10.0.0.15",
+        },
+    }
+
+
+def _security_unsupported(record_id: int) -> dict[str, object]:
+    event = _security_successful_logon(record_id)
+    event["EventID"] = 4625  # not in SUPPORTED_SECURITY_EVENT_IDS
+    return event
+
+
 def test_correlate_telemetry_records_metric_for_unsupported_sysmon_event_id() -> None:
     metrics = MetricsCollector()
 
     result = correlate_telemetry(
         sysmon_events=[_sysmon_process_create(1), _sysmon_unsupported(2)],
         security_events=[],
+        anchor_time=ANCHOR,
+        metrics=metrics,
+    )
+
+    assert len(result.bundle.facts) == 1
+    assert metrics.snapshot().correlation_unsupported_event_id_total == 1
+
+
+def test_correlate_telemetry_records_metric_for_unsupported_security_event_id() -> None:
+    metrics = MetricsCollector()
+
+    result = correlate_telemetry(
+        sysmon_events=[],
+        security_events=[
+            _security_successful_logon(1),
+            _security_unsupported(2),
+        ],
         anchor_time=ANCHOR,
         metrics=metrics,
     )
