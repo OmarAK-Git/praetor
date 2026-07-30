@@ -110,6 +110,7 @@ def _resolve_intake_evidence_bundle(
     sysmon_events: Sequence[Mapping[str, Any]] | None,
     security_events: Sequence[Mapping[str, Any]] | None,
     anchor_time: datetime | None,
+    metrics_collector: MetricsCollector | None = None,
 ) -> tuple[EvidenceBundle | None, bool]:
     if not correlate:
         return None, True
@@ -123,6 +124,7 @@ def _resolve_intake_evidence_bundle(
             sysmon_events=list(sysmon_events or ()),
             security_events=list(security_events or ()),
             anchor_time=moment,
+            metrics=metrics_collector,
         )
         if not correlated.bundle.facts:
             return None, True
@@ -278,6 +280,7 @@ def process_alert_intake(
         sysmon_events=sysmon_events,
         security_events=security_events,
         anchor_time=anchor_time,
+        metrics_collector=metrics_collector,
     )
     if correlation_failed:
         alloc = store.allocate_attempt(

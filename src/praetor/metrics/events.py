@@ -143,6 +143,7 @@ class MetricsSnapshot:
     feed_export_lag_warning_threshold_seconds: float | None
     feed_export_lag_warning_exceeded: bool
     revocation_feed_unhealthy_transitions: int
+    correlation_unsupported_event_id_total: int
 
     @property
     def policy_gate_override_rate(self) -> float:

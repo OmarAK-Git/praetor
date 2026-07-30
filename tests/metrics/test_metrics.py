@@ -421,3 +421,14 @@ def test_default_feed_lag_window_matches_constant() -> None:
     assert len(collector.snapshot().feed_export_lag_samples) == (
         DEFAULT_FEED_LAG_SAMPLE_WINDOW
     )
+
+
+def test_record_correlation_unsupported_event_id_increments_snapshot() -> None:
+    from praetor.metrics.collector import MetricsCollector
+
+    collector = MetricsCollector()
+    collector.record_correlation_unsupported_event_id()
+    collector.record_correlation_unsupported_event_id()
+
+    snap = collector.snapshot()
+    assert snap.correlation_unsupported_event_id_total == 2

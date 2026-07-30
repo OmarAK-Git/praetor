@@ -24,6 +24,7 @@ from praetor.correlation.window import (
     filter_events_in_window,
 )
 from praetor.judgment.excerpt import PromptExcerptSet
+from praetor.metrics.collector import MetricsCollector
 
 
 @dataclass(frozen=True)
@@ -39,6 +40,7 @@ def correlate_telemetry(
     anchor_time: datetime,
     window_seconds: int = DEFAULT_CORRELATION_WINDOW_SECONDS,
     anchor_host_id: str | None = None,
+    metrics: MetricsCollector | None = None,
 ) -> CorrelationResult:
     """Normalize and window-filter telemetry into bundle + prompt excerpts."""
     filtered_sysmon = filter_events_in_window(
@@ -73,10 +75,14 @@ def correlate_telemetry(
     facts: list[EvidenceFact] = []
     for event in filtered_sysmon:
         if not supports_sysmon_event(event):
+            if metrics is not None:
+                metrics.record_correlation_unsupported_event_id()
             continue
         facts.append(normalize_sysmon_event(event))
     for event in filtered_security:
         if not supports_security_event(event):
+            if metrics is not None:
+                metrics.record_correlation_unsupported_event_id()
             continue
         facts.append(normalize_security_event(event))
 

@@ -70,6 +70,7 @@ class MetricsCollector:
         )
         self._feed_export_lag_warning_threshold_seconds: float | None = None
         self._revocation_feed_unhealthy_transitions = 0
+        self._correlation_unsupported_event_id_total = 0
 
     def record_disposition(self, disposition: Disposition | str) -> None:
         key = disposition.value if isinstance(disposition, Disposition) else disposition
@@ -172,6 +173,15 @@ class MetricsCollector:
     def record_revocation_feed_unhealthy_transition(self) -> None:
         self._revocation_feed_unhealthy_transitions += 1
 
+    def record_correlation_unsupported_event_id(self) -> None:
+        """Record a telemetry event skipped because its EventID is unsupported.
+
+        Distinguishes a schema-mismatch cause of an empty/short EvidenceBundle
+        from genuinely empty telemetry, since both currently downgrade to the
+        same ``correlation_failure`` disposition path.
+        """
+        self._correlation_unsupported_event_id_total += 1
+
     def snapshot(self) -> MetricsSnapshot:
         lag_samples = list(self._feed_export_lag_samples)
         p99 = compute_p99(lag_samples)
@@ -210,5 +220,8 @@ class MetricsCollector:
             feed_export_lag_warning_exceeded=warning_exceeded,
             revocation_feed_unhealthy_transitions=(
                 self._revocation_feed_unhealthy_transitions
+            ),
+            correlation_unsupported_event_id_total=(
+                self._correlation_unsupported_event_id_total
             ),
         )
