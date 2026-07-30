@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import sqlite3
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -10,6 +11,8 @@ from pydantic import ValidationError
 
 from praetor.contracts.edict import DecisionEdict
 from praetor.ledger.hash_chain import DECISION_EDICT_RECORD_TYPE
+
+_logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -85,6 +88,10 @@ def _fetch_decision_edict(
     try:
         return DecisionEdict.model_validate_json(str(row["record_json"]))
     except ValidationError:
+        _logger.warning(
+            "malformed ledger edict for decision_id=%s skipped in precedent fetch",
+            decision_id,
+        )
         return None
 
 
