@@ -55,6 +55,7 @@ SANCTIONED_V2_DOC_PATHS: frozenset[str] = frozenset(
         "docs/architecture.md",
         "docs/eval_gates.md",
         "docs/proposals/delivery_backlog.md",
+        "docs/proposals/reverse_spec_rfc_disposition.md",
         "docs/proposals/v2_hardening.md",
     }
 )
