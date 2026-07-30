@@ -9,10 +9,14 @@
     "phase_gate_verification": "explicit_queue_item_only",
     "require_fresh_context_verifier": true,
     "allow_parallel_implementation": false,
-    "implementation_model": "composer-2.5-fast",
-    "verification_model": "claude-opus-4-8-thinking-high",
-    "gate_run_mode": "chat_gate",
-    "active_sprint": "v2-followups-backlog-splunk"
+    "implementation_model": "composer-2.5",
+    "verification_model": "cursor-grok-4.5-high",
+    "gate_model": "cursor-grok-4.5-high",
+    "gate_run_mode": "in_session_grok",
+    "researcher_policy": "multi_path_opportunity_cost",
+    "code_review_policy": "frequent_after_implement",
+    "test_runner_policy": "gates_and_major_sections",
+    "active_sprint": "reverse-spec-rfc-remediation"
   },
   "status_values": [
     "pending",
@@ -1521,6 +1525,291 @@
       "max_retries": 1,
       "evidence": [
         ".workflow/v2-039-live-splunk-hec-demo/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "rfc-remediation-01-never-contain-logging",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [],
+      "goal": "Log malformed never-contain entries on both defensive matcher skip branches without changing matching or authorization outcomes.",
+      "scope": "RFC-003 observability only; preserve skip-and-continue semantics and all PolicyGate outcomes.",
+      "files_allowed": [
+        "src/praetor/config/live.py",
+        "tests/config/test_live_never_contain_matching.py"
+      ],
+      "acceptance_criteria": [
+        "Both malformed-entry branches emit a warning through praetor.config.live.",
+        "Valid entries emit no warning and matching behavior remains unchanged.",
+        "No disposition, authorization, or never-contain semantics change."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/config/test_live_never_contain_matching.py -v",
+          "ruff check .",
+          "mypy ."
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/rfc-remediation-01-never-contain-logging",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/rfc-remediation-01-never-contain-logging/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "rfc-remediation-02-correlation-metric",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "rfc-remediation-01-never-contain-logging"
+      ],
+      "goal": "Add and production-wire a metric that counts telemetry skipped because its EventID is unsupported.",
+      "scope": "RFC-004 metric field, collector, correlator wiring, orchestrator wiring, and focused tests only.",
+      "files_allowed": [
+        "src/praetor/metrics/events.py",
+        "src/praetor/metrics/collector.py",
+        "src/praetor/correlation/__init__.py",
+        "src/praetor/engine/orchestrator.py",
+        "tests/metrics/test_metrics.py",
+        "tests/correlation/test_correlation_metrics.py"
+      ],
+      "acceptance_criteria": [
+        "MetricsSnapshot exposes correlation_unsupported_event_id_total.",
+        "Unsupported Sysmon and Security EventIDs increment the counter when a collector is provided.",
+        "Production intake passes its metrics collector into correlation.",
+        "Existing callers without a collector remain compatible."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/metrics/test_metrics.py tests/correlation/test_correlation_metrics.py tests/engine/ -v",
+          "ruff check .",
+          "mypy ."
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/rfc-remediation-02-correlation-metric",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/rfc-remediation-02-correlation-metric/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "rfc-remediation-03-citations-adapter-test",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "rfc-remediation-02-correlation-metric"
+      ],
+      "goal": "Add direct unit coverage for the engine.citations adapter without changing production citation behavior.",
+      "scope": "RFC-006 adapter test only; production code is out of scope.",
+      "files_allowed": [
+        "tests/engine/test_citations.py"
+      ],
+      "acceptance_criteria": [
+        "Resolvable citations return true through the engine adapter.",
+        "Missing evidence IDs and missing field paths return false.",
+        "No production code changes are made for this task."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/engine/test_citations.py -v",
+          "ruff check .",
+          "mypy ."
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/rfc-remediation-03-citations-adapter-test",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/rfc-remediation-03-citations-adapter-test/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "rfc-remediation-04-precedent-logging",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "rfc-remediation-03-citations-adapter-test"
+      ],
+      "goal": "Log malformed ledger edicts skipped during human-confirmed precedent fetch.",
+      "scope": "RFC-005 malformed-edict observability only; retrieval, ranking, and authorization behavior remain unchanged.",
+      "files_allowed": [
+        "src/praetor/annotations/precedent.py",
+        "tests/annotations/test_precedent.py"
+      ],
+      "acceptance_criteria": [
+        "Malformed ledger edicts are skipped and emit a warning containing the decision ID.",
+        "Existing similar-case retrieval behavior remains unchanged.",
+        "No precedent ranking or PolicyGate behavior changes."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/annotations/test_precedent.py tests/judgment/test_similar_case_retrieval.py -v",
+          "ruff check .",
+          "mypy ."
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/rfc-remediation-04-precedent-logging",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/rfc-remediation-04-precedent-logging/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "rfc-remediation-05-feed-size-warning",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "rfc-remediation-04-precedent-logging"
+      ],
+      "goal": "Emit an operator health warning when the append-only revocation feed exceeds a configured size threshold.",
+      "scope": "RFC-002 operator warning only; no rotation, truncation, segmentation, format, sequence, or actuation changes.",
+      "files_allowed": [
+        "src/praetor/config/constants.py",
+        "src/praetor/revocation/exporter.py",
+        "tests/revocation/test_feed_exporter.py"
+      ],
+      "acceptance_criteria": [
+        "A feed above the threshold queues revocation_feed_file_size_warning through the existing health-alert outbox.",
+        "A missing or below-threshold feed emits no size warning.",
+        "The default startup hook checks the configured threshold.",
+        "The warning never rotates, truncates, or changes feed actuation state."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/revocation/test_feed_exporter.py -v",
+          "ruff check .",
+          "mypy ."
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/rfc-remediation-05-feed-size-warning",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/rfc-remediation-05-feed-size-warning/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "rfc-remediation-06-disposition-record",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "rfc-remediation-05-feed-size-warning"
+      ],
+      "goal": "Record the verified disposition of all six reverse-spec RFC findings.",
+      "scope": "Documentation disposition plus the exact strict scope-guard allowlist entry required for the new proposal file.",
+      "files_allowed": [
+        "docs/proposals/reverse_spec_rfc_disposition.md",
+        "tests/contracts/test_scope_guard.py"
+      ],
+      "acceptance_criteria": [
+        "The disposition record preserves the plan's accepted, rejected, and rescoped findings.",
+        "The strict proposal scope guard explicitly allows the new disposition document.",
+        "Existing documentation drift checks remain green."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/docs/test_docs.py tests/contracts/test_scope_guard.py -v",
+          "ruff check .",
+          "mypy ."
+        ],
+        "manual_checks": [
+          "Confirm RFC-001 remains rejected under DEC-053 and feed rotation remains explicitly out of scope."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/rfc-remediation-06-disposition-record",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/rfc-remediation-06-disposition-record/results/verifier-result.md"
+      ]
+    },
+    {
+      "id": "rfc-remediation-gate",
+      "status": "done",
+      "tier": "T3",
+      "depends_on": [
+        "rfc-remediation-01-never-contain-logging",
+        "rfc-remediation-02-correlation-metric",
+        "rfc-remediation-03-citations-adapter-test",
+        "rfc-remediation-04-precedent-logging",
+        "rfc-remediation-05-feed-size-warning",
+        "rfc-remediation-06-disposition-record"
+      ],
+      "goal": "Verify the complete reverse-spec RFC remediation plan with the repository-wide test, lint, and typecheck gates.",
+      "scope": "Verify-only final plan gate; no feature implementation.",
+      "files_allowed": [
+        ".workflow/rfc-remediation-gate/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "The full pytest suite passes.",
+        "Repository-wide ruff passes.",
+        "Repository-wide mypy passes.",
+        "All six task verifier artifacts exist and the final review has no blocking findings."
+      ],
+      "verification": {
+        "scope": "phase_exit",
+        "commands": [
+          "pytest",
+          "ruff check .",
+          "mypy ."
+        ],
+        "manual_checks": [
+          "Confirm RFC-001, stamp ordering, PolicyGate authorization, never-contain semantics, and feed no-rotation boundaries are unchanged."
+        ]
+      },
+      "implementation_agent": "test-runner",
+      "verification_agent": "skeptic-verifier",
+      "gate_model": "cursor-grok-4.5-high",
+      "run_mode": "in_session_grok",
+      "run_dir": ".workflow/rfc-remediation-gate",
+      "attempts": 1,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/rfc-remediation-gate/results/verifier-result.md",
+        ".workflow/rfc-remediation-gate/results/final-code-review.md",
+        ".workflow/rfc-remediation-gate/results/gate-commands.md",
+        ".workflow/rfc-remediation-gate/results/blocker.md"
       ]
     }
   ]

@@ -19,13 +19,13 @@ For each runnable queue item:
 | Role | Agent | Model | Writes | Completion authority |
 | --- | --- | --- | --- | --- |
 | Controller | main Cursor agent | UI selection (orchestration only for tasks) | queue and workflow state | no task completion without verifier evidence |
-| Implementer | `implementer` subagent | `defaults.implementation_model` (`composer-2.5-fast`) | task-scoped files only | none |
-| Task verifier | `skeptic-verifier` subagent | `defaults.verification_model` (`claude-opus-4-8-thinking-high`) | verification artifact only | pass / block / human_needed |
-| Gate verifier | current chat (no subagent) | **UI-selected Claude** in fresh Chat B | gate run dir + queue | pass / block for `phase_exit` only |
+| Implementer | `implementer` subagent | `defaults.implementation_model` (`composer-2.5`) | task-scoped files only | none |
+| Task verifier | `skeptic-verifier` subagent | `defaults.verification_model` (`cursor-grok-4.5-high`) | verification artifact only | pass / block / human_needed |
+| Gate verifier | `skeptic-verifier` subagent | `defaults.gate_model` (`cursor-grok-4.5-high`) | gate run dir + queue | pass / block for `phase_exit` only |
 
 Task items: controller dispatches implementer and verifier subagents with the models above — the chat UI model does not matter for Chat A as long as the controller delegates.
 
-Gate items (`run_mode: chat_gate`): run in a **fresh chat** with Claude selected in the UI; no subagent dispatch.
+Gate items: run in-session (`run_mode: in_session_grok`) by dispatching `test-runner` for gate commands and a fresh `skeptic-verifier` on `defaults.gate_model` for the verdict. Grok is the standing gate model per the user's 2026-07-30 instruction; do not use Opus for gates until that instruction changes. Legacy `run_mode: chat_gate` items still mean "fresh chat, no subagent dispatch".
 
 ## Loop bounds
 

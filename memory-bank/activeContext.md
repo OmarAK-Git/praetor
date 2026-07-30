@@ -2,14 +2,24 @@
 
 ## Current focus
 
-**V2 COMPLETE** — Gates 0–5 closed; tasks V2-001–036 done. Correctness audit 2026-07-10:
-`.workflow/v2-correctness-audit/final-report.md` (pytest **1029**, walkthrough OK, docs refreshed).
+**2026-07-30 — Reverse-spec RFC remediation COMPLETE.** Plan
+`docs/superpowers/plans/2026-07-30-reverse-spec-rfc-remediation.md` drained via GSD on branch
+`reverse-spec-rfc-remediation`. Six observability/coverage tasks + disposition record shipped;
+RFC-001 rejected under DEC-053; feed rotation stays out of scope. Gate evidence:
+`.workflow/rfc-remediation-gate/results/verifier-result.md` (pytest **1047**, ruff/mypy clean).
 
-**V2-037 done** — Gate 5 intake wiring (evaluation recording + similar-case prompt injection) on
-live `process_alert_intake`. Evidence: `.workflow/v2-037-gate5-intake-wiring/results/verifier-result.md`.
+**Standing model instruction (2026-07-30, until revoked):** all gates use
+`cursor-grok-4.5-high` / `in_session_grok` — not Opus. Queued in personal Cursor rule +
+`.workflow/autopilot-queue.json` defaults + `OPS.md`.
 
-**Follow-ups:** deferred roadmap / Accepted Deferral / Partial rows only.
-Backlog reconcile **V2-038 done**; live Splunk HEC **V2-039 done**.
+**2026-07-18 — Reverse spec + debt ledger extraction COMPLETE.** Deliverables at repo root:
+`AS_BUILT.md` and `DEBT_LEDGER.md`. Live plan: `IMPLEMENTATION_PLAN.md` (status complete).
+
+**V2 COMPLETE** — Gates 0–5 closed; tasks V2-001–039 done. Correctness audit 2026-07-10:
+`.workflow/v2-correctness-audit/final-report.md`.
+
+**Follow-ups:** deferred roadmap / Accepted Deferral / Partial rows only; optional Minor notes
+from the RFC remediation final review (orchestrator metric-wiring assert, feed warning dedupe).
 
 **Sprint history (all closed):** V2-0 … V2-5 — see `memory-bank/progress.md` and `.workflow/v2-gate-*-exit/`.
 

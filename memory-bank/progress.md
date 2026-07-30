@@ -1,5 +1,25 @@
 # Progress Log
 
+## 2026-07-30 — Reverse-spec RFC remediation COMPLETE
+
+- Loaded plan `docs/superpowers/plans/2026-07-30-reverse-spec-rfc-remediation.md` into GSD queue
+  (items `rfc-remediation-01`…`06` + `rfc-remediation-gate`) on branch `reverse-spec-rfc-remediation`.
+- Shipped 7 commits: never-contain skip logging, unsupported-EventID metric (+ Security test fix),
+  citations adapter tests, precedent malformed-edict logging, feed size-warning health alert,
+  disposition record + AG-0095 scope-guard allowlist.
+- Per-task implement / code-review / skeptic-verify all PASS.
+- Final gate (Grok after user standing order): pytest **1047** passed / ruff clean / mypy clean;
+  broad review PASS (no Critical/Important); skeptic-verifier PASS.
+- Evidence: `.workflow/rfc-remediation-gate/results/verifier-result.md`.
+- Queue sprint `reverse-spec-rfc-remediation` fully drained (`rfc-remediation-gate` → `done`).
+
+## 2026-07-18 — Reverse spec + debt ledger extraction COMPLETE
+
+- Structured probes (not open discovery) → `AS_BUILT.md` + `DEBT_LEDGER.md` at repo root.
+- AS_BUILT: 20 packages + state, interfaces/Protocols, 6 data flows, 25 invariants claimed-vs-enforced, error posture, test coverage map.
+- DEBT_LEDGER: no classic TODO/FIXME; S1 = TicketStampBackend/TokenVerifier stubs + quiet excepts; S2 = no lockfile, provisional SLA, constant duplication.
+- Plan: `IMPLEMENTATION_PLAN.md` marked complete.
+
 ## 2026-07-10 — V2-038 delivery backlog reconcile COMPLETE
 
 - Reconciled `docs/proposals/delivery_backlog.md`: banner reflects Gates 0–5 + V2-037; Gate 5 intake wiring removed from residuals.
