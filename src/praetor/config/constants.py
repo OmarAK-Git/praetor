@@ -9,6 +9,11 @@ EMERGENCY_MAX_SECONDS = 48 * 3600
 DEFAULT_FEED_PROPAGATION_SECONDS = 60
 DEFAULT_CLOCK_SKEW_SECONDS = 30
 
+# Operator visibility only — not a rotation trigger. Feed rotation remains a
+# deferred v1 non-goal (docs/operator_runbook.md "no rotation machinery").
+# Provisional threshold pending owner-set org-config value.
+DEFAULT_FEED_FILE_SIZE_WARNING_BYTES = 500_000_000
+
 REQUIRED_TOP_LEVEL_SECTIONS: tuple[str, ...] = (
     "version_metadata",
     "known_principals",

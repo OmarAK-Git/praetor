@@ -45,6 +45,7 @@ from praetor.revocation.outbox import (
 from praetor.state.sqlite_guard import critical_transaction
 
 REVOCATION_FEED_UNHEALTHY_CODE = "revocation_feed_unhealthy"
+FEED_FILE_SIZE_WARNING_CODE = "revocation_feed_file_size_warning"
 
 
 class FeedExportError(Exception):
@@ -102,6 +103,29 @@ def _emit_feed_unhealthy_alert(conn: sqlite3.Connection) -> None:
         emitted_at=datetime.now(UTC),
     )
     write_pending_health_alert(conn, alert)
+
+
+def check_feed_file_size_warning(
+    conn: sqlite3.Connection,
+    feed_path: Path,
+    *,
+    warning_bytes: int,
+) -> bool:
+    """Emit a health alert when the unrotated feed file crosses a size threshold.
+
+    Purely observational: does not rotate, truncate, or otherwise modify the
+    feed file, and does not affect ``is_feed_actuation_blocked``.
+    """
+    if not feed_path.exists():
+        return False
+    if feed_path.stat().st_size <= warning_bytes:
+        return False
+    alert = SystemHealthAlert(
+        alert_code=FEED_FILE_SIZE_WARNING_CODE,
+        emitted_at=datetime.now(UTC),
+    )
+    write_pending_health_alert(conn, alert)
+    return True
 
 
 def _transition_feed_unhealthy(conn: sqlite3.Connection) -> None:
@@ -442,6 +466,7 @@ def run_feed_startup_hook(
     propagation_delay_seconds: int,
     now: datetime | None = None,
     metrics: MetricsCollector | None = None,
+    feed_file_size_warning_bytes: int | None = None,
 ) -> FeedExportResult:
     """Recover pending feed rows before actuation; set degraded if SLO missed."""
     init_revocation_feed_export_schema(conn)
@@ -478,6 +503,11 @@ def run_feed_startup_hook(
             feed_unhealthy=True,
             degraded_actuation=True,
         )
+    if feed_file_size_warning_bytes is not None:
+        check_feed_file_size_warning(
+            conn, feed_path, warning_bytes=feed_file_size_warning_bytes
+        )
+        conn.commit()
     return result
 
 
@@ -488,12 +518,18 @@ def run_feed_startup_hook_for_db(
     max_feed_export_retries: int = 3,
     propagation_delay_seconds: int = 60,
     metrics: MetricsCollector | None = None,
+    feed_file_size_warning_bytes: int | None = None,
 ) -> FeedExportResult:
     """Default hook using feed path adjacent to the state database."""
+    if feed_file_size_warning_bytes is None:
+        from praetor.config.constants import DEFAULT_FEED_FILE_SIZE_WARNING_BYTES
+
+        feed_file_size_warning_bytes = DEFAULT_FEED_FILE_SIZE_WARNING_BYTES
     return run_feed_startup_hook(
         conn,
         feed_path=default_feed_jsonl_path(db_path),
         max_feed_export_retries=max_feed_export_retries,
         propagation_delay_seconds=propagation_delay_seconds,
         metrics=metrics,
+        feed_file_size_warning_bytes=feed_file_size_warning_bytes,
     )

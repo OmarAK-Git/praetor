@@ -526,3 +526,89 @@ class TestFeedExporter:
         assert result.exported_count == 0
         assert result.feed_unhealthy
         assert result.degraded_actuation
+
+
+def test_run_feed_startup_hook_emits_size_warning_when_threshold_exceeded(
+    tmp_path: Path,
+) -> None:
+    from praetor.revocation.exporter import (
+        check_feed_file_size_warning,
+        default_feed_jsonl_path,
+    )
+    from praetor.state.store import open_state_store
+
+    db_path = tmp_path / "state.db"
+    store = open_state_store(db_path)
+    feed_path = default_feed_jsonl_path(db_path)
+    feed_path.parent.mkdir(parents=True, exist_ok=True)
+    feed_path.write_bytes(b"x" * 2048)
+
+    warned = check_feed_file_size_warning(
+        store.conn, feed_path, warning_bytes=1024
+    )
+    store.conn.commit()
+
+    assert warned is True
+    rows = store.conn.execute(
+        "SELECT alert_code FROM system_health_alert_outbox"
+    ).fetchall()
+    assert any(row["alert_code"] == "revocation_feed_file_size_warning" for row in rows)
+    store.close()
+
+
+def test_check_feed_file_size_warning_no_alert_below_threshold(
+    tmp_path: Path,
+) -> None:
+    from praetor.revocation.exporter import (
+        check_feed_file_size_warning,
+        default_feed_jsonl_path,
+    )
+    from praetor.state.store import open_state_store
+
+    db_path = tmp_path / "state.db"
+    store = open_state_store(db_path)
+    feed_path = default_feed_jsonl_path(db_path)
+    feed_path.parent.mkdir(parents=True, exist_ok=True)
+    feed_path.write_bytes(b"x" * 100)
+
+    warned = check_feed_file_size_warning(
+        store.conn, feed_path, warning_bytes=1024
+    )
+    store.conn.commit()
+
+    assert warned is False
+    rows = store.conn.execute(
+        "SELECT alert_code FROM system_health_alert_outbox"
+    ).fetchall()
+    assert not any(
+        row["alert_code"] == "revocation_feed_file_size_warning" for row in rows
+    )
+    store.close()
+
+
+def test_run_feed_startup_hook_wires_size_warning_check(
+    tmp_path: Path,
+) -> None:
+    from praetor.revocation.exporter import (
+        default_feed_jsonl_path,
+        run_feed_startup_hook_for_db,
+    )
+    from praetor.state.store import open_state_store
+
+    db_path = tmp_path / "state.db"
+    store = open_state_store(db_path)
+    feed_path = default_feed_jsonl_path(db_path)
+    feed_path.parent.mkdir(parents=True, exist_ok=True)
+    feed_path.write_bytes(b"\n" * 2048)
+
+    run_feed_startup_hook_for_db(
+        store.conn,
+        db_path,
+        feed_file_size_warning_bytes=1024,
+    )
+
+    rows = store.conn.execute(
+        "SELECT alert_code FROM system_health_alert_outbox"
+    ).fetchall()
+    assert any(row["alert_code"] == "revocation_feed_file_size_warning" for row in rows)
+    store.close()
