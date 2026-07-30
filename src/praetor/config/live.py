@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import re
 from datetime import UTC, datetime
 from typing import Any
@@ -10,6 +11,8 @@ from praetor.config.errors import PreflightError
 from praetor.contracts.containment import ContainmentDirective
 from praetor.contracts.ledger import EmergencyNeverContainRecord
 from praetor.contracts.org_config_sections import NeverContainEntry
+
+_logger = logging.getLogger(__name__)
 
 _SID_PATTERN = re.compile(r"^S-1-5(?:-\d+)+$", re.IGNORECASE)
 
@@ -80,7 +83,10 @@ def directive_matches_entry(directive: ContainmentDirective, entry: dict[str, An
         canonical = canonical_target_specification(
             {k: v for k, v in entry.items() if k in ("target_type", "target_id")}
         )
-    except PreflightError:
+    except PreflightError as exc:
+        _logger.warning(
+            "malformed never-contain entry skipped during directive match: %s", exc
+        )
         return False
     return (
         directive.target_type.value == canonical["target_type"]
@@ -113,7 +119,10 @@ def target_in_never_contain_list(
             canonical = canonical_target_specification(
                 {k: v for k, v in entry.items() if k in ("target_type", "target_id")}
             )
-        except PreflightError:
+        except PreflightError as exc:
+            _logger.warning(
+                "malformed never-contain entry skipped during target match: %s", exc
+            )
             continue
         if canonical["target_type"] == target_type and canonical["target_id"] == target_id:
             return True
