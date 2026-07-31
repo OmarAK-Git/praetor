@@ -222,16 +222,42 @@ def test_gate_blocks_before_correlation_on_manifest_failure(
     assert calls == []
 
 
-def test_gate_fails_corroboration_when_security_dropped(tmp_path: Path) -> None:
+def test_gate_passes_corroboration_with_sysmon_only_under_dec065(
+    tmp_path: Path,
+) -> None:
+    """DEC-065: account corroboration passes with >=1 fact (sysmon-only)."""
     scenario = load_correlation_expected(PASS_SCENARIO)
     scenario.raw["inputs"]["security_fixtures"] = []
+    expectations = scenario.raw["expectations"]
+    expectations["required_record_ids"] = ["1001", "1002"]
+    expectations["min_collected_facts"] = 2
+    expectations["max_collected_facts"] = 2
+    expectations["required_provenance_paths"] = ["sysmon_event_log"]
     tampered = tmp_path / "sysmon_only.yaml"
+    tampered.write_text(yaml.safe_dump(scenario.raw), encoding="utf-8")
+
+    result = run_correlation_gate(tampered, repo_root=REPO_ROOT)
+    assert result.passed is True, result.errors
+    assert set(result.collected_record_ids) == {"1001", "1002"}
+
+
+def test_gate_fails_corroboration_when_no_facts_collected(tmp_path: Path) -> None:
+    scenario = load_correlation_expected(PASS_SCENARIO)
+    scenario.raw["inputs"]["sysmon_fixtures"] = []
+    scenario.raw["inputs"]["security_fixtures"] = []
+    expectations = scenario.raw["expectations"]
+    expectations["required_record_ids"] = []
+    expectations["min_collected_facts"] = 0
+    expectations["max_collected_facts"] = 0
+    expectations["required_process_relationships"] = []
+    expectations["required_provenance_paths"] = []
+    tampered = tmp_path / "no_facts.yaml"
     tampered.write_text(yaml.safe_dump(scenario.raw), encoding="utf-8")
 
     result = run_correlation_gate(tampered, repo_root=REPO_ROOT)
     assert result.passed is False
     assert any("account corroboration failed" in error for error in result.errors)
-    assert set(result.collected_record_ids) == {"1001", "1002"}
+    assert result.collected_record_ids == ()
 
 
 def test_gate_fails_corroboration_when_security_provenance_wrong(

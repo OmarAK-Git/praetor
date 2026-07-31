@@ -9,10 +9,11 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
+import praetor.engine.orchestrator  # noqa: F401 — break policy↔engine cycle for isolated collection
 from praetor.contracts.disposition import Disposition
 from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
 from praetor.contracts.identity import CanonicalAccountIdentity
-from praetor.evidence.provenance import meets_account_corroboration
+from praetor.evidence.provenance import LEDGER_HISTORY, meets_account_corroboration
 from praetor.policy.identity import (
     evaluate_account_containment_eligibility,
     is_sid_backed,
@@ -135,25 +136,25 @@ def test_sid_backed_corroborated_authorizes_containment() -> None:
     assert result.system_fault_escalation is False
 
 
-def test_sid_backed_insufficient_not_flagged_escalates() -> None:
+def test_sid_backed_single_fact_authorizes() -> None:
     result = evaluate_account_containment_eligibility(
         _identity(ambiguity_flag=False),
         [_fact(evidence_id="ev-sysmon", provenance_path="sysmon_event_log")],
     )
 
-    assert result.authorized is False
-    assert result.fault_flag == "ambiguous_target_identity"
+    assert result.authorized is True
+    assert result.fault_flag is None
     assert result.system_fault_escalation is False
-    assert result.final_disposition == Disposition.ESCALATE
+    assert result.final_disposition == Disposition.AUTO_CONTAIN
 
 
-def test_same_provenance_facts_do_not_corroborate() -> None:
+def test_same_provenance_facts_corroborate() -> None:
     facts = [
         _fact(evidence_id="ev-sysmon-a", provenance_path="sysmon_event_log"),
         _fact(evidence_id="ev-sysmon-b", provenance_path="sysmon_event_log"),
     ]
 
-    assert meets_account_corroboration(facts) is False
+    assert meets_account_corroboration(facts) is True
 
 
 def test_sysmon_plus_security_log_satisfies_corroboration() -> None:
@@ -165,32 +166,32 @@ def test_sysmon_plus_security_log_satisfies_corroboration() -> None:
     assert meets_account_corroboration(facts) is True
 
 
-def test_two_security_logs_do_not_corroborate() -> None:
+def test_two_security_logs_corroborate() -> None:
     facts = [
         _fact(evidence_id="ev-security-a", provenance_path="windows_security_log"),
         _fact(evidence_id="ev-security-b", provenance_path="windows_security_log"),
     ]
 
-    assert meets_account_corroboration(facts) is False
+    assert meets_account_corroboration(facts) is True
 
 
-def test_single_and_empty_do_not_corroborate() -> None:
+def test_empty_does_not_corroborate_single_fact_passes() -> None:
     assert meets_account_corroboration([]) is False
     assert (
         meets_account_corroboration(
             [_fact(evidence_id="ev-sysmon", provenance_path="sysmon_event_log")]
         )
-        is False
+        is True
     )
 
 
-def test_corroboration_requires_windows_security_source() -> None:
+def test_any_provenance_satisfies_corroboration() -> None:
     facts = [
         _fact(evidence_id="ev-sysmon", provenance_path="sysmon_event_log"),
         _fact(evidence_id="ev-edr", provenance_path="edr_process_telemetry"),
     ]
 
-    assert meets_account_corroboration(facts) is False
+    assert meets_account_corroboration(facts) is True
 
 
 def test_whitespace_sid_is_not_sid_backed() -> None:
@@ -212,10 +213,10 @@ def test_whitespace_sid_is_not_sid_backed() -> None:
     assert result.final_disposition == Disposition.ESCALATE
 
 
-def test_ambiguous_target_insufficient_corroboration_escalates() -> None:
+def test_ambiguous_target_empty_facts_escalates() -> None:
     result = evaluate_account_containment_eligibility(
         _identity(ambiguity_flag=True),
-        [_fact(evidence_id="ev-sysmon", provenance_path="sysmon_event_log")],
+        [],
     )
 
     assert result.authorized is False
@@ -230,20 +231,35 @@ def test_synthetic_fixture_corroboration_pair() -> None:
     assert meets_account_corroboration(facts) is True
 
 
-def test_synthetic_fixture_same_provenance_rejected() -> None:
+def test_synthetic_fixture_same_provenance_satisfies() -> None:
     facts = _facts_from_fixture("account_same_provenance.json")
 
-    assert meets_account_corroboration(facts) is False
+    assert meets_account_corroboration(facts) is True
 
 
-def test_synthetic_fixture_ambiguous_insufficient_escalates() -> None:
+def test_synthetic_fixture_ambiguous_single_fact_authorizes() -> None:
     payload = _load_fixture("account_ambiguous_insufficient.json")
     identity = CanonicalAccountIdentity.model_validate(payload["identity"])
     facts = EvidenceBundle.model_validate({"facts": payload["facts"]}).facts
 
     result = evaluate_account_containment_eligibility(identity, facts)
 
-    assert result.authorized is False
-    assert result.fault_flag == "ambiguous_target_identity"
+    assert result.authorized is True
+    assert result.fault_flag is None
     assert result.system_fault_escalation is False
-    assert result.final_disposition == Disposition.ESCALATE
+    assert result.final_disposition == Disposition.AUTO_CONTAIN
+
+
+def test_sole_ledger_history_does_not_corroborate() -> None:
+    facts = [_fact(evidence_id="ev-ledger", provenance_path=LEDGER_HISTORY)]
+
+    assert meets_account_corroboration(facts) is False
+
+
+def test_ledger_history_plus_eligible_fact_corroborates() -> None:
+    facts = [
+        _fact(evidence_id="ev-ledger", provenance_path=LEDGER_HISTORY),
+        _fact(evidence_id="ev-sysmon", provenance_path="sysmon_event_log"),
+    ]
+
+    assert meets_account_corroboration(facts) is True

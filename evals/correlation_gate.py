@@ -277,7 +277,7 @@ def _validate_corroboration_and_provenance(
     if expectations.get("require_account_corroboration"):
         if not meets_account_corroboration(facts):
             errors.append(
-                "account corroboration failed: distinct Sysmon + Security provenance required"
+                "account corroboration failed: at least one supporting fact required (DEC-065)"
             )
     required_paths = expectations.get("required_provenance_paths")
     if isinstance(required_paths, list) and required_paths:

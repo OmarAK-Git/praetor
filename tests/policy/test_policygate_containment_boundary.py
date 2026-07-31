@@ -7,16 +7,15 @@ from tests.policy.conftest import (
     account_bundle,
     auto_contain_default_policy,
     auto_contain_judgment,
-    host_bundle,
     persist_snapshot_with_overrides,
 )
 
 from praetor.contracts.disposition import Disposition
+from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
 from praetor.contracts.judgment import CitedEvidenceRef
 from praetor.evidence.citations import ResolvedEvidenceCitation
 from praetor.evidence.provenance import (
     SYSMON_EVENT_LOG,
-    WINDOWS_SECURITY_LOG,
     meets_host_cited_corroboration,
 )
 from praetor.policy.containment_policy import extract_account_identity
@@ -92,31 +91,34 @@ def test_policy_gate_authorizes_when_feature_gate_enabled(
     assert gate_result.containment_directive is not None
 
 
-def test_host_corroboration_helper_alone_does_not_authorize_containment(
+def test_host_corroboration_helper_pass_does_not_bypass_sole_ambiguous_gate(
     activated, org_snapshot
 ) -> None:
-    bundle = host_bundle()
-    sysmon = bundle.facts[0]
-    security = bundle.facts[1]
+    bundle = EvidenceBundle(
+        facts=[
+            EvidenceFact(
+                evidence_id="host-ambiguous-only",
+                normalized_fields={"host_id": "ws-01", "process_name": "cmd.exe"},
+                source_event_reference="syn:amb:1",
+                raw_source="{}",
+                provenance_path=SYSMON_EVENT_LOG,
+                ambiguity_flag=True,
+                timestamp=NOW,
+            ),
+        ]
+    )
     cited = (
         ResolvedEvidenceCitation(
-            evidence_id=sysmon.evidence_id,
+            evidence_id="host-ambiguous-only",
             field_path="host_id",
             value="ws-01",
-            ambiguity_flag=False,
+            ambiguity_flag=True,
             provenance_path=SYSMON_EVENT_LOG,
-        ),
-        ResolvedEvidenceCitation(
-            evidence_id=security.evidence_id,
-            field_path="host_id",
-            value="ws-01",
-            ambiguity_flag=False,
-            provenance_path=WINDOWS_SECURITY_LOG,
         ),
     )
     facts_by_id = {fact.evidence_id: fact for fact in bundle.facts}
 
-    assert meets_host_cited_corroboration(
+    assert not meets_host_cited_corroboration(
         cited,
         target_host_id="ws-01",
         facts_by_id=facts_by_id,
@@ -128,15 +130,15 @@ def test_host_corroboration_helper_alone_does_not_authorize_containment(
             bundle,
             refs=[
                 CitedEvidenceRef(
-                    evidence_id=sysmon.evidence_id,
-                    field_path="process_name",
+                    evidence_id="host-ambiguous-only",
+                    field_path="host_id",
                 )
             ],
         ),
         evidence_bundle=bundle,
         org_snapshot=org_snapshot,
-        alert_identity="ALERT-HOST-BYPASS",
-        decision_id="dec-host-bypass",
+        alert_identity="ALERT-HOST-SOLE-AMB",
+        decision_id="dec-host-sole-amb",
         now=NOW,
     )
 

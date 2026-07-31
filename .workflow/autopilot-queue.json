@@ -16,11 +16,9 @@
     "researcher_policy": "multi_path_opportunity_cost",
     "code_review_policy": "frequent_after_implement",
     "test_runner_policy": "gates_and_major_sections",
-    "active_sprint": "agentic-judgment",
-    "worktree_path": "C:\\Users\\oalan\\Praetor\\.worktrees\\agentic-judgment",
-    "worktree_pythonpath": "C:\\Users\\oalan\\Praetor\\.worktrees\\agentic-judgment\\src",
-    "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
-    "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md"
+    "active_sprint": "corroboration-floor",
+    "source_spec": "docs/superpowers/plans/2026-07-31-corroboration-floor-temporary.md",
+    "source_plan": "docs/superpowers/plans/2026-07-31-corroboration-floor-temporary.md"
   },
   "status_values": [
     "pending",
@@ -2505,6 +2503,195 @@
       ],
       "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
       "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: gate is verify-only"
+    },
+    {
+      "id": "corroboration-floor-01-decision",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [],
+      "goal": "Ratify DEC-065 temporary corroboration floor and update contracts/spec; supersede DEC-064 ledger_history corroboration eligibility.",
+      "scope": "Docs/decisions only; no production code changes.",
+      "files_allowed": [
+        "docs/decisions.md",
+        "docs/contracts.md",
+        "docs/spec.md",
+        "docs/architecture.md",
+        "docs/superpowers/plans/2026-07-31-corroboration-floor-temporary.md",
+        ".workflow/corroboration-floor-01-decision/"
+      ],
+      "acceptance_criteria": [
+        "DEC-065 accepted: temporary >=1 anchoring cited fact (any provenance); sole ambiguity still fails; upgrade-to->=2 flagged for multi-telemetry.",
+        "contracts.md \u00a712a and spec.md host/account corroboration pins match DEC-065.",
+        "DEC-064 corroboration trust extension marked superseded; agentic OM row and session_trace_hash remain."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "rg -n \"DEC-065\" docs/decisions.md docs/contracts.md docs/spec.md",
+          "rg -n \"ledger_history\" docs/decisions.md docs/contracts.md"
+        ],
+        "manual_checks": [
+          "Confirm ledger_history is documented as not corroboration-eligible.",
+          "Confirm temporary >=1 floor and upgrade-to->=2 flag are explicit."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/corroboration-floor-01-decision",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/corroboration-floor-01-decision/results/verifier-result.md",
+        ".workflow/corroboration-floor-01-decision/results/code-review.md"
+      ],
+      "source_plan": "docs/superpowers/plans/2026-07-31-corroboration-floor-temporary.md",
+      "researcher_decision": "skipped: single prescribed path from user-locked decisions"
+    },
+    {
+      "id": "corroboration-floor-02-helpers",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "corroboration-floor-01-decision"
+      ],
+      "goal": "Relax meets_host_cited_corroboration and meets_account_corroboration to temporary >=1 floor; remove ledger_history from non-attacker set.",
+      "scope": "provenance.py helpers + evidence unit tests only.",
+      "files_allowed": [
+        "src/praetor/evidence/provenance.py",
+        "tests/evidence/test_host_corroboration.py",
+        "tests/evidence/test_account_corroboration.py",
+        "tests/evidence/test_provenance.py",
+        ".workflow/corroboration-floor-02-helpers/"
+      ],
+      "acceptance_criteria": [
+        "Host: >=1 target-anchoring cite passes; zero anchors fails; sole ambiguity_flag=true cite fails; no >=2 path or trusted-path requirement.",
+        "Account: >=1 fact of any provenance passes; empty fails.",
+        "LEDGER_HISTORY constant may remain; is_attacker_controllable_provenance(LEDGER_HISTORY) is True."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evidence/test_host_corroboration.py tests/evidence/test_account_corroboration.py tests/evidence/test_provenance.py -q",
+          "ruff check src/praetor/evidence/provenance.py tests/evidence/test_host_corroboration.py tests/evidence/test_account_corroboration.py tests/evidence/test_provenance.py",
+          "mypy src/praetor/evidence/provenance.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/corroboration-floor-02-helpers",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/corroboration-floor-02-helpers/results/verifier-result.md",
+        ".workflow/corroboration-floor-02-helpers/results/code-review.md"
+      ],
+      "source_plan": "docs/superpowers/plans/2026-07-31-corroboration-floor-temporary.md",
+      "researcher_decision": "skipped: single prescribed path from user-locked decisions"
+    },
+    {
+      "id": "corroboration-floor-03-gate-harness",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "corroboration-floor-02-helpers"
+      ],
+      "goal": "Retarget insufficient_corroboration harness and PolicyGate/engine tests to sole-ambiguous / zero-anchor failures under the temporary floor.",
+      "scope": "Harness scenario + policy/engine/correlation tests that assert old >=2 semantics.",
+      "files_allowed": [
+        "evals/scenarios/insufficient_corroboration.yaml",
+        "tests/policy/",
+        "tests/engine/test_gate_target_ownership.py",
+        "tests/evals/",
+        "tests/correlation/",
+        ".workflow/corroboration-floor-03-gate-harness/",
+        "tests/fixtures/synthetic/host_sole_ambiguous_insufficient.json",
+        "tests/policy/test_citation_anchored_host_targeting.py",
+        "evals/run_phase3_gate.py"
+      ],
+      "acceptance_criteria": [
+        "Harness insufficient_corroboration covers OM row via sole ambiguous host citation (escalate, flag, SFE=false).",
+        "Single-provenance host auto_contain no longer escalates solely for insufficient_corroboration.",
+        "Touched policy/engine/eval/correlation tests updated and green."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/policy/test_host_corroboration_gate.py tests/policy/test_policy_gate.py tests/engine/test_gate_target_ownership.py tests/evals/test_eval_harness.py -q",
+          "ruff check tests/policy tests/engine/test_gate_target_ownership.py"
+        ],
+        "manual_checks": [
+          "Confirm scenario YAML description matches sole-ambiguous failure mode."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/corroboration-floor-03-gate-harness",
+      "attempts": 1,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/corroboration-floor-03-gate-harness/results/verifier-result.md",
+        ".workflow/corroboration-floor-03-gate-harness/results/code-review.md"
+      ],
+      "source_plan": "docs/superpowers/plans/2026-07-31-corroboration-floor-temporary.md",
+      "researcher_decision": "skipped: single prescribed path from user-locked decisions"
+    },
+    {
+      "id": "corroboration-floor-gate",
+      "status": "done",
+      "tier": "T3",
+      "depends_on": [
+        "corroboration-floor-01-decision",
+        "corroboration-floor-02-helpers",
+        "corroboration-floor-03-gate-harness"
+      ],
+      "goal": "Verify temporary corroboration floor sprint with repository-wide test, lint, and typecheck gates.",
+      "scope": "Verify-only final plan gate; no feature implementation.",
+      "files_allowed": [
+        ".workflow/corroboration-floor-gate/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Full pytest suite passes.",
+        "Repository-wide ruff and mypy (src evals consumer_sdk) pass.",
+        "All three task verifier artifacts exist and PASS.",
+        "DEC-065 temporary floor is reflected in docs and code; ledger_history not trusted for corroboration.",
+        "No AgenticJudgmentProvider runtime default wiring added."
+      ],
+      "verification": {
+        "scope": "phase_exit",
+        "commands": [
+          "pytest -q",
+          "ruff check src tests evals consumer_sdk",
+          "mypy src evals consumer_sdk"
+        ],
+        "manual_checks": [
+          "Confirm sole ambiguity still fails host corroboration.",
+          "Confirm upgrade-to->=2 flag is documented in DEC-065 / contracts \u00a712a."
+        ]
+      },
+      "implementation_agent": "test-runner",
+      "verification_agent": "skeptic-verifier",
+      "gate_model": "cursor-grok-4.5-high",
+      "run_mode": "in_session_grok",
+      "run_dir": ".workflow/corroboration-floor-gate",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/corroboration-floor-gate/results/verifier-result.md",
+        ".workflow/corroboration-floor-gate/results/gate-commands.md",
+        ".workflow/corroboration-floor-gate/final-report.md"
+      ],
+      "source_plan": "docs/superpowers/plans/2026-07-31-corroboration-floor-temporary.md",
       "researcher_decision": "skipped: gate is verify-only"
     }
   ]

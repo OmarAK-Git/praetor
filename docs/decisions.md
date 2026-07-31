@@ -21,7 +21,8 @@ This file records implementation choices that refine or operationalize those doc
 | DEC-059 | 2026-06-29 | V2 host corroboration floor: cited facts for host `auto_contain` require ≥2 distinct `provenance_path` values with ≥1 non-attacker-controllable; sole `ambiguity_flag=true` cited fact cannot authorize host containment; fault flag `insufficient_corroboration` (`system_fault_escalation=false`); account path unchanged (`ambiguous_target_identity`) | v1 solved citation-anchored targeting (DEC-052) but not evidence sufficiency; extends account corroboration discipline to hosts; raises bar from single forged log line to convergent independent collection paths | V2-002; `docs/contracts.md` §12a/§13; implementation in V2-011 |
 | DEC-060 | 2026-06-29 | V2 revocation/snapshot semantics: `NeverContainSnapshotRecord` appended only in engine post-stamp transaction paired with `DecisionEdict` (not in PolicyGate); `snapshot_content` is the gate-supplied full live never-contain list from serializable PolicyGate evaluation (conflict rebuild paths may refresh); expired-directive fresh re-issue retains §4.2 carve-out; expired-unrevoked rows excluded from step-6 idempotency; orphan directives skipped at step 6 and surfaced in V2-010 | Closes REVIEW-007/008 timing ambiguity; ratifies v1 intake behavior; commit-time-only capture is not the v1 contract | V2-003; `docs/contracts.md` §4.2/§7a; V2-003 reopen 2026-06-29 |
 | DEC-061 | 2026-06-29 | V2 `provider_unavailable` Outcome Matrix row for `ProviderUnavailableError`: `escalate` with `system_fault_escalation=true`; distinct from `provider_timeout`, `provider_refusal`, and `provider_health_breaker_open`; breaker tripping unchanged | Intake lacked documented fault flag for provider unavailability; closes Gate 0 provider mapping | V2-004; `docs/contracts.md` §13; V2-007 extends intake/metrics tests |
-| DEC-064 | 2026-07-30 | Agentic judgment: `ledger_history` added to the DEC-059 non-attacker-controllable provenance set; `org_config_section` and `similar_cases` are explicitly **not** corroboration-eligible (org-config content flows through `ModelJudgment.org_config_refs`, never `cited_evidence_refs`; similar-case exemplars remain illustration-only per existing `EXEMPLAR_SCOPE_INSTRUCTIONS`); new Outcome Matrix row `agentic_evidence_gathering_failed` (`system_fault_escalation=true`) for all-Phase-1-sources-failed | Extends DEC-059's corroboration floor to a genuine second independent observation source (Praetor's own past decisions) without opening a free-corroboration hole via always-available static content; mirrors DEC-061's minimal-orchestrator-catch pattern for the new failure mode | `docs/superpowers/specs/2026-07-30-agentic-judgment-design.md`; `src/praetor/evidence/provenance.py`; `src/praetor/judgment/agentic/`; `src/praetor/metrics/events.py`; `src/praetor/contracts/fault_flags.py` |
+| DEC-064 | 2026-07-30 | Agentic judgment: corroboration trust extension (**superseded by DEC-065** — `ledger_history` is **not** corroboration-eligible); `org_config_section` and `similar_cases` remain explicitly **not** corroboration-eligible; new Outcome Matrix row `agentic_evidence_gathering_failed` (`system_fault_escalation=true`) for all-Phase-1-sources-failed; `session_trace_hash` on agentic-mode edicts | Original trust extension extended DEC-059 before multi-telemetry landed; DEC-065 supersedes only the corroboration-eligibility pin — OM row and session trace hash remain | `docs/superpowers/specs/2026-07-30-agentic-judgment-design.md`; `src/praetor/judgment/agentic/`; `src/praetor/metrics/events.py`; `src/praetor/contracts/fault_flags.py` |
+| DEC-065 | 2026-07-31 | Temporary corroboration floor: host `auto_contain` requires **≥1** cited fact anchoring the host target (DEC-052), any `provenance_path`; account `auto_contain` requires **≥1** supporting cited fact, any provenance (still feature-gated); sole `ambiguity_flag=true` cited fact still fails host corroboration; `ledger_history` is **not** corroboration-eligible (supersedes DEC-064 trust-table extension); attacker-controllable / trusted-path enforcement **deferred** until real multi-source telemetry; **upgrade flag:** restore ≥2 distinct `provenance_path` values (+ attacker-controllable table enforcement) when multi-telemetry lands | Host/ledger history is Praetor SoT, not an independent event source; with only Sysmon+Security today, the DEC-059 ≥2-path floor blocks single-shot judgment without genuine multi-source convergence; temporary relaxation unblocks production while preserving sole-ambiguity reject | `docs/contracts.md` §12a; `docs/spec.md` host/account corroboration; `docs/superpowers/plans/2026-07-31-corroboration-floor-temporary.md` |
 
 Add rows when implementation choices diverge from or refine authoritative docs.
 
@@ -306,7 +307,11 @@ An outstanding directive row whose `decision_id` has **no** matching ledger `Dec
 
 ### Corroboration trust extension
 
-**Decision:** add `ledger_history` to the non-attacker-controllable provenance set (DEC-059). Explicitly **exclude** `org_config_section` and `similar_cases` from corroboration eligibility — org-config flows through `ModelJudgment.org_config_refs`; exemplars remain illustration-only per `EXEMPLAR_SCOPE_INSTRUCTIONS`.
+**Status:** **superseded by DEC-065** (2026-07-31) for corroboration eligibility only.
+
+**Original decision (2026-07-30):** add `ledger_history` to the non-attacker-controllable provenance set (DEC-059). **DEC-065 supersedes this pin:** `ledger_history` is **not** corroboration-eligible — Praetor-authored past-decision data is SoT, not an independent telemetry source.
+
+**Still in force from DEC-064:** explicitly **exclude** `org_config_section` and `similar_cases` from corroboration eligibility — org-config flows through `ModelJudgment.org_config_refs`; exemplars remain illustration-only per `EXEMPLAR_SCOPE_INSTRUCTIONS`.
 
 ### Outcome Matrix row
 
@@ -320,4 +325,53 @@ An outstanding directive row whose `decision_id` has **no** matching ledger `Dec
 
 Agentic-mode edicts carry optional `DecisionEdict.session_trace_hash`, copied from `ModelJudgment.session_trace_hash` (hash domain `DOMAIN_SESSION_TRACE` / `compute_session_trace_hash` in `docs/contracts.md` agentic-session section).
 
-**Doc placement.** §13 Outcome Matrix row and agentic-session hash domain in `docs/contracts.md`; implementation in `src/praetor/judgment/agentic/`, `src/praetor/engine/orchestrator.py`, `src/praetor/contracts/edict.py`.
+**Doc placement.** §13 Outcome Matrix row and agentic-session hash domain in `docs/contracts.md`; implementation in `src/praetor/judgment/agentic/`, `src/praetor/engine/orchestrator.py`, `src/praetor/contracts/edict.py`. Corroboration trust extension superseded by DEC-065 — see DEC-065 section below.
+
+## DEC-065 — Temporary corroboration floor (single-telemetry era)
+
+**Status:** accepted (2026-07-31)
+
+**Context.** DEC-059 established a host corroboration floor of ≥2 distinct `provenance_path` values with ≥1 non-attacker-controllable path. With only Sysmon and Security telemetry in production today, that floor blocks single-shot host `auto_contain` without a genuine second independent source. DEC-064 briefly extended the trust table with `ledger_history`, but host/ledger history is Praetor SoT — not attacker-injectable log content, but also not an independent observation path. Agentic evidence gathering will improve citation quality later; this decision unblocks single-shot judgment now.
+
+### Temporary host corroboration floor
+
+Before authorizing host `auto_contain` for a citation-anchored host target (DEC-052), cited facts must:
+
+1. include **≥1** cited fact that **anchors the host target** (any `provenance_path`); and
+2. **not** rely on a **sole** cited anchoring fact with `ambiguity_flag = true`.
+
+Failure → `escalate(insufficient_corroboration)` with `system_fault_escalation = false`.
+
+**Failing cases (temporary):** zero target-anchoring cited facts; exactly one target-anchoring cited fact with `ambiguity_flag = true`.
+
+**Passing cases (temporary):** ≥1 target-anchoring cited fact from any provenance (e.g. a single `sysmon_event_log` citation suffices).
+
+### Temporary account corroboration floor
+
+Account `auto_contain` (still feature-gated via `account_auto_contain_enabled`) requires **≥1** supporting cited fact from any `provenance_path`. Empty cited-evidence sets fail. Production enablement and SID-backed identity rules are unchanged.
+
+### Deferred enforcement
+
+Attacker-controllable vs non-attacker-controllable `provenance_path` classification (DEC-059 table) remains **documented and advisory** but is **not enforced** at the corroboration floor until real multi-source telemetry lands. The trust table in `docs/contracts.md` §12a is unchanged for future use.
+
+### `ledger_history` not corroboration-eligible
+
+`ledger_history` must **not** count toward host or account corroboration. This supersedes DEC-064's corroboration trust-table extension only. The `LEDGER_HISTORY` constant may remain for tool/audit tagging.
+
+### Upgrade flag (multi-telemetry)
+
+When real multi-source telemetry events land (distinct collection paths beyond Praetor SoT), **restore** the DEC-059 floor:
+
+- host and account corroboration require **≥2 distinct** `provenance_path` values;
+- **≥1** from a **non-attacker-controllable** path per the §12a trust table; and
+- attacker-controllable classification is **enforced** at the gate.
+
+Document the upgrade in contracts §12a and retire the temporary ≥1 floor in a follow-on decision.
+
+### Preserved from DEC-059 / DEC-064
+
+- Sole `ambiguity_flag=true` cited fact cannot authorize host containment.
+- Outcome Matrix row `insufficient_corroboration` preserved; failing case redefined to zero anchoring cites / sole ambiguous cite.
+- DEC-064 Outcome Matrix row `agentic_evidence_gathering_failed` and `session_trace_hash` unchanged.
+
+**Doc placement.** `docs/contracts.md` §12a is the source of truth for the temporary corroboration floor while `docs/spec.md` remains frozen; implementation in follow-on tasks per `docs/superpowers/plans/2026-07-31-corroboration-floor-temporary.md`.

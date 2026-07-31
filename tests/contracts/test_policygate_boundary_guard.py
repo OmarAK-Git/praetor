@@ -26,42 +26,42 @@ KNOWN_LEGACY_TEST_HELPER_CALLS: frozenset[tuple[str, str, int]] = frozenset(
         (
             _ACCOUNT_ELIGIBILITY_HELPER,
             "tests/correlation/test_correlator_identity_compliance.py",
-            347,
+            354,
         ),
         (
             _ACCOUNT_ELIGIBILITY_HELPER,
             "tests/correlation/test_correlator_identity_compliance.py",
-            355,
+            362,
         ),
         (
             _ACCOUNT_ELIGIBILITY_HELPER,
             "tests/evidence/test_account_corroboration.py",
-            108,
+            109,
         ),
         (
             _ACCOUNT_ELIGIBILITY_HELPER,
             "tests/evidence/test_account_corroboration.py",
-            130,
+            131,
         ),
         (
             _ACCOUNT_ELIGIBILITY_HELPER,
             "tests/evidence/test_account_corroboration.py",
-            139,
+            140,
         ),
         (
             _ACCOUNT_ELIGIBILITY_HELPER,
             "tests/evidence/test_account_corroboration.py",
-            201,
+            202,
         ),
         (
             _ACCOUNT_ELIGIBILITY_HELPER,
             "tests/evidence/test_account_corroboration.py",
-            216,
+            217,
         ),
         (
             _ACCOUNT_ELIGIBILITY_HELPER,
             "tests/evidence/test_account_corroboration.py",
-            244,
+            245,
         ),
         (
             _HOST_CORROBORATION_HELPER,

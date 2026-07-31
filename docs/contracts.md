@@ -550,37 +550,40 @@ These are Pydantic v2 `@model_validator` rules at the schema level (not the stor
 
 ## 12a. Containment evidence corroboration (host and account)
 
-Corroboration is a **first-class authorization concept** for `auto_contain`, not an account-only rule (DEC-059). PolicyGate evaluates corroboration on **resolved citation metadata** (`provenance_path`, `ambiguity_flag`) from `validate_evidence_citations` — the same fields the citation validator already resolves today.
+Corroboration is a **first-class authorization concept** for `auto_contain`, not an account-only rule (DEC-059, **temporary floor DEC-065**). PolicyGate evaluates corroboration on **resolved citation metadata** (`provenance_path`, `ambiguity_flag`) from `validate_evidence_citations` — the same fields the citation validator already resolves today.
 
-### Provenance-path trust classification (v1 Windows)
+### Provenance-path trust classification (v1 Windows, advisory until multi-telemetry)
 
-| `provenance_path` | Attacker-controllable | Rationale |
-|---|---|---|
-| `sysmon_event_log` | **yes** | Process-creation and command-line content is injectable or spoofable in the event payload |
-| `windows_security_log` | **no** | Independent Windows Security channel authentication events; distinct collection path from Sysmon |
+The table below classifies paths for **future** enforcement when multi-source telemetry lands (DEC-065 upgrade flag). It is **not enforced** at the temporary corroboration floor.
 
-**Default for future normalizers:** any `provenance_path` not listed in this table is **attacker-controllable** until explicitly classified here (fail-closed). Adding a non-attacker-controllable path requires a `docs/contracts.md` update before the normalizer ships.
+| `provenance_path` | Attacker-controllable | Corroboration-eligible | Rationale |
+|---|---|---|---|
+| `sysmon_event_log` | **yes** | **yes** | Process-creation and command-line content is injectable or spoofable in the event payload |
+| `windows_security_log` | **no** | **yes** | Independent Windows Security channel authentication events; distinct collection path from Sysmon |
+| `ledger_history` | **yes** (fail-closed default) | **no** | Praetor-authored past-decision SoT — not attacker-injectable log content, but not an independent telemetry source (DEC-065 supersedes DEC-064 corroboration extension) |
+| `org_config_section` | n/a | **no** | Flows through `ModelJudgment.org_config_refs`, never `cited_evidence_refs` |
+| `similar_cases` | n/a | **no** | Illustration-only exemplars per `EXEMPLAR_SCOPE_INSTRUCTIONS` |
 
-### Account `auto_contain` corroboration (unchanged v1)
+**Default for future normalizers:** any `provenance_path` not listed in this table is **attacker-controllable** and **corroboration-eligible** until explicitly classified here (fail-closed for trust). Adding a non-attacker-controllable path requires a `docs/contracts.md` update before the normalizer ships.
 
-Account containment authorization requires the cited facts (or the account-identity facts the gate evaluates) to include:
+### Account `auto_contain` corroboration (temporary floor, DEC-065)
 
-- at least **two distinct** `provenance_path` values, and
-- at least **one** from a **non-attacker-controllable** path per the table above.
+Account containment authorization requires **≥1** supporting cited fact from **any** `provenance_path`. Empty cited-evidence sets do not corroborate.
 
-For v1 Windows/Sysmon, the approved pair is one `sysmon_event_log` fact plus one `windows_security_log` fact. Two facts sharing the same `provenance_path` do not corroborate.
+When a SID-backed account target fails this check, PolicyGate escalates with fault flag **`ambiguous_target_identity`** (`system_fault_escalation = false`). Production account `auto_contain` remains feature-gated (`account_auto_contain_enabled`).
 
-When a SID-backed account target fails this check, PolicyGate escalates with fault flag **`ambiguous_target_identity`** (`system_fault_escalation = false`). This path is unchanged from v1.
+**Upgrade (multi-telemetry):** restore ≥2 distinct `provenance_path` values with ≥1 non-attacker-controllable path per the table above (DEC-059 account semantics).
 
-### Host `auto_contain` corroboration floor (V2)
+### Host `auto_contain` corroboration floor (temporary, DEC-065)
 
 Before authorizing host `auto_contain`, the **cited facts** anchoring the host target (DEC-052) must satisfy:
 
-1. **Distinct provenance** — cited facts span **≥2 distinct** `provenance_path` values.
-2. **Independent source** — at least **one** cited fact comes from a **non-attacker-controllable** `provenance_path` per the table above.
-3. **No sole ambiguous basis** — host containment must not rest on a **single** cited fact when that fact has `ambiguity_flag = true`.
+1. **Anchoring cite present** — **≥1** cited fact anchors the host target (any `provenance_path`).
+2. **No sole ambiguous basis** — host containment must not rest on a **single** target-anchoring cited fact when that fact has `ambiguity_flag = true`.
 
-When any check fails, PolicyGate escalates with fault flag **`insufficient_corroboration`** (`system_fault_escalation = false`, policy/safety-gate class). **Implemented** (V2-011) in PolicyGate + `evidence/provenance.py`; harness scenario `insufficient_corroboration`.
+When any check fails, PolicyGate escalates with fault flag **`insufficient_corroboration`** (`system_fault_escalation = false`, policy/safety-gate class). **Failing cases:** zero target-anchoring cited facts; exactly one target-anchoring cited fact with `ambiguity_flag = true`. **Implemented** in PolicyGate + `evidence/provenance.py`; harness scenario `insufficient_corroboration` (sole-ambiguous failure mode under temporary floor).
+
+**Upgrade (multi-telemetry):** restore DEC-059 floor — cited facts span **≥2 distinct** `provenance_path` values with **≥1** non-attacker-controllable path; enforce the trust table above.
 
 **Scope note.** Host corroboration applies to **host** containment targets after citation-anchored target resolution. It does not replace account identity corroboration or multi-host ambiguity (`ambiguous_containment_target`).
 
@@ -604,7 +607,7 @@ The eval harness asserts, for every failure class, the disposition, the fault fl
 | Target on live never-contain list at emission | escalate | `never_contain_live_conflict` | false |
 | Account target, insufficient identity corroboration | escalate | `ambiguous_target_identity` | false |
 | Containment target spans multiple cited hosts | escalate | `ambiguous_containment_target` | false |
-| Host target, insufficient cited-evidence corroboration | escalate | `insufficient_corroboration` | false |
+| Host target, insufficient cited-evidence corroboration (zero anchoring cites or sole ambiguous anchoring cite; DEC-065 temporary floor) | escalate | `insufficient_corroboration` | false |
 | Account containment production feature gate disabled | escalate | `account_containment_disabled` | false |
 | Target-scoped containment rule conflict, no precedence | escalate | `policy_ambiguity` | false |
 | Containment rate limit exceeded | escalate | `rate_limit_exceeded` | false |

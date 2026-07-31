@@ -167,7 +167,7 @@ def test_correlated_real_pair_authorizes_containment() -> None:
     assert result.fault_flag is None
 
 
-def test_two_sysmon_facts_reject_corroboration_and_host_contain_via_policy_gate(
+def test_two_sysmon_facts_authorize_host_contain_via_policy_gate(
     activated, org_snapshot
 ) -> None:
     sysmon_events = _load_json_fixture(SYSMON_FIXTURES / "process_chain.json")
@@ -177,7 +177,7 @@ def test_two_sysmon_facts_reject_corroboration_and_host_contain_via_policy_gate(
         fact for fact in bundle.facts if fact.provenance_path == SYSMON_EVENT_LOG
     ]
     assert len(sysmon_facts) == 2
-    assert meets_account_corroboration(bundle.facts) is False
+    assert meets_account_corroboration(bundle.facts) is True
     assert extract_account_identity(list(bundle.facts)) is None
 
     target = resolve_host_target(bundle)
@@ -185,16 +185,23 @@ def test_two_sysmon_facts_reject_corroboration_and_host_contain_via_policy_gate(
     assert target.target_type == "host"
     assert target.target_id == "WORKSTATION1"
 
-    result = _run_policy_gate(
-        activated,
-        org_snapshot,
-        bundle,
+    snapshot = permissive_org_snapshot(activated, org_snapshot, "WORKSTATION1")
+    refs = [_judgment_for_bundle(bundle)]
+    judgment = auto_contain_judgment(bundle, refs=refs)
+    result = evaluate_policy_gate(
+        activated.conn,
+        judgment=judgment,
+        evidence_bundle=bundle,
+        org_snapshot=snapshot,
         alert_identity="ALERT-2-SYSMON",
+        decision_id="dec-alert-2-sysmon",
+        now=NOW,
     )
-    assert result.final_disposition == Disposition.ESCALATE
-    assert result.fault_flags == [INSUFFICIENT_CORROBORATION]
+    assert result.final_disposition == Disposition.AUTO_CONTAIN
+    assert result.fault_flags == []
     assert AMBIGUOUS_TARGET_IDENTITY not in result.fault_flags
-    assert result.containment_directive is None
+    assert result.containment_directive is not None
+    assert result.containment_directive.target_id == "WORKSTATION1"
 
 
 def test_ambiguous_sysmon_sets_ambiguity_flag() -> None:
@@ -214,7 +221,7 @@ def test_ambiguous_sysmon_only_resolves_host_via_policy_gate(
 
     assert len(bundle.facts) == 1
     assert bundle.facts[0].ambiguity_flag is True
-    assert meets_account_corroboration(bundle.facts) is False
+    assert meets_account_corroboration(bundle.facts) is True
     assert extract_account_identity(list(bundle.facts)) is None
 
     target = resolve_host_target(bundle)
@@ -237,7 +244,7 @@ def test_ambiguous_sysmon_only_resolves_host_via_policy_gate(
 def test_corroborated_ambiguous_identity_auto_contain_when_gate_enabled(
     activated, org_snapshot
 ) -> None:
-    """spec.md:309 escalates only when ambiguity_flag and insufficient corroboration."""
+    """Account auto_contain with >=1 fact when gate enabled (DEC-065)."""
     bundle = _correlate(
         sysmon_events=_load_json_fixture(SYSMON_FIXTURES / "ambiguous_user.json"),
         security_events=_load_json_fixture(
@@ -363,11 +370,11 @@ def test_real_eligible_pair_matches_synthetic_eligible() -> None:
     assert real_result.fault_flag == synthetic_result.fault_flag
 
 
-def test_real_sysmon_only_matches_synthetic_same_provenance_rejection() -> None:
+def test_real_sysmon_only_matches_synthetic_same_provenance_acceptance() -> None:
     _, synthetic_facts = _load_synthetic("account_same_provenance.json")
-    assert meets_account_corroboration(synthetic_facts) is False
+    assert meets_account_corroboration(synthetic_facts) is True
 
     sysmon_events = _load_json_fixture(SYSMON_FIXTURES / "process_chain.json")
     real_bundle = _correlate(sysmon_events=sysmon_events)
 
-    assert meets_account_corroboration(real_bundle.facts) is False
+    assert meets_account_corroboration(real_bundle.facts) is True

@@ -12,8 +12,14 @@ WINDOWS_SECURITY_LOG = "windows_security_log"
 HOST_ID_FIELD = "host_id"
 LEDGER_HISTORY = "ledger_history"
 
-_NON_ATTACKER_CONTROLLABLE_PATHS = frozenset({WINDOWS_SECURITY_LOG, LEDGER_HISTORY})
+_NON_ATTACKER_CONTROLLABLE_PATHS = frozenset({WINDOWS_SECURITY_LOG})
 _ATTACKER_CONTROLLABLE_OVERRIDES = frozenset({SYSMON_EVENT_LOG})
+_NON_CORROBORATION_ELIGIBLE_PATHS = frozenset({LEDGER_HISTORY})
+
+
+def _is_corroboration_eligible_provenance(provenance_path: str) -> bool:
+    """Return whether ``provenance_path`` may count toward corroboration (DEC-065)."""
+    return provenance_path not in _NON_CORROBORATION_ELIGIBLE_PATHS
 
 
 def distinct_provenance_paths(facts: Sequence[EvidenceFact]) -> frozenset[str]:
@@ -31,13 +37,17 @@ def is_attacker_controllable_provenance(provenance_path: str) -> bool:
 
 
 def meets_account_corroboration(facts: Sequence[EvidenceFact]) -> bool:
-    """Return whether facts satisfy v1 Windows/Sysmon account corroboration.
+    """Return whether facts satisfy account corroboration (DEC-065 temporary floor).
 
-    Requires at least one ``sysmon_event_log`` and one ``windows_security_log``
-    fact. Two facts from the same provenance path do not corroborate.
+    Requires at least one corroboration-eligible supporting fact from any
+    ``provenance_path``.
     """
-    paths = distinct_provenance_paths(facts)
-    return SYSMON_EVENT_LOG in paths and WINDOWS_SECURITY_LOG in paths
+    eligible = tuple(
+        fact
+        for fact in facts
+        if _is_corroboration_eligible_provenance(fact.provenance_path)
+    )
+    return len(eligible) >= 1
 
 
 def _cited_fact_anchors_host(
@@ -64,14 +74,14 @@ def meets_host_cited_corroboration(
     anchored = tuple(
         ref
         for ref in cited
-        if _cited_fact_anchors_host(
+        if _is_corroboration_eligible_provenance(ref.provenance_path)
+        and _cited_fact_anchors_host(
             facts_by_id.get(ref.evidence_id),
             target_host_id=target_host_id,
         )
     )
+    if not anchored:
+        return False
     if len(anchored) == 1 and anchored[0].ambiguity_flag:
         return False
-    paths = frozenset(ref.provenance_path for ref in anchored)
-    if len(paths) < 2:
-        return False
-    return any(not is_attacker_controllable_provenance(path) for path in paths)
+    return True

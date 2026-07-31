@@ -10,8 +10,8 @@ from praetor.evidence.provenance import (
 )
 
 
-def test_ledger_history_is_non_attacker_controllable() -> None:
-    assert is_attacker_controllable_provenance(LEDGER_HISTORY) is False
+def test_ledger_history_is_attacker_controllable() -> None:
+    assert is_attacker_controllable_provenance(LEDGER_HISTORY) is True
 
 
 def test_existing_classifications_unchanged() -> None:

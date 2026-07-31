@@ -68,7 +68,7 @@ For proposed `auto_contain`, gate evaluation and (when enabled) directive persis
 - Revocation-feed health (pending row age vs propagation SLO)
 - Live never-contain + emergency entries
 - Rate limits and containment breaker state
-- Host/account corroboration floors (DEC-059)
+- Host/account corroboration floors (DEC-059 design; **temporary ≥1 floor DEC-065**)
 - Org-config `default_action` / rule precedence (DEC-058)
 - Idempotency key insertion
 
@@ -79,7 +79,7 @@ Production intake evaluates gate with `persist_directive=False` until terminal s
 - Required `containment_policy.default_action` (example org: `escalate`).
 - No matching rule → fall through to `default_action` (implicit default-allow retired).
 - Sole matching `escalate` rule blocks `auto_contain`.
-- Host `auto_contain` requires corroborated cited evidence (`insufficient_corroboration` otherwise).
+- Host `auto_contain` requires corroborated cited evidence per DEC-065 temporary floor (`insufficient_corroboration` on zero anchoring cites or sole ambiguous anchoring cite).
 - All production containment authorization flows through PolicyGate (V2-025).
 
 ## Detection portability (Phase 4)

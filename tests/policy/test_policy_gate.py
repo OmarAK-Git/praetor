@@ -164,10 +164,10 @@ def test_insufficient_account_corroboration_escalates(activated, org_snapshot) -
     assert result.system_fault_escalation is False
 
 
-def test_sid_without_corroboration_escalates_without_host_fallback(
+def test_sid_with_single_fact_account_path_blocks_without_host_fallback(
     activated, org_snapshot
 ) -> None:
-    """SID present but under-corroborated must not fall back to host containment."""
+    """SID with ≥1 fact uses account path; feature gate blocks host fallback."""
     from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
     from praetor.contracts.judgment import CitedEvidenceRef
 
@@ -199,7 +199,7 @@ def test_sid_without_corroboration_escalates_without_host_fallback(
         alert_identity="ALERT-SID-NO-CORR",
     )
     assert result.final_disposition == Disposition.ESCALATE
-    assert result.fault_flags == [AMBIGUOUS_TARGET_IDENTITY]
+    assert result.fault_flags == [ACCOUNT_CONTAINMENT_DISABLED]
     assert result.system_fault_escalation is False
 
 

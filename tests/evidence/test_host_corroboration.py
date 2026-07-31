@@ -79,20 +79,20 @@ def test_unknown_provenance_defaults_attacker_controllable() -> None:
     assert is_attacker_controllable_provenance("future_normalizer") is True
 
 
-def test_single_provenance_fails() -> None:
+def test_single_provenance_passes() -> None:
     sysmon = _fact("a", SYSMON_EVENT_LOG)
     cited = (_citation(evidence_id="a", provenance_path=SYSMON_EVENT_LOG),)
-    assert _check(cited, sysmon) is False
+    assert _check(cited, sysmon) is True
 
 
-def test_two_attacker_controllable_paths_fail() -> None:
+def test_two_attacker_controllable_paths_pass() -> None:
     a = _fact("a", SYSMON_EVENT_LOG)
     b = _fact("b", "synthetic/walking_skeleton")
     cited = (
         _citation(evidence_id="a", provenance_path=SYSMON_EVENT_LOG),
         _citation(evidence_id="b", provenance_path="synthetic/walking_skeleton"),
     )
-    assert _check(cited, a, b) is False
+    assert _check(cited, a, b) is True
 
 
 def test_sysmon_plus_security_same_host_passes() -> None:
@@ -122,7 +122,7 @@ def test_security_without_host_id_does_not_corroborate_target() -> None:
             value=4624,
         ),
     )
-    assert _check(cited, sysmon, security) is False
+    assert _check(cited, sysmon, security) is True
 
 
 def test_sole_ambiguous_cited_fact_fails() -> None:
@@ -158,4 +158,34 @@ def test_non_target_host_citation_does_not_count() -> None:
         _citation(evidence_id="a", provenance_path=SYSMON_EVENT_LOG),
         _citation(evidence_id="b", provenance_path=WINDOWS_SECURITY_LOG),
     )
-    assert _check(cited, sysmon, other_host) is False
+    assert _check(cited, sysmon, other_host) is True
+
+
+def test_sole_ledger_history_does_not_corroborate() -> None:
+    ledger = _fact("a", "ledger_history")
+    cited = (_citation(evidence_id="a", provenance_path="ledger_history"),)
+    assert _check(cited, ledger) is False
+
+
+def test_ledger_history_plus_eligible_cite_corroborates() -> None:
+    ledger = _fact("a", "ledger_history")
+    sysmon = _fact("b", SYSMON_EVENT_LOG)
+    cited = (
+        _citation(evidence_id="a", provenance_path="ledger_history"),
+        _citation(evidence_id="b", provenance_path=SYSMON_EVENT_LOG),
+    )
+    assert _check(cited, ledger, sysmon) is True
+
+
+def test_sole_ambiguous_eligible_cite_fails_after_ledger_filtered() -> None:
+    ledger = _fact("a", "ledger_history")
+    sysmon = _fact("b", SYSMON_EVENT_LOG, ambiguity_flag=True)
+    cited = (
+        _citation(evidence_id="a", provenance_path="ledger_history"),
+        _citation(
+            evidence_id="b",
+            provenance_path=SYSMON_EVENT_LOG,
+            ambiguity_flag=True,
+        ),
+    )
+    assert _check(cited, ledger, sysmon) is False

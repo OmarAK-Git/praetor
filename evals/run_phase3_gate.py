@@ -36,7 +36,7 @@ from praetor.config.loader import load_org_config_source
 from praetor.config.preflight import run_preflight
 from praetor.config.state import fetch_active_snapshot
 from praetor.contracts.disposition import Disposition
-from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
+from praetor.contracts.evidence import EvidenceBundle
 from praetor.contracts.judgment import CitedEvidenceRef, ModelJudgment
 from praetor.correlation import correlate_telemetry, load_fixture_events
 from praetor.evidence.provenance import (
@@ -321,13 +321,21 @@ def check_phase2_safety_on_noisy_bundle(
                         "account_containment_disabled must keep system_fault_escalation=false"
                     )
 
+                host_snapshot = _persist_snapshot_with_overrides(
+                    store,
+                    snapshot,
+                    containment_policy=allowlist_containment_policy(
+                        host_ids=[INCIDENT_HOST_ID],
+                    ),
+                )
                 sysmon_fact = next(
                     fact
                     for fact in sysmon_only_bundle.facts
                     if fact.provenance_path == SYSMON_EVENT_LOG
                     and fact.normalized_fields.get("host_id") == INCIDENT_HOST_ID
+                    and not fact.ambiguity_flag
                 )
-                host_blocked = evaluate_policy_gate(
+                host_single_sysmon = evaluate_policy_gate(
                     store.conn,
                     judgment=_auto_contain_judgment(
                         sysmon_only_bundle,
@@ -339,76 +347,63 @@ def check_phase2_safety_on_noisy_bundle(
                         ],
                     ),
                     evidence_bundle=sysmon_only_bundle,
-                    org_snapshot=snapshot,
-                    alert_identity="phase3-noisy-host-insufficient",
-                    decision_id="dec-phase3-noisy-host-insufficient",
-                    now=FIXED_NOW,
-                )
-                if host_blocked.final_disposition != Disposition.ESCALATE:
-                    errors.append(
-                        "sysmon-only host auto_contain must escalate under corroboration floor"
-                    )
-                if host_blocked.fault_flags != [INSUFFICIENT_CORROBORATION]:
-                    errors.append(
-                        "sysmon-only host auto_contain must record insufficient_corroboration"
-                    )
-
-                host_snapshot = _persist_snapshot_with_overrides(
-                    store,
-                    snapshot,
-                    containment_policy=allowlist_containment_policy(
-                        host_ids=[INCIDENT_HOST_ID],
-                    ),
-                )
-                corroboration_security = EvidenceFact(
-                    evidence_id="phase3-host-security-corroboration",
-                    normalized_fields={
-                        "host_id": INCIDENT_HOST_ID,
-                        "event_id": 4624,
-                    },
-                    source_event_reference="phase3:security:corroboration",
-                    raw_source="{}",
-                    provenance_path=WINDOWS_SECURITY_LOG,
-                    ambiguity_flag=False,
-                    timestamp=FIXED_NOW,
-                )
-                host_corroborated_bundle = EvidenceBundle(
-                    facts=[*sysmon_only_bundle.facts, corroboration_security]
-                )
-                host_result = evaluate_policy_gate(
-                    store.conn,
-                    judgment=_auto_contain_judgment(
-                        host_corroborated_bundle,
-                        refs=[
-                            CitedEvidenceRef(
-                                evidence_id=sysmon_fact.evidence_id,
-                                field_path="host_id",
-                            ),
-                            CitedEvidenceRef(
-                                evidence_id=corroboration_security.evidence_id,
-                                field_path="host_id",
-                            ),
-                        ],
-                    ),
-                    evidence_bundle=host_corroborated_bundle,
                     org_snapshot=host_snapshot,
-                    alert_identity="phase3-noisy-host-autocontain",
-                    decision_id="dec-phase3-noisy-host-autocontain",
+                    alert_identity="phase3-noisy-host-single-sysmon",
+                    decision_id="dec-phase3-noisy-host-single-sysmon",
                     now=FIXED_NOW,
                 )
-                if host_result.final_disposition != Disposition.AUTO_CONTAIN:
+                if host_single_sysmon.final_disposition != Disposition.AUTO_CONTAIN:
                     errors.append(
-                        "corroborated host auto_contain must pass on noisy correlated bundle"
+                        "single non-ambiguous sysmon host cite must auto_contain "
+                        "under DEC-065 temporary floor"
                     )
-                directive = host_result.containment_directive
-                if directive is None:
+                if host_single_sysmon.fault_flags:
                     errors.append(
-                        "host auto_contain must emit containment directive"
+                        "single non-ambiguous sysmon host cite must not record "
+                        f"fault flags, got {host_single_sysmon.fault_flags}"
                     )
-                elif directive.target_id != INCIDENT_HOST_ID:
+                single_directive = host_single_sysmon.containment_directive
+                if single_directive is None:
+                    errors.append(
+                        "single sysmon host auto_contain must emit containment directive"
+                    )
+                elif single_directive.target_id != INCIDENT_HOST_ID:
                     errors.append(
                         "containment directive must target incident host "
-                        f"{INCIDENT_HOST_ID}, got {directive.target_id}"
+                        f"{INCIDENT_HOST_ID}, got {single_directive.target_id}"
+                    )
+
+                ambiguous_sysmon = next(
+                    fact
+                    for fact in sysmon_only_bundle.facts
+                    if fact.provenance_path == SYSMON_EVENT_LOG
+                    and fact.normalized_fields.get("host_id") == INCIDENT_HOST_ID
+                    and fact.ambiguity_flag
+                )
+                host_sole_ambiguous = evaluate_policy_gate(
+                    store.conn,
+                    judgment=_auto_contain_judgment(
+                        sysmon_only_bundle,
+                        refs=[
+                            CitedEvidenceRef(
+                                evidence_id=ambiguous_sysmon.evidence_id,
+                                field_path="host_id",
+                            )
+                        ],
+                    ),
+                    evidence_bundle=sysmon_only_bundle,
+                    org_snapshot=host_snapshot,
+                    alert_identity="phase3-noisy-host-sole-ambiguous",
+                    decision_id="dec-phase3-noisy-host-sole-ambiguous",
+                    now=FIXED_NOW,
+                )
+                if host_sole_ambiguous.final_disposition != Disposition.ESCALATE:
+                    errors.append(
+                        "sole ambiguous host cite must escalate under corroboration floor"
+                    )
+                if host_sole_ambiguous.fault_flags != [INSUFFICIENT_CORROBORATION]:
+                    errors.append(
+                        "sole ambiguous host cite must record insufficient_corroboration"
                     )
             finally:
                 store.close()

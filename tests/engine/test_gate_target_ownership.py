@@ -185,20 +185,31 @@ def test_intake_two_host_bundle_persists_only_cited_gate_target(
 def test_intake_insufficient_corroboration_does_not_persist_directive(
     activated,
 ) -> None:
-    """Single-cited host on filtered bundle escalates without persisting directive."""
+    """Sole ambiguous host citation escalates without persisting directive."""
     org_snapshot = fetch_active_snapshot(activated.conn)
     assert org_snapshot is not None
-    bundle = _sysmon_only_noisy_bundle()
-    incident_fact = next(
-        fact
-        for fact in bundle.facts
-        if fact.normalized_fields.get("host_id") == INCIDENT_HOST_ID
+    ts = datetime(2026, 6, 8, 12, 0, 0, tzinfo=UTC)
+    bundle = EvidenceBundle(
+        facts=[
+            EvidenceFact(
+                evidence_id="host-ambiguous-only",
+                normalized_fields={
+                    "host_id": INCIDENT_HOST_ID,
+                    "process_name": "cmd.exe",
+                },
+                source_event_reference="syn:amb:intake",
+                raw_source="{}",
+                provenance_path="sysmon_event_log",
+                ambiguity_flag=True,
+                timestamp=ts,
+            ),
+        ]
     )
     judgment = auto_contain_judgment(
         bundle,
         refs=[
             CitedEvidenceRef(
-                evidence_id=incident_fact.evidence_id,
+                evidence_id="host-ambiguous-only",
                 field_path="host_id",
             )
         ],
@@ -210,7 +221,7 @@ def test_intake_insufficient_corroboration_does_not_persist_directive(
         activated,
         judgment_provider=provider,
         stamp_backend=SucceedingStampBackend(),
-        alert_identity="ALERT-INTAKE-CITATION-NOISE",
+        alert_identity="ALERT-INTAKE-SOLE-AMB",
         evidence_bundle=bundle,
     )
     assert result.edict is not None

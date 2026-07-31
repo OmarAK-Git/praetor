@@ -22,10 +22,7 @@ from praetor.policy.containment_policy import (
     resolve_host_target_from_citations,
 )
 from praetor.policy.gate import evaluate_policy_gate
-from praetor.policy.identity import (
-    AMBIGUOUS_CONTAINMENT_TARGET,
-    INSUFFICIENT_CORROBORATION,
-)
+from praetor.policy.identity import AMBIGUOUS_CONTAINMENT_TARGET
 
 
 def _two_host_bundle() -> EvidenceBundle:
@@ -135,9 +132,10 @@ def test_uncited_cross_host_noise_does_not_capture_target(
         now=NOW,
     )
 
-    assert result.final_disposition == Disposition.ESCALATE
-    assert result.fault_flags == [INSUFFICIENT_CORROBORATION]
-    assert result.containment_directive is None
+    assert result.final_disposition == Disposition.AUTO_CONTAIN
+    assert result.fault_flags == []
+    assert result.containment_directive is not None
+    assert result.containment_directive.target_id == INCIDENT_HOST_ID
 
 
 def test_multi_cited_hosts_escalates_ambiguous_containment_target(

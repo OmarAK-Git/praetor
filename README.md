@@ -1,7 +1,7 @@
 # Praetor
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-1029%20passed-brightgreen.svg)](#testing-and-verification)
+[![Tests](https://img.shields.io/badge/tests-1105%20passed-brightgreen.svg)](#testing-and-verification)
 [![Phase](https://img.shields.io/badge/v1%20%2B%20V2%20complete-brightgreen.svg)](#where-we-are-today)
 [![Plan](https://img.shields.io/badge/V2%20Gates%200%E2%80%935%20closed-brightgreen.svg)](docs/proposals/v2_implementation_plan.md)
 
@@ -10,7 +10,7 @@
 **▶ See it decide:** [`notebooks/praetor_walkthrough.ipynb`](notebooks/praetor_walkthrough.ipynb) — two-act tour of the real engine:
 
 - **Act I:** malicious → `auto_contain` · benign → `standard_review` · never-contain DC **refused**
-- **Act II (V2):** corroboration floor · escalate-by-default · progressive report · exemplars · statute curation
+- **Act II (V2):** temporary corroboration floor (DEC-065) · escalate-by-default · progressive report · exemplars · statute curation · agentic judgment (opt-in)
 
 ---
 
@@ -46,11 +46,13 @@ Praetor is a **post-detection disposition engine** — an add-on, not a platform
 - Safety rails are installed: PolicyGate, rate limits, circuit breakers, citation enforcement, provider-health breakers.
 - **V2 authorization rewire:** required `default_action`, host corroboration floor, escalate-blocks-containment, correlator host isolation, all containment through PolicyGate.
 - **V2 operator features:** progressive authorization reporting (read-only), bounded prompt exemplars + similar-case retrieval (library), statute curation workflow, eval regression locking.
+- **Agentic judgment (opt-in):** bounded tool-using `AgenticJudgmentProvider` (source fan-out → hypothesis debate → lead reconciliation) with session evidence registry and `session_trace_hash`; single-shot Vertex/Fake paths remain the default.
+- **Temporary corroboration floor (DEC-065):** host/account `auto_contain` needs ≥1 corroboration-eligible anchoring/supporting cite (any telemetry provenance); sole `ambiguity_flag=true` host cite still fails; `ledger_history` is **not** corroboration-eligible. Upgrade flag: restore ≥2 distinct provenance paths when real multi-source telemetry lands.
 - Real telemetry correlation feeds judgment on the production intake path.
 - Detection rules are portable: Sigma rules compile to SPL with a Splunk Free demo path.
 - Operators have runbooks, architecture docs, an org-config codification sweep CLI, and a production throughput benchmark.
 
-**Quality bar:** 1029 automated tests, mypy strict (134 files), ruff clean, 32 mandatory eval scenarios, V2 Gates 0–5 green. See [`.workflow/v2-gate-5-exit/`](.workflow/v2-gate-5-exit/) and [`.workflow/v2-correctness-audit/final-report.md`](.workflow/v2-correctness-audit/final-report.md).
+**Quality bar:** 1105 automated tests, mypy strict, ruff clean, 33 mandatory eval scenarios, V2 Gates 0–5 green, agentic judgment + DEC-065 gates green. See [`.workflow/v2-gate-5-exit/`](.workflow/v2-gate-5-exit/), [`.workflow/agentic-judgment-gate/`](.workflow/agentic-judgment-gate/), and [`.workflow/corroboration-floor-gate/`](.workflow/corroboration-floor-gate/).
 
 There is no product UI yet. Praetor is a library and contract surface today — inspectable through tests, schemas, example config, and operator docs.
 
@@ -110,7 +112,7 @@ Full rationale in [`docs/prd.md`](docs/prd.md); behavioral detail in [`docs/spec
 1. **Recommendation ≠ authorization** — `ModelJudgment` is a proposal; `PolicyGate` decides the final disposition.
 2. **Fail safe, fail loud** — `standard_review` and `escalate` route to humans. The only automated action is `auto_contain`, and it is gated, bounded, and reviewable.
 3. **Citations are enforced, not decorative** — prose without resolvable citations is a hallucination failure mode; the Outcome Matrix treats it as escalate.
-4. **Containment is earned** — required `default_action`; host `auto_contain` needs corroborated cited evidence (DEC-058/059).
+4. **Containment is earned** — required `default_action`; host `auto_contain` needs corroborated cited evidence (DEC-058/059; temporary ≥1 floor under DEC-065 until multi-telemetry).
 5. **Safety config is complete, not curated** — token budgets may shrink config, but never by dropping safety-critical sections.
 6. **Feedback is human-gated** — analyst annotations inform a SOC lead who deliberately edits config. No self-tuning containment authority.
 7. **Contracts before code** — hash domains, ID derivations, and the Outcome Matrix are ratified in [`docs/contracts.md`](docs/contracts.md) before implementation.
@@ -144,6 +146,7 @@ Full rationale in [`docs/prd.md`](docs/prd.md); behavioral detail in [`docs/spec
 | Intake orchestrator, edict building, crash recovery | `src/praetor/engine/` |
 | Real telemetry correlation (Sysmon + Security) + host isolation | `src/praetor/correlation/` |
 | Provider abstraction, prompt construction, citation validation | `src/praetor/judgment/`, `src/praetor/evidence/` |
+| Agentic judgment pipeline (opt-in JudgmentProvider) | `src/praetor/judgment/agentic/` |
 | PolicyGate, rate limits, circuit breakers, directive lifecycle | `src/praetor/policy/`, `src/praetor/containment/` |
 | Provider-health breaker + half-open probes | `src/praetor/judgment/provider_health_breaker.py` |
 | Vertex provider (real HTTP; CI stays fixture-backed) | `src/praetor/judgment/vertex_provider.py` |
@@ -152,7 +155,7 @@ Full rationale in [`docs/prd.md`](docs/prd.md); behavioral detail in [`docs/spec
 | Similar-case retrieval (human-confirmed precedents) | `src/praetor/retrieval/` |
 | Analyst annotation storage | `src/praetor/annotations/` |
 | Reference consumer verifier | `consumer_sdk/reference_verifier.py` |
-| Mandatory eval harness (32 scenarios) | `evals/harness.py`, `evals/scenarios/` |
+| Mandatory eval harness (33 scenarios) | `evals/harness.py`, `evals/scenarios/` |
 | Phase 3/4/5 regression gates | `evals/run_phase3_gate.py`, `evals/correlation_gate.py`, `evals/run_phase5_benchmark.py` |
 | Sigma rule repository + SPL compile | `detections/sigma/`, `tools/compile_sigma.py`, `detections/spl/` |
 | Splunk Free demo config + ingest script | `splunk/`, `tools/splunk_ingest_demo.ps1` |
@@ -170,8 +173,8 @@ src/praetor/
 ├── codification/  # Org-config sweep, CLI, statute curation (review-only → promote)
 ├── correlation/   # Real telemetry normalization → EvidenceBundle
 ├── engine/        # Intake orchestrator, edict building, startup recovery
-├── judgment/      # Provider abstraction, prompt/excerpt hygiene, exemplars
-├── evidence/      # Citation validation, host/account corroboration
+├── judgment/      # Provider abstraction, prompt/excerpt hygiene, exemplars, agentic/
+├── evidence/      # Citation validation, host/account corroboration (DEC-065 floor)
 ├── policy/        # PolicyGate, rate limits, containment policy
 ├── containment/   # Directive lifecycle, revocation triggers
 ├── metrics/       # In-process disposition and breaker counters
@@ -231,7 +234,7 @@ python notebooks/check_walkthrough.py notebooks/praetor_walkthrough.ipynb
 
 | Gate | Command | What it proves |
 |---|---|---|
-| Mandatory safety scenarios | `python -m evals.harness` | 32 scenarios — disposition invariants, citation failures, corroboration, breakers, stamp failures |
+| Mandatory safety scenarios | `python -m evals.harness` | 33 scenarios — disposition invariants, citation failures, corroboration (DEC-065), breakers, stamp failures, agentic gathering failure |
 | Phase 3 regression | `python -m evals.run_phase3_gate` | Correlated telemetry, identity compliance, citation-anchored containment on noisy bundles |
 | Correlation accuracy | `python -m evals.correlation_gate` | Manifest checksums, corroboration, noise attribution, window boundaries |
 | Production throughput | `python -m evals.run_phase5_benchmark` | DEC-053 serialized path vs org-config rate targets (self-contained, no pre-existing DB) |
@@ -246,7 +249,8 @@ There is no product UI. The best way to inspect Praetor is through tests, exampl
 | Current org policy shape (`default_action: escalate`) | `configs/example_org.yaml` |
 | Public contracts Praetor emits/consumes | `schemas/` and `src/praetor/contracts/` |
 | PolicyGate on intake (`auto_contain`) | `pytest -q tests/engine/test_policygate_integration_tripwire.py` |
-| Host corroboration floor | `pytest -q tests/policy/test_host_corroboration_gate.py` |
+| Host corroboration floor (DEC-065 temporary ≥1) | `pytest -q tests/policy/test_host_corroboration_gate.py` |
+| Agentic judgment unit surface | `pytest -q tests/judgment/agentic/` |
 | Intake → stamp → actuation sequencing | `pytest -q tests/engine/test_intake_stamp_actuation.py` |
 | Real telemetry correlation | `pytest -q tests/correlation/` |
 | Crash recovery never auto-contains | `pytest -q tests/engine/test_crash_recovery.py::test_crash_at_lifecycle_state_recovery_never_autocontains` |
@@ -282,7 +286,7 @@ This README is the **showcase**. For depth, use the layered docs — each has a 
 | [`docs/prd.md`](docs/prd.md) | **Why** — problem, thesis, product decisions, success criteria |
 | [`docs/spec.md`](docs/spec.md) | **What** — architecture, Outcome Matrix (v1 + V2 mirrors), acceptance criteria, non-goals |
 | [`docs/contracts.md`](docs/contracts.md) | **Pins** — hash domains, ID constructions, V2 Outcome Matrix rows, corroboration |
-| [`docs/decisions.md`](docs/decisions.md) | **DEC-xxx** — including V2 DEC-058–063 |
+| [`docs/decisions.md`](docs/decisions.md) | **DEC-xxx** — including V2 DEC-058–063, agentic DEC-064, temporary corroboration floor DEC-065 |
 | [`docs/plan.md`](docs/plan.md) | **How (v1)** — 35 tasks, sprint groupings, phase gates |
 | [`docs/proposals/v2_implementation_plan.md`](docs/proposals/v2_implementation_plan.md) | **How (V2)** — 36 tasks, Gates 0–5 (**COMPLETE**) |
 | [`docs/operator_runbook.md`](docs/operator_runbook.md) | **Operate** — SQLite requirements, startup order, throughput ceiling, failure handling |
