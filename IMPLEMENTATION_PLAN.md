@@ -1,34 +1,25 @@
-# Reverse Spec + Debt Ledger Extraction
+# Interactive Praetor Walkthrough
 
 **Tier:** T2  
-**Goal:** Produce `AS_BUILT.md` (reverse spec of the system that exists) and `DEBT_LEDGER.md` (recoverable MVP-era traces) via structured probes, not open-ended discovery.  
+**Goal:** Replace the fixed Act I/II notebook with an isolated radio-driven scenario explorer and retain deterministic all-scenario CI coverage.  
 **Status:** complete  
-**Updated:** 2026-07-18
+**Updated:** 2026-07-31
 
-## Extraction checklist (fixed probes)
+## Sources
 
-### AS_BUILT probes
-1. Module inventory from `src/praetor/**` — done
-2. Public interfaces / contracts — done
-3. Data flows — done
-4. Invariants claimed vs enforced — done (25 rows)
-5. Error-handling posture — done
-6. Test coverage map — done
+- Design: `docs/superpowers/specs/2026-07-31-interactive-walkthrough-design.md`
+- Detailed plan: `docs/superpowers/plans/2026-07-31-interactive-walkthrough.md`
 
-### DEBT_LEDGER probes
-1. TODO/FIXME/HACK comments — done (none classic)
-2. Git log debt language — done
-3. Hardcoded constants — done
-4. Swallowed exceptions — done
-5. Single-implementation abstractions — done
-6. High-complexity functions — done
-7. Untested paths — done
-8. Pinned dependencies — done (no lockfile)
+## Checklist
 
-## Deliverables
-- `AS_BUILT.md` (repo root) — written
-- `DEBT_LEDGER.md` (repo root) — written
+1. Pin all scenario markers in `notebooks/check_walkthrough.py` — done
+2. Build fresh-store scenario registry in `notebooks/_regen_walkthrough.py` — done
+3. Add radio picker and deterministic scenario sweep — done
+4. Regenerate notebook and run semantic checker — done
+5. Fresh-context review and Memory Bank sync — done
 
 ## Verification
-- Structured probes via explore subagents + local greps on Protocols, Outcome Matrix finishers, schemas, pyproject
-- Shell git-log recheck was flaky in harness; git signals taken from explore agent probe (hashes cited in ledger)
+
+- Red: checker failed against the pre-change notebook (missing interactive markers).
+- Green: `python notebooks/_regen_walkthrough.py` then `python notebooks/check_walkthrough.py notebooks/praetor_walkthrough.ipynb` → OK.
+- Generated notebook has `RadioButtons`, observer wiring, ten `SCENARIO COMPLETE` markers, rate-limit and breaker pins.

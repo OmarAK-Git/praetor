@@ -14,17 +14,30 @@ import sys
 
 import nbformat
 
-# Substrings that must appear in the executed stdout. Chosen to be insensitive to
-# label spacing while still pinning Act I + Act II decisions.
+# Substrings that must appear in the executed stdout. The generator performs a
+# deterministic all-scenario sweep because a live widget displays only one
+# selection at a time.
 REQUIRED = (
-    # Act I — thesis
+    "INTERACTIVE PICKER READY",
+    "SCENARIO COMPLETE: earned_auto_contain",
+    "SCENARIO COMPLETE: benign_review",
+    "SCENARIO COMPLETE: never_contain",
+    "SCENARIO COMPLETE: insufficient_corroboration",
+    "SCENARIO COMPLETE: not_allowlisted",
+    "SCENARIO COMPLETE: rate_limit",
+    "SCENARIO COMPLETE: circuit_breaker",
+    "SCENARIO COMPLETE: progressive_report",
+    "SCENARIO COMPLETE: similar_case_exemplars",
+    "SCENARIO COMPLETE: statute_curation",
+    "CI SCENARIO SWEEP COMPLETE",
     "AUTO_CONTAIN",
     "CONTAINMENT DIRECTIVE EMITTED",
     "STANDARD_REVIEW",
     "ESCALATE",
     "never_contain_live_conflict",
-    # Act II — V2 hardening
     "insufficient_corroboration",
+    "rate_limit_exceeded",
+    "containment_breaker_open",
     "containment not granted by omission",
     "PROGRESSIVE AUTHORIZATION REPORT",
     "prompt_exemplar_block",

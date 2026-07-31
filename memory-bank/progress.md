@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-07-31 — Interactive walkthrough COMPLETE
+
+- Spec/plan: `docs/superpowers/specs/2026-07-31-interactive-walkthrough-design.md`, `docs/superpowers/plans/2026-07-31-interactive-walkthrough.md`.
+- Replaced linear Act I/II with `ipywidgets.RadioButtons` scenario registry; each dial force-refreshes a clean store.
+- Ten scenarios: earned contain, benign review, never-contain, insufficient corroboration, not allowlisted, rate limit, circuit breaker, progressive report, exemplars, statute curation.
+- CI: hidden all-scenario sweep + updated `check_walkthrough.py`; workflow installs `.[dev,walkthrough]`.
+- Verify: `python notebooks/_regen_walkthrough.py`; `python notebooks/check_walkthrough.py notebooks/praetor_walkthrough.ipynb` → OK.
+
 ## 2026-07-31 — Corroboration floor temporary (DEC-065) COMPLETE
 
 - Plan: docs/superpowers/plans/2026-07-31-corroboration-floor-temporary.md
@@ -784,7 +792,7 @@
 - Worktree .worktrees/agentic-judgment on gentic-judgment.
 - Queue loaded (14 tasks + final gate). Baseline: pytest 1047 / mypy / ruff green after LF normalize.
 - Merge: everse-spec-rfc-remediation FF into local master @ a3441a9.
-
+
 
 ## 2026-07-30 — Agentic judgment sprint COMPLETE
 
@@ -793,4 +801,4 @@
 - Queue drained: `agentic-judgment-01`…`14` + `agentic-judgment-gate` all `done`.
 - Final gate (Grok): pytest **1100** / ruff clean / mypy clean / schema_export --check green.
 - Evidence: `.workflow/agentic-judgment-gate/results/verifier-result.md`.
-- No implementation commit/push (user standing order for this run).
+- No implementation commit/push (user standing order for this run).
