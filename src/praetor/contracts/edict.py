@@ -25,6 +25,10 @@ class DecisionEdict(ContractModel):
     org_config_snapshot_hash: str
     live_never_contain_hash: str
     model_judgment: ModelJudgment
+    session_trace_hash: str | None = None
+    """Agentic-mode session evidence registry hash (DEC-064), copied from
+    ModelJudgment.session_trace_hash (added in Task 13). None for
+    single-shot-mode edicts."""
     policy_gate_result: PolicyGateResult
     final_disposition: Disposition
     system_fault_escalation: bool

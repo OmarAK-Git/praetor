@@ -106,6 +106,7 @@ def build_decision_edict(
         org_config_snapshot_hash=attempt.org_config_snapshot_hash,
         live_never_contain_hash=live_hash,
         model_judgment=judgment,
+        session_trace_hash=judgment.session_trace_hash,
         policy_gate_result=PolicyGateResult(
             proposed_disposition=disposition.proposed_disposition,
             final_disposition=disposition.final_disposition,

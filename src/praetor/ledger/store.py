@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import logging
 import sqlite3
 from dataclasses import dataclass
 from typing import Any
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from praetor.contracts.edict import DecisionEdict
 from praetor.contracts.ledger import (
@@ -17,6 +18,7 @@ from praetor.contracts.ledger import (
 from praetor.hashing.canonical import canonical_serialize
 from praetor.hashing.domains import compute_ledger_link_hash
 from praetor.ledger.hash_chain import (
+    DECISION_EDICT_RECORD_TYPE,
     LedgerChainIntegrityError,
     record_body_for_chain_hash,
     validate_known_record_type,
@@ -37,6 +39,8 @@ LedgerRecord = (
     | NeverContainSnapshotRecord
     | EmergencyNeverContainRecord
 )
+
+_logger = logging.getLogger(__name__)
 
 _LEDGER_SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS ledger_chain (
@@ -84,6 +88,54 @@ def fetch_ledger_tip_hash(conn: sqlite3.Connection) -> str | None:
     if row is None:
         return None
     return str(row["ledger_current_hash"])
+
+
+def fetch_edicts_for_target_history(
+    conn: sqlite3.Connection,
+    *,
+    alert_reference: str,
+    target_ids: tuple[str, ...],
+    limit: int = 10,
+) -> list[DecisionEdict]:
+    """Past edicts matching ``alert_reference`` or a prior
+    ``containment_directive.target_id`` in ``target_ids``.
+
+    v1 LedgerHistoryTool query surface — both fields are already persisted
+    on every DecisionEdict, so this needs no new schema or indexing. A full
+    "every past decision touching this host" index would require new
+    engine-transaction wiring at edict-append time and is out of scope
+    (see docs/superpowers/specs/2026-07-30-agentic-judgment-design.md).
+    """
+    target_clause = ""
+    params: list[Any] = [DECISION_EDICT_RECORD_TYPE, alert_reference]
+    if target_ids:
+        placeholders = ",".join("?" for _ in target_ids)
+        target_clause = (
+            " OR json_extract(record_json, "
+            f"'$.containment_directive.target_id') IN ({placeholders})"
+        )
+        params.extend(target_ids)
+    params.append(limit)
+
+    rows = conn.execute(
+        f"""
+        SELECT record_json
+        FROM ledger_chain
+        WHERE record_type = ?
+          AND (json_extract(record_json, '$.alert_reference') = ?{target_clause})
+        ORDER BY chain_sequence DESC
+        LIMIT ?
+        """,
+        params,
+    ).fetchall()
+
+    edicts: list[DecisionEdict] = []
+    for row in rows:
+        try:
+            edicts.append(DecisionEdict.model_validate_json(str(row["record_json"])))
+        except ValidationError:
+            _logger.warning("malformed ledger edict skipped in target history fetch")
+    return edicts
 
 
 def fetch_ledger_rows(conn: sqlite3.Connection) -> list[LedgerChainRow]:

@@ -11,6 +11,7 @@ from typing import Any, Protocol, runtime_checkable
 
 from pydantic import ValidationError
 
+from praetor.contracts.evidence import EvidenceBundle
 from praetor.contracts.judgment import ModelJudgment
 
 
@@ -45,6 +46,9 @@ class JudgmentRequest:
 
     scenario_id: str
     payload: Mapping[str, Any] = field(default_factory=dict)
+    evidence_bundle: EvidenceBundle | None = None
+    """Resolved EvidenceBundle for this intake when available. Unused by
+    single-shot providers; agentic-mode providers require it for tools."""
 
 
 @dataclass(frozen=True)

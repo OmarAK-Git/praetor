@@ -10,8 +10,9 @@ from praetor.evidence.citations import ResolvedEvidenceCitation
 SYSMON_EVENT_LOG = "sysmon_event_log"
 WINDOWS_SECURITY_LOG = "windows_security_log"
 HOST_ID_FIELD = "host_id"
+LEDGER_HISTORY = "ledger_history"
 
-_NON_ATTACKER_CONTROLLABLE_PATHS = frozenset({WINDOWS_SECURITY_LOG})
+_NON_ATTACKER_CONTROLLABLE_PATHS = frozenset({WINDOWS_SECURITY_LOG, LEDGER_HISTORY})
 _ATTACKER_CONTROLLABLE_OVERRIDES = frozenset({SYSMON_EVENT_LOG})
 
 

@@ -5,6 +5,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 import pytest
+from tests.contracts.test_edict_session_trace_hash import _judgment
 
 from praetor.engine.edict import build_decision_edict, skeleton_policy_result
 from praetor.engine.skeleton import SKELETON_BUNDLE_HASH, skeleton_model_judgment
@@ -50,3 +51,16 @@ def test_stored_bundle_hash_equals_decision_id_input(correlation_failure: bool) 
         assert edict.evidence_bundle_hash == EMPTY_BUNDLE
     else:
         assert edict.evidence_bundle_hash == SKELETON_BUNDLE_HASH
+
+
+def test_build_decision_edict_copies_session_trace_hash_from_judgment() -> None:
+    judgment = _judgment(session_trace_hash="deadbeef" * 8)
+    edict = build_decision_edict(
+        attempt=_attempt(),
+        judgment=judgment,
+        disposition=skeleton_policy_result(judgment),
+        live_never_contain_entries=[],
+        stamp_status="not_required",
+        ticket_stamp_payload={},
+    )
+    assert edict.session_trace_hash == "deadbeef" * 8

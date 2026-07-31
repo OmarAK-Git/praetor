@@ -1,0 +1,15 @@
+schema_version: "1"
+scenario_id: agentic_evidence_gathering_failed
+description: All Phase 1 agentic evidence sources failing escalates with system_fault_escalation true.
+runner: engine_intake
+setup:
+  alert_identity: agentic_evidence_gathering_failed
+  provider_mode: agentic_evidence_gathering_failed
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - agentic_evidence_gathering_failed
+  system_fault_escalation: true
+  metrics:
+    policy_gate_evaluations_total: 0
+    llm_failure_by_fault_flag: {}

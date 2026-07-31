@@ -35,6 +35,7 @@ Operator-adjacent (V2): reporting · similar-case retrieval · statute curation
 | `praetor.config` | Org config load, preflight, activation | `schemas/org_config_snapshot.json` |
 | `praetor.correlation` | Sysmon/Security normalization + host isolation | `schemas/evidence_bundle.json` |
 | `praetor.judgment` | Provider protocol, prompts, exemplar slot | `schemas/model_judgment.json` |
+| `praetor.judgment.agentic` | 3-phase agentic judgment pipeline (opt-in `JudgmentProvider`) | — |
 | `praetor.evidence` | Citation validation, host/account corroboration | — |
 | `praetor.policy` | PolicyGate, rate limits, breakers, `default_action` | `schemas/policy_gate_result.json`, `schemas/containment_directive.json` |
 | `praetor.engine` | Intake orchestrator, recovery | `schemas/decision_edict.json` |

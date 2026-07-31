@@ -25,3 +25,7 @@ class ModelJudgment(ContractModel):
     narrative: str
     model_name: str = Field(..., description="Model/provider metadata.")
     provider_name: str = Field(..., description="Model/provider metadata.")
+    session_trace_hash: str | None = None
+    """Agentic-mode session evidence registry hash (DEC-064). None for
+    single-shot-mode judgments — every existing construction site is
+    unaffected by this addition."""

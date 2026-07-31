@@ -2,6 +2,9 @@
 
 ## Current focus
 
+**2026-07-30 — Agentic judgment sprint COMPLETE (queue drained; uncommitted on agentic-judgment worktree)** on worktree .worktrees/agentic-judgment / branch gentic-judgment. Queue loaded; draining.
+
+
 **2026-07-30 â€” Reverse-spec RFC remediation COMPLETE.** Plan
 `docs/superpowers/plans/2026-07-30-reverse-spec-rfc-remediation.md` drained via GSD on branch
 `reverse-spec-rfc-remediation`. Six observability/coverage tasks + disposition record shipped;

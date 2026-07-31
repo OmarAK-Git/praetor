@@ -17,6 +17,7 @@ DOMAIN_EVIDENCE_ID = "praetor:v1:evidence_id"
 DOMAIN_IDEMPOTENCY_KEY = "praetor:v1:idempotency_key"
 DOMAIN_STAMP_ID = "praetor:v1:stamp_id"
 DOMAIN_LEDGER_LINK = "praetor:v1:ledger_link"
+DOMAIN_SESSION_TRACE = "praetor:v1:session_trace_hash"
 
 # Genesis previous-hash token for delimited link preimages (docs/contracts.md §7a).
 LEDGER_GENESIS_PREVIOUS_HASH = "null"
@@ -144,3 +145,18 @@ def compute_ledger_link_hash(
     prev = previous_hash if previous_hash is not None else LEDGER_GENESIS_PREVIOUS_HASH
     body_bytes = canonical_serialize(record)
     return sha256_hex(delimited([DOMAIN_LEDGER_LINK, prev, body_bytes]))
+
+
+def compute_session_trace_hash(
+    evidence_entries: list[dict[str, Any]],
+    org_config_entries: list[dict[str, Any]],
+    exemplar_entries: list[dict[str, Any]],
+) -> str:
+    """Hash-chain over one agentic judgment session's full tool-call trace
+    (docs/contracts.md §agentic-session; DEC-064)."""
+    payload = {
+        "evidence_entries": evidence_entries,
+        "org_config_entries": org_config_entries,
+        "exemplar_entries": exemplar_entries,
+    }
+    return sha256_hex(delimited([DOMAIN_SESSION_TRACE, canonical_serialize(payload)]))

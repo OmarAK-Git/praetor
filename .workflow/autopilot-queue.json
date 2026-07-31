@@ -16,7 +16,11 @@
     "researcher_policy": "multi_path_opportunity_cost",
     "code_review_policy": "frequent_after_implement",
     "test_runner_policy": "gates_and_major_sections",
-    "active_sprint": "reverse-spec-rfc-remediation"
+    "active_sprint": "agentic-judgment",
+    "worktree_path": "C:\\Users\\oalan\\Praetor\\.worktrees\\agentic-judgment",
+    "worktree_pythonpath": "C:\\Users\\oalan\\Praetor\\.worktrees\\agentic-judgment\\src",
+    "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+    "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md"
   },
   "status_values": [
     "pending",
@@ -1811,6 +1815,697 @@
         ".workflow/rfc-remediation-gate/results/gate-commands.md",
         ".workflow/rfc-remediation-gate/results/blocker.md"
       ]
+    },
+    {
+      "id": "agentic-judgment-01-provenance",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [],
+      "goal": "Classify ledger_history as non-attacker-controllable provenance (DEC-064).",
+      "scope": "Provenance trust table only; no PolicyGate logic changes.",
+      "files_allowed": [
+        "src/praetor/evidence/provenance.py",
+        "tests/evidence/test_provenance.py",
+        ".workflow/agentic-judgment-01-provenance/"
+      ],
+      "acceptance_criteria": [
+        "LEDGER_HISTORY constant exists and is_attacker_controllable_provenance(LEDGER_HISTORY) is False.",
+        "Existing WINDOWS_SECURITY_LOG / SYSMON_EVENT_LOG classifications unchanged.",
+        "Unknown provenance paths still default to attacker-controllable."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evidence/test_provenance.py -v",
+          "ruff check src/praetor/evidence/provenance.py tests/evidence/test_provenance.py",
+          "mypy src/praetor/evidence/provenance.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/agentic-judgment-01-provenance",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/agentic-judgment-01-provenance/results/verifier-result.md",
+        ".workflow/agentic-judgment-01-provenance/results/code-review.md"
+      ],
+      "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+      "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: single prescribed implementation path in plan; no multi-path opportunity cost"
+    },
+    {
+      "id": "agentic-judgment-02-registry",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "agentic-judgment-01-provenance"
+      ],
+      "goal": "Add session_trace hash domain and SessionEvidenceRegistry.",
+      "scope": "Hash domain + agentic registry package scaffolding only.",
+      "files_allowed": [
+        "src/praetor/hashing/domains.py",
+        "src/praetor/judgment/agentic/",
+        "tests/hashing/test_domains.py",
+        "tests/judgment/agentic/",
+        ".workflow/agentic-judgment-02-registry/",
+        "docs/contracts.md"
+      ],
+      "acceptance_criteria": [
+        "compute_session_trace_hash is deterministic, content-sensitive, and returns 64-hex for empty sessions.",
+        "SessionEvidenceRegistry records evidence/org-config/exemplar entries and exposes facts/exemplars/org_config_findings plus session_trace_hash().",
+        "DOMAIN_SESSION_TRACE lives in hashing/domains.py only (AG-0007)."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/hashing/test_domains.py tests/judgment/agentic/test_registry.py -v",
+          "ruff check src/praetor/hashing/domains.py src/praetor/judgment/agentic tests/hashing/test_domains.py tests/judgment/agentic",
+          "mypy src/praetor/hashing/domains.py src/praetor/judgment/agentic"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/agentic-judgment-02-registry",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/agentic-judgment-02-registry/results/verifier-result.md",
+        ".workflow/agentic-judgment-02-registry/results/code-review.md"
+      ],
+      "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+      "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: single prescribed implementation path in plan; no multi-path opportunity cost"
+    },
+    {
+      "id": "agentic-judgment-03-budget-errors",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "agentic-judgment-02-registry"
+      ],
+      "goal": "Add PhaseBudget/BudgetTracker and AgenticEvidenceGatheringFailedError.",
+      "scope": "Budget + error types only; no phase orchestration yet.",
+      "files_allowed": [
+        "src/praetor/judgment/agentic/budget.py",
+        "src/praetor/judgment/agentic/errors.py",
+        "tests/judgment/agentic/test_budget.py",
+        "tests/judgment/agentic/test_errors.py",
+        ".workflow/agentic-judgment-03-budget-errors/"
+      ],
+      "acceptance_criteria": [
+        "BudgetTracker permits up to max_tool_calls and raises BudgetExceededError beyond that, including zero-call budgets.",
+        "PhaseBudget rejects invalid max_tool_calls/max_seconds.",
+        "AgenticEvidenceGatheringFailedError is a ProviderError subclass."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/judgment/agentic/test_budget.py tests/judgment/agentic/test_errors.py -v",
+          "ruff check src/praetor/judgment/agentic/budget.py src/praetor/judgment/agentic/errors.py tests/judgment/agentic/test_budget.py tests/judgment/agentic/test_errors.py",
+          "mypy src/praetor/judgment/agentic/budget.py src/praetor/judgment/agentic/errors.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/agentic-judgment-03-budget-errors",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/agentic-judgment-03-budget-errors/results/verifier-result.md",
+        ".workflow/agentic-judgment-03-budget-errors/results/code-review.md"
+      ],
+      "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+      "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: single prescribed implementation path in plan; no multi-path opportunity cost"
+    },
+    {
+      "id": "agentic-judgment-04-request-wiring",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "agentic-judgment-03-budget-errors"
+      ],
+      "goal": "Thread resolved EvidenceBundle into JudgmentRequest for agentic providers.",
+      "scope": "Optional JudgmentRequest.evidence_bundle field + orchestrator wiring; single-shot path unchanged.",
+      "files_allowed": [
+        "src/praetor/judgment/provider.py",
+        "src/praetor/engine/orchestrator.py",
+        "tests/judgment/test_provider_failures.py",
+        "tests/engine/test_agentic_request_evidence_bundle_wiring.py",
+        ".workflow/agentic-judgment-04-request-wiring/"
+      ],
+      "acceptance_criteria": [
+        "JudgmentRequest.evidence_bundle defaults to None and remains backward compatible.",
+        "process_alert_intake passes the resolved EvidenceBundle on JudgmentRequest.",
+        "Existing judgment/engine tests remain green."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/engine/test_agentic_request_evidence_bundle_wiring.py tests/judgment tests/engine -q",
+          "ruff check src/praetor/judgment/provider.py src/praetor/engine/orchestrator.py tests/engine/test_agentic_request_evidence_bundle_wiring.py",
+          "mypy src/praetor/judgment/provider.py src/praetor/engine/orchestrator.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/agentic-judgment-04-request-wiring",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/agentic-judgment-04-request-wiring/results/verifier-result.md",
+        ".workflow/agentic-judgment-04-request-wiring/results/code-review.md"
+      ],
+      "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+      "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: single prescribed implementation path in plan; no multi-path opportunity cost"
+    },
+    {
+      "id": "agentic-judgment-05-ledger-history",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "agentic-judgment-04-request-wiring"
+      ],
+      "goal": "Add fetch_edicts_for_target_history ledger query helper for LedgerHistoryTool.",
+      "scope": "Read-only ledger query helper + tests; no edict-append path changes.",
+      "files_allowed": [
+        "src/praetor/ledger/store.py",
+        "tests/ledger/test_target_history.py",
+        ".workflow/agentic-judgment-05-ledger-history/"
+      ],
+      "acceptance_criteria": [
+        "fetch_edicts_for_target_history returns matching DecisionEdicts by alert_reference or containment target_id.",
+        "Query respects limit and does not invent new indexes beyond existing ledger fields.",
+        "Focused ledger history tests pass."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/ledger/test_target_history.py -v",
+          "ruff check src/praetor/ledger/store.py tests/ledger/test_target_history.py",
+          "mypy src/praetor/ledger/store.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/agentic-judgment-05-ledger-history",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/agentic-judgment-05-ledger-history/results/verifier-result.md",
+        ".workflow/agentic-judgment-05-ledger-history/results/code-review.md"
+      ],
+      "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+      "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: single prescribed implementation path in plan; no multi-path opportunity cost"
+    },
+    {
+      "id": "agentic-judgment-06-tools-evidence",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "agentic-judgment-05-ledger-history"
+      ],
+      "goal": "Implement LedgerHistoryTool and WiderTelemetryTool with raw_source isolation.",
+      "scope": "Evidence-producing tools only; org-config and similar-case tools come later.",
+      "files_allowed": [
+        "src/praetor/judgment/agentic/tools.py",
+        "tests/judgment/agentic/test_tools.py",
+        ".workflow/agentic-judgment-06-tools-evidence/"
+      ],
+      "acceptance_criteria": [
+        "LedgerHistoryTool returns EvidenceFacts with provenance_path=ledger_history and never leaks raw_source.",
+        "WiderTelemetryTool re-fetches untruncated facts from the request EvidenceBundle using existing provenance paths.",
+        "Scope constraints from the design are enforced in tests."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/judgment/agentic/test_tools.py -v",
+          "ruff check src/praetor/judgment/agentic/tools.py tests/judgment/agentic/test_tools.py",
+          "mypy src/praetor/judgment/agentic/tools.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/agentic-judgment-06-tools-evidence",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/agentic-judgment-06-tools-evidence/results/verifier-result.md",
+        ".workflow/agentic-judgment-06-tools-evidence/results/code-review.md"
+      ],
+      "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+      "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: single prescribed implementation path in plan; no multi-path opportunity cost"
+    },
+    {
+      "id": "agentic-judgment-07-org-config-tool",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "agentic-judgment-06-tools-evidence"
+      ],
+      "goal": "Implement OrgConfigSectionTool (non-evidentiary org_config_refs path).",
+      "scope": "Org-config section tool only; must not feed corroboration/cited_evidence_refs.",
+      "files_allowed": [
+        "src/praetor/judgment/agentic/tools.py",
+        "tests/judgment/agentic/test_tools.py",
+        ".workflow/agentic-judgment-07-org-config-tool/"
+      ],
+      "acceptance_criteria": [
+        "OrgConfigSectionTool returns section text for named sections without producing EvidenceFacts.",
+        "Tool results are recordable as OrgConfigCallRecord entries.",
+        "Focused tools tests pass."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/judgment/agentic/test_tools.py -v",
+          "ruff check src/praetor/judgment/agentic/tools.py tests/judgment/agentic/test_tools.py",
+          "mypy src/praetor/judgment/agentic/tools.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/agentic-judgment-07-org-config-tool",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/agentic-judgment-07-org-config-tool/results/verifier-result.md",
+        ".workflow/agentic-judgment-07-org-config-tool/results/code-review.md"
+      ],
+      "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+      "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: single prescribed implementation path in plan; no multi-path opportunity cost"
+    },
+    {
+      "id": "agentic-judgment-08-similar-case-tool",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "agentic-judgment-07-org-config-tool"
+      ],
+      "goal": "Implement SimilarCaseTool wrapping retrieve_similar_case_exemplars.",
+      "scope": "Non-evidentiary exemplar tool only; EXEMPLAR_SCOPE_INSTRUCTIONS semantics unchanged.",
+      "files_allowed": [
+        "src/praetor/judgment/agentic/tools.py",
+        "tests/judgment/agentic/test_tools.py",
+        ".workflow/agentic-judgment-08-similar-case-tool/"
+      ],
+      "acceptance_criteria": [
+        "SimilarCaseTool returns exemplar summaries via existing retrieval helper.",
+        "Exemplars remain non-evidentiary (not EvidenceFacts).",
+        "Focused tools tests pass."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/judgment/agentic/test_tools.py -v",
+          "ruff check src/praetor/judgment/agentic/tools.py tests/judgment/agentic/test_tools.py",
+          "mypy src/praetor/judgment/agentic/tools.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/agentic-judgment-08-similar-case-tool",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/agentic-judgment-08-similar-case-tool/results/verifier-result.md",
+        ".workflow/agentic-judgment-08-similar-case-tool/results/code-review.md"
+      ],
+      "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+      "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: single prescribed implementation path in plan; no multi-path opportunity cost"
+    },
+    {
+      "id": "agentic-judgment-09-model-protocols",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "agentic-judgment-08-similar-case-tool"
+      ],
+      "goal": "Define SourceInvestigatorModel/HypothesisModel/LeadModel Protocols.",
+      "scope": "Protocol surfaces only; no real LLM wire integration.",
+      "files_allowed": [
+        "src/praetor/judgment/agentic/model.py",
+        "tests/judgment/agentic/test_model.py",
+        ".workflow/agentic-judgment-09-model-protocols/"
+      ],
+      "acceptance_criteria": [
+        "Protocols exist for source investigator, hypothesis, and lead models as specified in the plan.",
+        "Structural protocol tests pass."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/judgment/agentic/test_model.py -v",
+          "ruff check src/praetor/judgment/agentic/model.py tests/judgment/agentic/test_model.py",
+          "mypy src/praetor/judgment/agentic/model.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/agentic-judgment-09-model-protocols",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/agentic-judgment-09-model-protocols/results/verifier-result.md",
+        ".workflow/agentic-judgment-09-model-protocols/results/code-review.md"
+      ],
+      "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+      "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: single prescribed implementation path in plan; no multi-path opportunity cost"
+    },
+    {
+      "id": "agentic-judgment-10-fake-models",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "agentic-judgment-09-model-protocols"
+      ],
+      "goal": "Add deterministic Fake* implementations of the agentic model Protocols.",
+      "scope": "Fake model implementations only; no provider composition yet.",
+      "files_allowed": [
+        "src/praetor/judgment/agentic/fake_model.py",
+        "tests/judgment/agentic/test_fake_model.py",
+        ".workflow/agentic-judgment-10-fake-models/"
+      ],
+      "acceptance_criteria": [
+        "FakeSourceInvestigatorModel/FakeHypothesisModel/FakeLeadModel implement the Protocols deterministically.",
+        "Fakes never read EvidenceFact.raw_source.",
+        "Focused fake-model tests pass."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/judgment/agentic/test_fake_model.py -v",
+          "ruff check src/praetor/judgment/agentic/fake_model.py tests/judgment/agentic/test_fake_model.py",
+          "mypy src/praetor/judgment/agentic/fake_model.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/agentic-judgment-10-fake-models",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/agentic-judgment-10-fake-models/results/verifier-result.md",
+        ".workflow/agentic-judgment-10-fake-models/results/code-review.md"
+      ],
+      "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+      "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: single prescribed implementation path in plan; no multi-path opportunity cost"
+    },
+    {
+      "id": "agentic-judgment-11-phase1",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "agentic-judgment-10-fake-models"
+      ],
+      "goal": "Implement Phase 1 source fan-out orchestration with per-source budgets.",
+      "scope": "Phase 1 only; Phase 2/3 come next.",
+      "files_allowed": [
+        "src/praetor/judgment/agentic/phases.py",
+        "tests/judgment/agentic/test_phases.py",
+        ".workflow/agentic-judgment-11-phase1/"
+      ],
+      "acceptance_criteria": [
+        "Phase 1 fans out four source investigators concurrently with per-source BudgetTracker limits.",
+        "Per-source failures degrade gracefully into the SessionEvidenceRegistry.",
+        "Focused phase tests for Phase 1 pass."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/judgment/agentic/test_phases.py -v",
+          "ruff check src/praetor/judgment/agentic/phases.py tests/judgment/agentic/test_phases.py",
+          "mypy src/praetor/judgment/agentic/phases.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/agentic-judgment-11-phase1",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/agentic-judgment-11-phase1/results/verifier-result.md",
+        ".workflow/agentic-judgment-11-phase1/results/code-review.md"
+      ],
+      "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+      "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: single prescribed implementation path in plan; no multi-path opportunity cost"
+    },
+    {
+      "id": "agentic-judgment-12-phase2-3",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "agentic-judgment-11-phase1"
+      ],
+      "goal": "Implement Phase 2 hypothesis debate and Phase 3 lead reconciliation with protected budgets.",
+      "scope": "Phase 2/3 orchestration only; provider composition is Task 13.",
+      "files_allowed": [
+        "src/praetor/judgment/agentic/phases.py",
+        "tests/judgment/agentic/test_phases.py",
+        ".workflow/agentic-judgment-12-phase2-3/"
+      ],
+      "acceptance_criteria": [
+        "Phase 2 runs malicious and benign hypothesis cases over the registry without tools.",
+        "Phase 3 has an independently protected budget and produces the final ModelJudgment surface needed by the provider.",
+        "Focused phase tests cover Phase 2/3."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/judgment/agentic/test_phases.py -v",
+          "ruff check src/praetor/judgment/agentic/phases.py tests/judgment/agentic/test_phases.py",
+          "mypy src/praetor/judgment/agentic/phases.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/agentic-judgment-12-phase2-3",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/agentic-judgment-12-phase2-3/results/verifier-result.md",
+        ".workflow/agentic-judgment-12-phase2-3/results/code-review.md"
+      ],
+      "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+      "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: single prescribed implementation path in plan; no multi-path opportunity cost"
+    },
+    {
+      "id": "agentic-judgment-13-provider",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "agentic-judgment-12-phase2-3"
+      ],
+      "goal": "Compose AgenticJudgmentProvider as a JudgmentProvider drop-in returning session_trace_hash.",
+      "scope": "Provider composition + ModelJudgment.session_trace_hash field; no Outcome Matrix wiring yet.",
+      "files_allowed": [
+        "src/praetor/contracts/judgment.py",
+        "src/praetor/judgment/agentic/provider.py",
+        "src/praetor/judgment/agentic/__init__.py",
+        "tests/judgment/agentic/test_provider.py",
+        ".workflow/agentic-judgment-13-provider/"
+      ],
+      "acceptance_criteria": [
+        "AgenticJudgmentProvider implements JudgmentProvider and runs phases 1-3.",
+        "All-sources Phase 1 failure raises AgenticEvidenceGatheringFailedError.",
+        "Returned ModelJudgment carries session_trace_hash from the registry.",
+        "Agentic package tests pass."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/judgment/agentic tests/evidence/test_provenance.py tests/hashing/test_domains.py tests/ledger/test_target_history.py -q",
+          "ruff check src/praetor/contracts/judgment.py src/praetor/judgment/agentic tests/judgment/agentic",
+          "mypy src/praetor/contracts/judgment.py src/praetor/judgment/agentic"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/agentic-judgment-13-provider",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/agentic-judgment-13-provider/results/verifier-result.md",
+        ".workflow/agentic-judgment-13-provider/results/code-review.md"
+      ],
+      "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+      "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: single prescribed implementation path in plan; no multi-path opportunity cost"
+    },
+    {
+      "id": "agentic-judgment-14-outcome-matrix",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "agentic-judgment-13-provider"
+      ],
+      "goal": "Register agentic_evidence_gathering_failed, thread session_trace_hash into DecisionEdict, and update docs.",
+      "scope": "Fault flag + orchestrator catch + edict field + harness scenario + DEC-064 docs; PolicyGate logic untouched.",
+      "files_allowed": [
+        "src/praetor/metrics/events.py",
+        "src/praetor/contracts/fault_flags.py",
+        "src/praetor/contracts/edict.py",
+        "src/praetor/engine/orchestrator.py",
+        "src/praetor/engine/edict.py",
+        "src/praetor/judgment/fake_provider.py",
+        "evals/harness.py",
+        "evals/scenarios/agentic_evidence_gathering_failed.yaml",
+        "docs/decisions.md",
+        "docs/contracts.md",
+        "docs/architecture.md",
+        "tests/engine/test_agentic_evidence_gathering_failed_intake.py",
+        "tests/contracts/test_edict_session_trace_hash.py",
+        "tests/engine/test_edict_session_trace_hash.py",
+        "tests/evals/test_eval_harness.py",
+        "tests/contracts/test_scope_guard.py",
+        ".workflow/agentic-judgment-14-outcome-matrix/",
+        "schemas/",
+        "tools/schema_export.py"
+      ],
+      "acceptance_criteria": [
+        "AgenticEvidenceGatheringFailedError maps to escalate with agentic_evidence_gathering_failed and system_fault_escalation=true without tripping the provider-health breaker.",
+        "DecisionEdict.session_trace_hash is optional and copied from ModelJudgment.",
+        "Outcome Matrix completeness guard passes with the new harness scenario.",
+        "DEC-064 and contracts/architecture docs updated; PolicyGate evaluation files unchanged.",
+        "Committed schemas regenerated for session_trace_hash (model_judgment + decision_edict); schema export --check passes."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/engine/test_agentic_evidence_gathering_failed_intake.py tests/evals/test_eval_harness.py tests/contracts/test_edict_session_trace_hash.py -q",
+          "ruff check src/praetor/metrics/events.py src/praetor/contracts src/praetor/engine src/praetor/judgment/fake_provider.py evals tests/engine/test_agentic_evidence_gathering_failed_intake.py",
+          "mypy src/praetor/metrics/events.py src/praetor/contracts src/praetor/engine/orchestrator.py src/praetor/judgment/fake_provider.py",
+          "python tools/schema_export.py --check"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/agentic-judgment-14-outcome-matrix",
+      "attempts": 1,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/agentic-judgment-14-outcome-matrix/results/verifier-result.md",
+        ".workflow/agentic-judgment-14-outcome-matrix/results/code-review.md"
+      ],
+      "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+      "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: single prescribed implementation path in plan; no multi-path opportunity cost"
+    },
+    {
+      "id": "agentic-judgment-gate",
+      "status": "done",
+      "tier": "T3",
+      "depends_on": [
+        "agentic-judgment-01-provenance",
+        "agentic-judgment-02-registry",
+        "agentic-judgment-03-budget-errors",
+        "agentic-judgment-04-request-wiring",
+        "agentic-judgment-05-ledger-history",
+        "agentic-judgment-06-tools-evidence",
+        "agentic-judgment-07-org-config-tool",
+        "agentic-judgment-08-similar-case-tool",
+        "agentic-judgment-09-model-protocols",
+        "agentic-judgment-10-fake-models",
+        "agentic-judgment-11-phase1",
+        "agentic-judgment-12-phase2-3",
+        "agentic-judgment-13-provider",
+        "agentic-judgment-14-outcome-matrix"
+      ],
+      "goal": "Verify the complete agentic-judgment plan with repository-wide test, lint, and typecheck gates.",
+      "scope": "Verify-only final plan gate; no feature implementation.",
+      "files_allowed": [
+        ".workflow/agentic-judgment-gate/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Full pytest suite passes.",
+        "Repository-wide ruff and mypy (src evals consumer_sdk) pass.",
+        "All 14 task verifier artifacts exist.",
+        "PolicyGate evaluation logic under src/praetor/policy/ shows zero diffs vs merge base for evaluation semantics (no gate logic edits).",
+        "Single-shot FakeProvider/VertexProvider paths remain intact."
+      ],
+      "verification": {
+        "scope": "phase_exit",
+        "commands": [
+          "pytest -q",
+          "ruff check src tests evals consumer_sdk",
+          "mypy src evals consumer_sdk"
+        ],
+        "manual_checks": [
+          "Confirm PolicyGate evaluation logic untouched and single-shot path intact.",
+          "Confirm ledger_history is the only new corroboration-eligible provenance path."
+        ]
+      },
+      "implementation_agent": "test-runner",
+      "verification_agent": "skeptic-verifier",
+      "gate_model": "cursor-grok-4.5-high",
+      "run_mode": "in_session_grok",
+      "run_dir": ".workflow/agentic-judgment-gate",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/agentic-judgment-gate/results/verifier-result.md",
+        ".workflow/agentic-judgment-gate/results/gate-commands.md",
+        ".workflow/agentic-judgment-gate/final-report.md"
+      ],
+      "source_spec": "docs/superpowers/specs/2026-07-30-agentic-judgment-design.md",
+      "source_plan": "docs/superpowers/plans/2026-07-30-agentic-judgment.md",
+      "researcher_decision": "skipped: gate is verify-only"
     }
   ]
 }

@@ -356,6 +356,27 @@ ledger_current_hash = SHA256( delimited([
 
 Output is lowercase hex SHA-256. Order is part of the contract.
 
+### Agentic session trace (`session_trace_hash`, DEC-064)
+
+| Purpose | Constant (exact bytes) |
+|---|---|
+| Agentic judgment session evidence registry | `praetor:v1:session_trace_hash` |
+
+Defined once as `DOMAIN_SESSION_TRACE` in `src/praetor/hashing/domains.py`. No computation site may use an inline literal.
+
+```
+session_trace_hash = SHA256( delimited([
+    DOMAIN_SESSION_TRACE,               # always first
+    canonical_serialize({
+        "evidence_entries": [...],      # tool-produced EvidenceFact payloads
+        "org_config_entries": [...],    # OrgConfigSectionTool call records
+        "exemplar_entries": [...],      # SimilarCaseTool call records
+    })
+]) )
+```
+
+Implemented as `compute_session_trace_hash(evidence_entries, org_config_entries, exemplar_entries)` in `src/praetor/hashing/domains.py`. When agentic mode is not used, `ModelJudgment.session_trace_hash` and `DecisionEdict.session_trace_hash` are `null` (single-shot backward compatibility). When agentic mode produces a judgment, `build_decision_edict` copies `ModelJudgment.session_trace_hash` onto the edict unchanged.
+
 ### Test vector (genesis link)
 
 Minimal genesis body (`DirectiveRevocationRecord`, no chain-hash fields):
@@ -578,6 +599,7 @@ The eval harness asserts, for every failure class, the disposition, the fault fl
 | Provider timed out past bounded retry | escalate | `provider_timeout` | true |
 | Provider refused | escalate | `provider_refusal` | true |
 | Provider unavailable (integration/transport/upstream failure before judgment) | escalate | `provider_unavailable` | true |
+| All Phase 1 agentic evidence sources fail before judgment | escalate | `agentic_evidence_gathering_failed` | true |
 | Target on snapshot never-contain list | escalate | `never_contain_snapshot` | false |
 | Target on live never-contain list at emission | escalate | `never_contain_live_conflict` | false |
 | Account target, insufficient identity corroboration | escalate | `ambiguous_target_identity` | false |

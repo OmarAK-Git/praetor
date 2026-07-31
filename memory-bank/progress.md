@@ -768,3 +768,19 @@
 1. **V2-001** â€” Authorization posture decision (`docs/decisions.md`, `docs/proposals/v2_hardening.md`).
 2. **V2-002** â€“ **V2-004** â€” parallel decision/contract tasks (no cross-deps within Gate 0).
 3. Close **V2 Gate 0** before V2-005 (strict containment schema).
+
+## 2026-07-30 — Agentic judgment sprint STARTED
+
+- Worktree .worktrees/agentic-judgment on gentic-judgment.
+- Queue loaded (14 tasks + final gate). Baseline: pytest 1047 / mypy / ruff green after LF normalize.
+- Merge: everse-spec-rfc-remediation FF into local master @ a3441a9.
+
+
+## 2026-07-30 — Agentic judgment sprint COMPLETE
+
+- Worktree: `.worktrees/agentic-judgment` on branch `agentic-judgment` (from merged `master` @ a3441a9).
+- Merge: `reverse-spec-rfc-remediation` fast-forwarded into local `master` (no local `main`; remote not pushed).
+- Queue drained: `agentic-judgment-01`…`14` + `agentic-judgment-gate` all `done`.
+- Final gate (Grok): pytest **1100** / ruff clean / mypy clean / schema_export --check green.
+- Evidence: `.workflow/agentic-judgment-gate/results/verifier-result.md`.
+- No implementation commit/push (user standing order for this run).

@@ -53,6 +53,11 @@ def activated(store: StateStore, verifier: PrincipalMapVerifier) -> StateStore:
     return store
 
 
+def test_judgment_request_evidence_bundle_defaults_to_none() -> None:
+    request = JudgmentRequest(scenario_id="backward-compat")
+    assert request.evidence_bundle is None
+
+
 def test_fake_provider_valid_mode_returns_model_judgment() -> None:
     provider = FakeProvider(mode=FakeProviderMode.VALID)
 

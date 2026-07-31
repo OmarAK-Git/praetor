@@ -41,6 +41,7 @@ class OutcomeMatrixFaultFlag(StrEnum):
     PROVIDER_TIMEOUT = "provider_timeout"
     PROVIDER_REFUSAL = "provider_refusal"
     PROVIDER_UNAVAILABLE = "provider_unavailable"
+    AGENTIC_EVIDENCE_GATHERING_FAILED = "agentic_evidence_gathering_failed"
     NEVER_CONTAIN_SNAPSHOT = "never_contain_snapshot"
     NEVER_CONTAIN_LIVE_CONFLICT = "never_contain_live_conflict"
     AMBIGUOUS_TARGET_IDENTITY = "ambiguous_target_identity"

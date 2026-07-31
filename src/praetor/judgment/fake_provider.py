@@ -10,6 +10,7 @@ from typing import Any
 from praetor.contracts.disposition import Disposition
 from praetor.contracts.judgment import CitedEvidenceRef, ModelJudgment
 from praetor.engine.skeleton import skeleton_model_judgment
+from praetor.judgment.agentic.errors import AgenticEvidenceGatheringFailedError
 from praetor.judgment.provider import (
     JudgmentRequest,
     ProviderProbeResult,
@@ -26,6 +27,7 @@ class FakeProviderMode(StrEnum):
     TIMEOUT = "timeout"
     REFUSAL = "refusal"
     UNAVAILABLE = "unavailable"
+    AGENTIC_EVIDENCE_GATHERING_FAILED = "agentic_evidence_gathering_failed"
     FABRICATED_CITATION = "fabricated_citation"
 
 
@@ -46,6 +48,8 @@ class FakeProvider:
             raise ProviderRefusalError("fake provider refusal")
         if mode == FakeProviderMode.UNAVAILABLE:
             raise ProviderUnavailableError("fake provider unavailable")
+        if mode == FakeProviderMode.AGENTIC_EVIDENCE_GATHERING_FAILED:
+            raise AgenticEvidenceGatheringFailedError("fake all-sources-failed")
         if mode == FakeProviderMode.MALFORMED_JSON:
             return parse_model_judgment_json('{"schema_version": "1"')
         if mode == FakeProviderMode.FABRICATED_CITATION:

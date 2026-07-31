@@ -21,6 +21,7 @@ OUTCOME_MATRIX_SFE: dict[OutcomeMatrixFaultFlag, bool] = {
     OutcomeMatrixFaultFlag.PROVIDER_TIMEOUT: True,
     OutcomeMatrixFaultFlag.PROVIDER_REFUSAL: True,
     OutcomeMatrixFaultFlag.PROVIDER_UNAVAILABLE: True,
+    OutcomeMatrixFaultFlag.AGENTIC_EVIDENCE_GATHERING_FAILED: True,
     OutcomeMatrixFaultFlag.NEVER_CONTAIN_SNAPSHOT: False,
     OutcomeMatrixFaultFlag.NEVER_CONTAIN_LIVE_CONFLICT: False,
     OutcomeMatrixFaultFlag.AMBIGUOUS_TARGET_IDENTITY: False,

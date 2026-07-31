@@ -92,6 +92,18 @@
       "default": "1",
       "title": "Schema Version",
       "type": "string"
+    },
+    "session_trace_hash": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Session Trace Hash"
     }
   },
   "required": [

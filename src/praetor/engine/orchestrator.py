@@ -40,6 +40,7 @@ from praetor.engine.timeouts import (
     V1_DEFAULT_MAX_PROVIDER_JUDGMENT_LATENCY_SECONDS,
     call_provider_with_latency_tracking,
 )
+from praetor.judgment.agentic.errors import AgenticEvidenceGatheringFailedError
 from praetor.judgment.excerpt import build_prompt_exemplar_block
 from praetor.judgment.prompt import build_judgment_prompt_payload_from_excerpt_set
 from praetor.judgment.provider import (
@@ -367,6 +368,7 @@ def process_alert_intake(
     request = JudgmentRequest(
         scenario_id=alert_identity,
         payload=prompt_payload,
+        evidence_bundle=resolved_bundle,
     )
     try:
         tracked = call_provider_with_latency_tracking(
@@ -405,6 +407,14 @@ def process_alert_intake(
             attempt,
             judgment_provider,
             fault_flag=OutcomeMatrixFaultFlag.PROVIDER_UNAVAILABLE.value,
+            metrics_collector=metrics_collector,
+        )
+    except AgenticEvidenceGatheringFailedError:
+        return _finish_system_fault(
+            store,
+            attempt,
+            judgment_provider,
+            fault_flag=OutcomeMatrixFaultFlag.AGENTIC_EVIDENCE_GATHERING_FAILED.value,
             metrics_collector=metrics_collector,
         )
     calls = getattr(judgment_provider, "calls", 0)

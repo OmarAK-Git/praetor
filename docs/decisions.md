@@ -21,6 +21,7 @@ This file records implementation choices that refine or operationalize those doc
 | DEC-059 | 2026-06-29 | V2 host corroboration floor: cited facts for host `auto_contain` require ≥2 distinct `provenance_path` values with ≥1 non-attacker-controllable; sole `ambiguity_flag=true` cited fact cannot authorize host containment; fault flag `insufficient_corroboration` (`system_fault_escalation=false`); account path unchanged (`ambiguous_target_identity`) | v1 solved citation-anchored targeting (DEC-052) but not evidence sufficiency; extends account corroboration discipline to hosts; raises bar from single forged log line to convergent independent collection paths | V2-002; `docs/contracts.md` §12a/§13; implementation in V2-011 |
 | DEC-060 | 2026-06-29 | V2 revocation/snapshot semantics: `NeverContainSnapshotRecord` appended only in engine post-stamp transaction paired with `DecisionEdict` (not in PolicyGate); `snapshot_content` is the gate-supplied full live never-contain list from serializable PolicyGate evaluation (conflict rebuild paths may refresh); expired-directive fresh re-issue retains §4.2 carve-out; expired-unrevoked rows excluded from step-6 idempotency; orphan directives skipped at step 6 and surfaced in V2-010 | Closes REVIEW-007/008 timing ambiguity; ratifies v1 intake behavior; commit-time-only capture is not the v1 contract | V2-003; `docs/contracts.md` §4.2/§7a; V2-003 reopen 2026-06-29 |
 | DEC-061 | 2026-06-29 | V2 `provider_unavailable` Outcome Matrix row for `ProviderUnavailableError`: `escalate` with `system_fault_escalation=true`; distinct from `provider_timeout`, `provider_refusal`, and `provider_health_breaker_open`; breaker tripping unchanged | Intake lacked documented fault flag for provider unavailability; closes Gate 0 provider mapping | V2-004; `docs/contracts.md` §13; V2-007 extends intake/metrics tests |
+| DEC-064 | 2026-07-30 | Agentic judgment: `ledger_history` added to the DEC-059 non-attacker-controllable provenance set; `org_config_section` and `similar_cases` are explicitly **not** corroboration-eligible (org-config content flows through `ModelJudgment.org_config_refs`, never `cited_evidence_refs`; similar-case exemplars remain illustration-only per existing `EXEMPLAR_SCOPE_INSTRUCTIONS`); new Outcome Matrix row `agentic_evidence_gathering_failed` (`system_fault_escalation=true`) for all-Phase-1-sources-failed | Extends DEC-059's corroboration floor to a genuine second independent observation source (Praetor's own past decisions) without opening a free-corroboration hole via always-available static content; mirrors DEC-061's minimal-orchestrator-catch pattern for the new failure mode | `docs/superpowers/specs/2026-07-30-agentic-judgment-design.md`; `src/praetor/evidence/provenance.py`; `src/praetor/judgment/agentic/`; `src/praetor/metrics/events.py`; `src/praetor/contracts/fault_flags.py` |
 
 Add rows when implementation choices diverge from or refine authoritative docs.
 
@@ -296,3 +297,27 @@ An outstanding directive row whose `decision_id` has **no** matching ledger `Dec
 - Future event-type normalizers must use the same helper and add conformance coverage.
 
 **Doc placement.** Recorded here; memory-bank index row retained as pointer.
+
+## DEC-064 — Agentic judgment corroboration extension and evidence-gathering failure row
+
+**Status:** accepted (2026-07-30)
+
+**Context.** Agentic judgment (`praetor.judgment.agentic`) adds bounded tool-using evidence gathering before hypothesis debate and lead reconciliation. Phase 1 can fail per-source (graceful degradation) or all-sources (no findings to debate). DEC-059's corroboration floor needed extension for `ledger_history` without opening free-corroboration via always-available org-config or illustration-only exemplars.
+
+### Corroboration trust extension
+
+**Decision:** add `ledger_history` to the non-attacker-controllable provenance set (DEC-059). Explicitly **exclude** `org_config_section` and `similar_cases` from corroboration eligibility — org-config flows through `ModelJudgment.org_config_refs`; exemplars remain illustration-only per `EXEMPLAR_SCOPE_INSTRUCTIONS`.
+
+### Outcome Matrix row
+
+| Condition | Disposition | Fault flag | system_fault_escalation |
+|---|---|---|---|
+| All four Phase 1 agentic source subagents fail before judgment | `escalate` | `agentic_evidence_gathering_failed` | `true` |
+
+**Orchestrator mapping:** `AgenticEvidenceGatheringFailedError` → `_finish_system_fault` (not `_finish_provider_fault`). This is a data-layer gathering failure, not LLM provider health — it does **not** trip the provider-health breaker (contrast DEC-061 `provider_unavailable`).
+
+### Session trace hash
+
+Agentic-mode edicts carry optional `DecisionEdict.session_trace_hash`, copied from `ModelJudgment.session_trace_hash` (hash domain `DOMAIN_SESSION_TRACE` / `compute_session_trace_hash` in `docs/contracts.md` agentic-session section).
+
+**Doc placement.** §13 Outcome Matrix row and agentic-session hash domain in `docs/contracts.md`; implementation in `src/praetor/judgment/agentic/`, `src/praetor/engine/orchestrator.py`, `src/praetor/contracts/edict.py`.
