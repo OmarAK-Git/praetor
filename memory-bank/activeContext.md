@@ -2,6 +2,10 @@
 
 ## Current focus
 
+**2026-07-31 — Public demo copy rewrite COMPLETE.** SOC-manager voice across all
+ten scenarios; panels renamed What happens / Setup / Why it matters. Demo +
+notebook regenerated; checker and `--check` green.
+
 **2026-07-31 — Public demo page COMPLETE.** Scenario registry extracted to `notebooks/walkthrough_scenarios.py` (shared by notebook, CI sweep, and demo build). `tools/build_demo_page.py` renders `demo/index.html`: real HTML radio dials over pre-executed engine output, no kernel required, published by `.github/workflows/demo-pages.yml`. `--check` mode gates staleness in CI. Needed because ipywidgets cannot be interactive on github.com.
 
 **2026-07-31 — Interactive walkthrough COMPLETE.** Act I/II replaced by radio-driven scenario picker (fresh store per dial); CI all-scenario sweep retained. Checker OK.

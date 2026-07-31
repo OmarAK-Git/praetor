@@ -7,9 +7,9 @@
 
 > **Elevator pitch:** Detection tells you something fired. Praetor decides what happens next — with LLM judgment you can actually trust, because every action passes deterministic policy gates and lands in a tamper-evident audit trail.
 
-**▶ See it decide:** [**live demo**](https://omarak-git.github.io/praetor/) — pick a mechanism, watch the real engine authorize or refuse containment. No install, no kernel.
+**▶ See it decide:** [**live demo**](https://omarak-git.github.io/praetor/) — pick a scenario, watch the real engine authorize or refuse containment. No install, no kernel.
 
-Ten selectable scenarios: earned `auto_contain` · benign `standard_review` · never-contain refusal · corroboration floor (DEC-065) · escalate-by-default posture · rate-limit ceiling · containment circuit breaker · progressive authorization report · human-confirmed exemplars · statute curation.
+Ten scenarios in plain language: containment approved · looks benign → review · never-contain a DC · thin evidence · not on the allowlist · rate limit · circuit breaker · override scoreboard · similar past cases · propose a policy edit.
 
 Prefer to run it yourself? [`notebooks/praetor_walkthrough.ipynb`](notebooks/praetor_walkthrough.ipynb) drives the same scenarios through `ipywidgets` dials against a live kernel. Both share one registry, [`notebooks/walkthrough_scenarios.py`](notebooks/walkthrough_scenarios.py), and CI re-executes both so neither can drift from the engine.
 

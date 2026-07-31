@@ -1,5 +1,12 @@
 # Progress Log
 
+## 2026-07-31 — Public demo copy rewrite COMPLETE
+
+- Audience: security leader / SOC manager.
+- Renamed panel headings Architecture/Wiring/Gotcha → What happens / Setup / Why it matters.
+- Rewrote all ten scenario labels + explainers in plain SOC English.
+- Verify: demo rebuild, notebook regen, `check_walkthrough.py` OK, `--check` OK.
+
 ## 2026-07-31 — Public clickable demo page COMPLETE
 
 - Constraint that forced this: ipywidgets need a live kernel, and github.com is a

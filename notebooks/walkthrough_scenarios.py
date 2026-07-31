@@ -639,185 +639,182 @@ class Scenario:
 SCENARIO_LIST: tuple[Scenario, ...] = (
     Scenario(
         key="earned_auto_contain",
-        label="Earned auto-contain",
-        headline="Containment is authorized, so a bounded directive is emitted.",
+        label="Containment approved",
+        headline="Strong evidence + an allowlisted host → isolate it for five minutes.",
         architecture=(
-            "The provider proposes AUTO_CONTAIN, then PolicyGate independently "
-            "authorizes the cited host, and the engine commits the directive "
-            "together with the edict after the terminal ticket stamp resolves."
+            "The model says contain. Praetor checks policy and evidence, then "
+            "issues a short-lived containment order for that host."
         ),
         wiring=(
-            "A scoped host allow rule is activated and both the Sysmon and "
-            "Windows Security facts are cited. The emitted directive is bounded "
-            "to the configured 300-second lifetime."
+            "WORKSTATION1 is on the allowlist. Two independent log sources back "
+            "the same host. The order expires after 300 seconds."
         ),
         gotcha=(
-            "Praetor emits an auditable directive; it does not actuate an EDR. "
-            "A confident model judgment is never authority by itself."
+            "Praetor writes the order; your EDR still has to carry it out. A "
+            "confident model is never enough on its own."
         ),
         run=scenario_earned_auto_contain,
     ),
     Scenario(
         key="benign_review",
-        label="Benign standard review",
-        headline="The safe floor: a human still sees it, nothing is isolated.",
+        label="Looks benign — send to review",
+        headline="Nothing scary here, so a human still gets the ticket and nothing is isolated.",
         architecture=(
-            "STANDARD_REVIEW is the safe human-review floor, so PolicyGate never "
-            "needs to manufacture a containment authorization."
+            "When the model says this looks routine, Praetor keeps it in the "
+            "human review queue and does not authorize containment."
         ),
         wiring=(
-            "The scripted judgment classifies a routine interactive shell and the "
-            "normal intake path persists the resulting edict."
+            "A normal interactive logon shell on WORKSTATION7. No allowlist "
+            "trickery — the safe path is review by default."
         ),
         gotcha=(
-            "Standard review is not auto-close. Praetor has no auto_close "
-            "disposition at all; uncertainty always routes to a human."
+            "Review is not auto-close. Praetor never quietly dismisses an alert; "
+            "uncertainty always goes to a person."
         ),
         run=scenario_benign_review,
     ),
     Scenario(
         key="never_contain",
-        label="Never-contain list",
-        headline="A live never-contain entry overrides an explicit allow rule.",
+        label="Never-contain (domain controller)",
+        headline="Even with an allow rule, a domain controller on the never-contain list cannot be auto-isolated.",
         architecture=(
-            "Emergency never-contain is live authorization state, checked by the "
-            "gate and re-checked at the directive persistence boundary."
+            "Never-contain is a hard stop. Praetor checks it before issuing any "
+            "containment order."
         ),
         wiring=(
-            "DC01 receives both an explicit allow rule and an authenticated "
-            "emergency never-contain entry before the same AUTO_CONTAIN proposal "
-            "is processed."
+            "DC01 is allowlisted and the model wants containment — but an "
+            "emergency never-contain entry for that host is already live."
         ),
         gotcha=(
-            "Never-contain wins over allow. The result is an explicit ESCALATE "
-            "carrying never_contain_live_conflict, not a silent suppression."
+            "Never-contain beats allow. The alert escalates with an explicit "
+            "reason; it is not silently dropped."
         ),
         run=scenario_never_contain,
     ),
     Scenario(
         key="insufficient_corroboration",
-        label="Insufficient corroboration",
-        headline="A single thin citation cannot earn containment.",
+        label="Thin evidence",
+        headline="One shaky log line is not enough to isolate a host.",
         architecture=(
-            "Host authorization evaluates only the evidence the judgment actually "
-            "cited, never every fact present in the correlated bundle."
+            "Praetor only counts evidence the model actually points to — not "
+            "every log sitting nearby in the alert."
         ),
         wiring=(
-            "The bundle contains a second provenance source, but the judgment "
-            "cites only one ambiguous Sysmon host fact."
+            "A second log source exists in the bundle, but the model only cites "
+            "one ambiguous Sysmon event."
         ),
         gotcha=(
-            "Adding evidence to a bundle does nothing unless the judgment cites "
-            "it. Citation anchoring stops unrelated telemetry from silently "
-            "granting authority."
+            "Extra telemetry in the pile does nothing unless the model cites it. "
+            "That stops unrelated noise from unlocking containment."
         ),
         run=scenario_insufficient_corroboration,
     ),
     Scenario(
         key="not_allowlisted",
-        label="Target not allowlisted",
-        headline="Perfect evidence still loses to a missing allow rule.",
+        label="Not on the allowlist",
+        headline="Great evidence still loses if this host was never authorized for auto-contain.",
         architecture=(
-            "ContainmentPolicy runs default_action=escalate. Scoped rules are the "
-            "positive authorization surface; omission is never permission."
+            "By default Praetor escalates. Containment only happens when a host "
+            "(or class of hosts) is explicitly allowed."
         ),
-        wiring=("The evidence is fully corroborated, but no rule allows WORKSTATION9."),
+        wiring=(
+            "Evidence for WORKSTATION9 is solid, but no allow rule covers that "
+            "host."
+        ),
         gotcha=(
-            "Evidence quality and policy authority are independent gates. "
-            "Containment is earned, not granted by omission."
+            "Good evidence and policy permission are separate checks. Missing "
+            "from the allowlist means no auto-contain — full stop."
         ),
         run=scenario_not_allowlisted,
     ),
     Scenario(
         key="rate_limit",
-        label="Rate limit exceeded",
-        headline="Blast-radius ceiling refuses an otherwise valid containment.",
+        label="Rate limit hit",
+        headline="This host already hit its containment ceiling, so Praetor refuses another isolation.",
         architecture=(
-            "The policy layer evaluates sliding-window counters for every "
-            "applicable configured scope before the directive is persisted."
+            "Praetor caps how many hosts (and how often) you can auto-contain, "
+            "so one noisy incident cannot take half the floor offline."
         ),
         wiring=(
-            "The target is explicitly allowed, then its per-host counter is "
-            "seeded at the configured ceiling before intake runs."
+            "The host is allowlisted and the evidence is fine — we just already "
+            "used up its per-host containment budget."
         ),
         gotcha=(
-            "A rate-limit refusal is an authorization decision, not an "
-            "infrastructure fault, so system_fault_escalation stays false while "
-            "it still feeds breaker failure tracking."
+            "This is a deliberate safety limit, not a crash. The alert escalates "
+            "so a human can decide what to do next."
         ),
         run=scenario_rate_limit,
     ),
     Scenario(
         key="circuit_breaker",
-        label="Circuit breaker open",
-        headline="A tripped containment breaker blocks all new isolation.",
+        label="Circuit breaker tripped",
+        headline="Containment is paused org-wide until the breaker cools down.",
         architecture=(
-            "The containment breaker is independent of provider health and blocks "
-            "new AUTO_CONTAIN authorization while its window stays open."
+            "If auto-contain keeps failing or thrashing, Praetor opens a breaker "
+            "and blocks new isolation until the window expires."
         ),
         wiring=(
-            "The target is allowed and corroborated, but the containment breaker "
-            "row is opened with a fresh window timestamp."
+            "The host would otherwise qualify, but the containment breaker is "
+            "already open."
         ),
         gotcha=(
-            "This breaker can only recover by window elapse, because blocking "
-            "containment also blocks the success signals that would close it."
+            "While the breaker is open, nothing new gets isolated. It recovers "
+            "when the cooldown window ends — not by hoping the next contain "
+            "succeeds."
         ),
         run=scenario_circuit_breaker,
     ),
     Scenario(
         key="progressive_report",
-        label="Progressive authorization report",
-        headline="Read-only override rates, never an automatic policy promotion.",
+        label="Override scoreboard",
+        headline="A read-only report: how often did policy overturn the model?",
         architecture=(
-            "The report aggregates persisted PolicyGate evaluations and analyst "
-            "annotations. It is query-only and never writes configuration."
+            "This is a scoreboard, not a containment decision. It counts past "
+            "cases where the model wanted one thing and policy chose another."
         ),
         wiring=(
-            "Three evaluation rows are seeded with one model-to-gate override, "
-            "then grouped by target type and asset class."
+            "We plant three past decisions for workstations; in one of them "
+            "policy overrode the model (33%)."
         ),
         gotcha=(
-            "Override rates are decision support. Widening real authority stays a "
-            "separate, authenticated human workflow."
+            "Seeing a high override rate does not widen who can be auto-contained. "
+            "Changing real authority is still a separate human approval."
         ),
         run=scenario_progressive_report,
     ),
     Scenario(
         key="similar_case_exemplars",
-        label="Human-confirmed exemplars",
-        headline="Past confirmed cases inform the prompt without granting power.",
+        label="Similar past cases",
+        headline="Show the model a few human-confirmed precedents — without giving them power.",
         architecture=(
-            "Similar-case retrieval reads finalized edicts plus post-hoc analyst "
-            "annotations and injects bounded, illustration-only exemplars into "
-            "the judgment prompt."
+            "When a new alert looks like an old confirmed case, Praetor can "
+            "include a short example in the prompt so the model has context."
         ),
         wiring=(
-            "A real decision is persisted, an analyst marks it correct, and a "
-            "matching office-to-PowerShell query asks the prompt builder for "
-            "precedents."
+            "We save a real decision, an analyst marks it correct, then a "
+            "similar office→PowerShell alert asks for precedents."
         ),
         gotcha=(
-            "Exemplars shape model context but carry no containment authority. "
-            "The deterministic gate still decides the final action."
+            "Examples only help the model think. Policy still decides whether "
+            "anything gets contained."
         ),
         run=scenario_similar_case_exemplars,
     ),
     Scenario(
         key="statute_curation",
-        label="Statute curation",
-        headline="Proposed policy edits are refused at preflight by design.",
+        label="Propose a policy edit",
+        headline="Analysts can draft a policy change from review notes — but it cannot go live by itself.",
         architecture=(
-            "Curation produces a provenance-linked proposed statute artifact that "
-            "lives outside the active configuration path."
+            "After enough confirmed cases, Praetor can package a proposed org "
+            "policy edit for humans to review."
         ),
         wiring=(
-            "A finalized decision and its analyst annotation support a proposed "
-            "normal-admin-pattern edit."
+            "A finalized decision plus an analyst note support a draft change to "
+            "normal admin patterns."
         ),
         gotcha=(
-            "The artifact is deliberately non-activatable. Preflight refuses it "
-            "until a SOC lead runs the separate promotion workflow."
+            "The draft is refused for activation on purpose. A SOC lead must "
+            "promote it in a separate workflow before it becomes real policy."
         ),
         run=scenario_statute_curation,
     ),
@@ -830,9 +827,9 @@ def explainer_markdown(scenario: Scenario) -> str:
     return (
         f"### {scenario.label}\n\n"
         f"{scenario.headline}\n\n"
-        f"**Architecture.** {scenario.architecture}\n\n"
-        f"**Wiring.** {scenario.wiring}\n\n"
-        f"**Gotcha.** {scenario.gotcha}\n\n"
+        f"**What happens.** {scenario.architecture}\n\n"
+        f"**Setup.** {scenario.wiring}\n\n"
+        f"**Why it matters.** {scenario.gotcha}\n\n"
         "---"
     )
 

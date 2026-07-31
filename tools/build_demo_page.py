@@ -76,19 +76,19 @@ def _panel(scenario: Scenario, output: str, *, index: int) -> str:
         <p class="headline">{html.escape(scenario.headline)}</p>{badges}
         <div class="notes">
           <div class="note">
-            <h3>Architecture</h3>
+            <h3>What happens</h3>
             <p>{html.escape(scenario.architecture)}</p>
           </div>
           <div class="note">
-            <h3>Wiring</h3>
+            <h3>Setup</h3>
             <p>{html.escape(scenario.wiring)}</p>
           </div>
           <div class="note note-gotcha">
-            <h3>Gotcha</h3>
+            <h3>Why it matters</h3>
             <p>{html.escape(scenario.gotcha)}</p>
           </div>
         </div>
-        <h3 class="output-title">Engine output</h3>
+        <h3 class="output-title">What the engine printed</h3>
         <pre class="output"><code>{html.escape(output.strip())}</code></pre>
       </section>"""
 
@@ -116,9 +116,9 @@ def render_page(results: list[tuple[Scenario, str]], *, built_at: str) -> str:
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Praetor - post-detection disposition engine</title>
-<meta name="description" content="Interactive tour of Praetor's containment
-authorization gates: never-contain, corroboration floor, rate limits, circuit
-breaker, and allowlist posture.">
+<meta name="description" content="Interactive tour of Praetor: when an alert
+already fired, see when the system authorizes containment — and when it
+refuses.">
 <style>
   :root {{
     --bg: #0b0f17;
@@ -264,16 +264,15 @@ breaker, and allowlist posture.">
     <h1>Praetor</h1>
     <p class="tagline">The model recommends. The system authorizes.</p>
     <p class="sub">
-      A post-detection disposition engine: the alert already fired, and Praetor
-      decides what happens next. Pick a mechanism to see the real engine either
-      authorize containment or refuse it. Every panel below was produced by
-      executing the actual engine against a clean store; the judgment provider
-      and ticket stamp are the only stand-ins.
+      Detection already fired. Praetor decides what happens next: isolate the
+      host, escalate to a human, or refuse auto-contain for a safety reason.
+      Pick a scenario. Each panel below is a real engine run — only the model
+      and the ticketing step are stubbed.
     </p>
   </header>
 
   <div class="picker">
-    <h2>Select a mechanism</h2>
+    <h2>Pick a scenario</h2>
     <div class="dials" role="tablist">{dials}
     </div>
   </div>
@@ -281,10 +280,10 @@ breaker, and allowlist posture.">
 
   <footer>
     <p>
-      There is no <code>auto_close</code> disposition; uncertainty always routes
-      to a human. Run it yourself with
-      <code>notebooks/praetor_walkthrough.ipynb</code>, or regenerate this page
-      with <code>python tools/build_demo_page.py</code>.
+      Praetor never auto-closes alerts — when it is unsure, a human still sees
+      the ticket. Prefer a live kernel?
+      <code>notebooks/praetor_walkthrough.ipynb</code>. Regenerate this page with
+      <code>python tools/build_demo_page.py</code>.
     </p>
     <p>Generated {built_at} from the live engine.</p>
   </footer>
