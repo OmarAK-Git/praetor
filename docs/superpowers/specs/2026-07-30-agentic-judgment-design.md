@@ -78,12 +78,12 @@ Four read-only tools in v1, each a thin, allow-listed wrapper over data Praetor 
 
 | Tool | Wraps | Scope constraint |
 |---|---|---|
-| `LedgerHistoryTool` | New query over `ledger_chain`, modeled on `fetch_human_confirmed_precedents`'s existing `ledger_chain` lookup pattern, but scoped by host/account instead of by confirmed annotation | Only the current alert's own host/account — no pivoting to other targets |
+| `LedgerHistoryTool` | New query over `ledger_chain`, modeled on `fetch_human_confirmed_precedents`'s existing `ledger_chain` lookup pattern | v1 scope: past edicts matching this alert's `alert_reference` (exact recurrence) or a past `containment_directive.target_id` matching this alert's host/account (past auto_contain actions on this exact target) — both already-persisted fields, no new indexing. A full "every past decision that touched this host" index would require new schema/transaction wiring in the edict-append path (DEC-053/DEC-060 territory) and is deferred as follow-on work, not attempted here |
 | `OrgConfigSectionTool` | `fetch_verbatim_render_text` / org-config snapshot, sectioned instead of returned whole | Read-only section fetch by name |
 | `SimilarCaseTool` | `retrieve_similar_case_exemplars` (existing, unchanged) | Same human-confirmed precedent set as today, agent-queried instead of pre-injected |
 | `WiderTelemetryTool` | `praetor.correlation`, wider time window | Same host/account as the alert; window-bounded |
 
-Every tool call and its result is appended to a **session evidence registry** — the agentic-mode analog of `EvidenceBundle`, tagged with `provenance_path` exactly like today's `EvidenceFact`. `raw_source` isolation (DEC-047) extends to all four tools: they return normalized excerpts only, never raw log content, same discipline as `build_prompt_excerpt_set` today.
+Every tool call and its result is appended to a **session evidence registry** — the agentic-mode analog of `EvidenceBundle`. Three tools (`LedgerHistoryTool`, `WiderTelemetryTool`, and implicitly the original correlated bundle) produce `EvidenceFact`-typed, citable facts tagged with `provenance_path` exactly like today; `SimilarCaseTool` produces non-evidentiary exemplar summaries (same shape as today's pre-injected exemplars, just agent-queried); `OrgConfigSectionTool` produces config text that informs `org_config_refs`, not `cited_evidence_refs` — it was never part of the evidentiary/corroboration path (see below). `raw_source` isolation (DEC-047) extends to every tool producing `EvidenceFact`s: they return normalized excerpts only, never raw log content, same discipline as `build_prompt_excerpt_set` today.
 
 ## Audit trail
 
@@ -93,9 +93,13 @@ This requires a schema addition (new hash domain + ledger field, e.g. `session_t
 
 ## PolicyGate / corroboration floor extension
 
-`praetor.evidence.provenance`'s trust classification table gains two non-attacker-controllable entries: `ledger_history` and `org_config_section` — Praetor/operator-authored data, not attacker-injectable log content, by the same reasoning DEC-059 already applies to `windows_security_log`. `similar_cases` remains explicitly **non-evidentiary** (illustration only) — `EXEMPLAR_SCOPE_INSTRUCTIONS` semantics are unchanged, and exemplar citations continue to be rejected the same way they are today.
+`praetor.evidence.provenance`'s trust classification table gains **one** non-attacker-controllable entry: `ledger_history` — Praetor-authored past-decision data, not attacker-injectable log content, by the same reasoning DEC-059 already applies to `windows_security_log`. This is the only new source that produces genuinely citable `EvidenceFact`-typed facts:
 
-This means the corroboration floor can now be satisfied by host-history + telemetry, not solely by the one existing security-log source — a genuine strengthening. `meets_host_corroboration` / `meets_account_corroboration` **logic is unchanged**; it consumes a richer set of resolved `provenance_path` values from the registry, same interface as today. This needs a new decision record (next available ID, e.g. DEC-064) extending DEC-059's trust table — not superseding it.
+- `WiderTelemetryTool` reuses the **existing** `sysmon_event_log`/`windows_security_log` provenance paths (it's more of the same two sources, not a new one) — unchanged classification.
+- `OrgConfigSectionTool` does **not** produce `EvidenceFact`-typed, citable facts at all. `ModelJudgment` already has a field dedicated to org-config references — `org_config_refs: list[str]`, structurally separate from `cited_evidence_refs` — so org-config content was never going to flow through `validate_evidence_citations` or the corroboration check in the first place. (An earlier draft of this section proposed classifying `org_config_section` as corroboration-eligible too; that was wrong — org-config text is static and always available, so letting it count toward the non-attacker-controllable leg would let a single attacker-controlled sysmon citation satisfy corroboration by tacking on a free, contentless reference. Narrowed to `ledger_history` only.)
+- `SimilarCaseTool` stays explicitly **non-evidentiary** (illustration only) — `EXEMPLAR_SCOPE_INSTRUCTIONS` semantics are unchanged, and exemplar citations continue to be rejected the same way they are today.
+
+This means the corroboration floor can now be satisfied by host-history + telemetry, not solely by the one existing security-log source — a genuine strengthening, without opening a free-corroboration hole. `meets_host_corroboration` / `meets_account_corroboration` **logic is unchanged**; it consumes a richer set of resolved `provenance_path` values from the registry, same interface as today. This needs a new decision record (next available ID, e.g. DEC-064) extending DEC-059's trust table — not superseding it.
 
 `PolicyGate` remains a pure deterministic evaluator throughout. No judgment logic leaks into it; it only gains new provenance-path vocabulary.
 
