@@ -13,6 +13,8 @@ on:
       - "src/praetor/**"
       - "configs/example_org.yaml"
       - "pyproject.toml"
+      - "tools/build_demo_page.py"
+      - "demo/**"
       - ".github/workflows/walkthrough.yml"
   pull_request:
   workflow_dispatch:
@@ -43,3 +45,6 @@ jobs:
 
       - name: Assert the engine still makes the documented decisions
         run: python notebooks/check_walkthrough.py "$RUNNER_TEMP/executed_walkthrough.ipynb"
+
+      - name: Assert the committed demo page matches the live engine
+        run: python tools/build_demo_page.py --check

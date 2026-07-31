@@ -2,6 +2,8 @@
 
 ## Current focus
 
+**2026-07-31 — Public demo page COMPLETE.** Scenario registry extracted to `notebooks/walkthrough_scenarios.py` (shared by notebook, CI sweep, and demo build). `tools/build_demo_page.py` renders `demo/index.html`: real HTML radio dials over pre-executed engine output, no kernel required, published by `.github/workflows/demo-pages.yml`. `--check` mode gates staleness in CI. Needed because ipywidgets cannot be interactive on github.com.
+
 **2026-07-31 — Interactive walkthrough COMPLETE.** Act I/II replaced by radio-driven scenario picker (fresh store per dial); CI all-scenario sweep retained. Checker OK.
 
 **2026-07-31 — Corroboration floor temporary (DEC-065) COMPLETE.** Sprint drained; gate pytest 1105. Evidence: .workflow/corroboration-floor-gate/.

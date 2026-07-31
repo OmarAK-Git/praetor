@@ -7,10 +7,11 @@
 
 > **Elevator pitch:** Detection tells you something fired. Praetor decides what happens next — with LLM judgment you can actually trust, because every action passes deterministic policy gates and lands in a tamper-evident audit trail.
 
-**▶ See it decide:** [`notebooks/praetor_walkthrough.ipynb`](notebooks/praetor_walkthrough.ipynb) — two-act tour of the real engine:
+**▶ See it decide:** [**live demo**](https://omarak-git.github.io/praetor/) — pick a mechanism, watch the real engine authorize or refuse containment. No install, no kernel.
 
-- **Act I:** malicious → `auto_contain` · benign → `standard_review` · never-contain DC **refused**
-- **Act II (V2):** temporary corroboration floor (DEC-065) · escalate-by-default · progressive report · exemplars · statute curation · agentic judgment (opt-in)
+Ten selectable scenarios: earned `auto_contain` · benign `standard_review` · never-contain refusal · corroboration floor (DEC-065) · escalate-by-default posture · rate-limit ceiling · containment circuit breaker · progressive authorization report · human-confirmed exemplars · statute curation.
+
+Prefer to run it yourself? [`notebooks/praetor_walkthrough.ipynb`](notebooks/praetor_walkthrough.ipynb) drives the same scenarios through `ipywidgets` dials against a live kernel. Both share one registry, [`notebooks/walkthrough_scenarios.py`](notebooks/walkthrough_scenarios.py), and CI re-executes both so neither can drift from the engine.
 
 ---
 
@@ -230,6 +231,7 @@ python -m evals.run_phase3_gate
 python -m evals.correlation_gate
 python -m evals.run_phase5_benchmark
 python notebooks/check_walkthrough.py notebooks/praetor_walkthrough.ipynb
+python tools/build_demo_page.py --check
 ```
 
 | Gate | Command | What it proves |
@@ -238,7 +240,8 @@ python notebooks/check_walkthrough.py notebooks/praetor_walkthrough.ipynb
 | Phase 3 regression | `python -m evals.run_phase3_gate` | Correlated telemetry, identity compliance, citation-anchored containment on noisy bundles |
 | Correlation accuracy | `python -m evals.correlation_gate` | Manifest checksums, corroboration, noise attribution, window boundaries |
 | Production throughput | `python -m evals.run_phase5_benchmark` | DEC-053 serialized path vs org-config rate targets (self-contained, no pre-existing DB) |
-| Walkthrough invariants | `python notebooks/check_walkthrough.py …` | Act I + Act II pins (contain / review / refuse / corroboration / posture / report / exemplars / statute) |
+| Walkthrough invariants | `python notebooks/check_walkthrough.py …` | All ten scenario pins (contain / review / never-contain / corroboration / posture / rate limit / breaker / report / exemplars / statute) |
+| Demo page freshness | `python tools/build_demo_page.py --check` | The published demo still matches what the live engine decides |
 
 ### Try it — see it in action
 

@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Praetor - post-detection disposition engine</title>
+<meta name="description" content="Interactive tour of Praetor's containment
+authorization gates: never-contain, corroboration floor, rate limits, circuit
+breaker, and allowlist posture.">
+<style>
+  :root {
+    --bg: #0b0f17;
+    --surface: #131a26;
+    --surface-2: #1a2332;
+    --line: #263248;
+    --text: #e6edf7;
+    --muted: #93a4bf;
+    --accent: #5b9dff;
+    --contain: #f0a742;
+    --blocked: #ff6b6b;
+    --review: #46d19b;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          Helvetica, Arial, sans-serif;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 40px 20px 80px; }
+  header h1 { margin: 0 0 6px; font-size: 30px; letter-spacing: -0.02em; }
+  header .tagline { margin: 0 0 4px; color: var(--accent); font-weight: 600; }
+  header .sub { margin: 0 0 22px; color: var(--muted); max-width: 70ch; }
+  .picker {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 18px 18px 8px;
+    margin-bottom: 26px;
+  }
+  .picker h2 {
+    margin: 0 0 12px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--muted);
+  }
+  .dials { display: flex; flex-wrap: wrap; gap: 10px; }
+  .dial { cursor: pointer; }
+  .dial input { position: absolute; opacity: 0; pointer-events: none; }
+  .dial-label {
+    display: inline-block;
+    padding: 9px 14px;
+    margin-bottom: 10px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface-2);
+    color: var(--muted);
+    font-size: 14px;
+    transition: all .15s ease;
+  }
+  .dial:hover .dial-label { color: var(--text); border-color: #3a4a68; }
+  .dial input:checked + .dial-label {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #08121f;
+    font-weight: 650;
+  }
+  .dial input:focus-visible + .dial-label { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 24px;
+  }
+  .panel h2 { margin: 0 0 6px; font-size: 22px; }
+  .headline { margin: 0 0 14px; color: var(--muted); }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+  .badge {
+    font: 600 12px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid var(--line);
+    background: var(--surface-2);
+    color: var(--muted);
+  }
+  .badge-contain { color: var(--contain); border-color: #5a4526; }
+  .badge-blocked { color: var(--blocked); border-color: #5c2b2b; }
+  .badge-review { color: var(--review); border-color: #235142; }
+  .badge-flag { color: var(--accent); border-color: #27436e; }
+  .badge-directive { color: var(--contain); border-color: #5a4526; }
+  .notes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .note {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .note-gotcha { border-color: #4a3a24; }
+  .note h3 {
+    margin: 0 0 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--muted);
+  }
+  .note-gotcha h3 { color: var(--contain); }
+  .note p { margin: 0; font-size: 14px; }
+  .output-title {
+    margin: 0 0 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--muted);
+  }
+  .output {
+    margin: 0;
+    padding: 16px;
+    background: #080c14;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow-x: auto;
+    font: 13px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    color: #cdd9ec;
+  }
+  footer {
+    margin-top: 30px;
+    color: var(--muted);
+    font-size: 14px;
+    border-top: 1px solid var(--line);
+    padding-top: 18px;
+  }
+  footer code {
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 1px 6px;
+    font-size: 13px;
+  }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Praetor</h1>
+    <p class="tagline">The model recommends. The system authorizes.</p>
+    <p class="sub">
+      A post-detection disposition engine: the alert already fired, and Praetor
+      decides what happens next. Pick a mechanism to see the real engine either
+      authorize containment or refuse it. Every panel below was produced by
+      executing the actual engine against a clean store; the judgment provider
+      and ticket stamp are the only stand-ins.
+    </p>
+  </header>
+
+  <div class="picker">
+    <h2>Select a mechanism</h2>
+    <div class="dials" role="tablist">
+        <label class="dial">
+          <input type="radio" name="scenario" value="earned_auto_contain"
+                 id="dial-earned_auto_contain" checked>
+          <span class="dial-label">Earned auto-contain</span>
+        </label>
+        <label class="dial">
+          <input type="radio" name="scenario" value="benign_review"
+                 id="dial-benign_review">
+          <span class="dial-label">Benign standard review</span>
+        </label>
+        <label class="dial">
+          <input type="radio" name="scenario" value="never_contain"
+                 id="dial-never_contain">
+          <span class="dial-label">Never-contain list</span>
+        </label>
+        <label class="dial">
+          <input type="radio" name="scenario" value="insufficient_corroboration"
+                 id="dial-insufficient_corroboration">
+          <span class="dial-label">Insufficient corroboration</span>
+        </label>
+        <label class="dial">
+          <input type="radio" name="scenario" value="not_allowlisted"
+                 id="dial-not_allowlisted">
+          <span class="dial-label">Target not allowlisted</span>
+        </label>
+        <label class="dial">
+          <input type="radio" name="scenario" value="rate_limit"
+                 id="dial-rate_limit">
+          <span class="dial-label">Rate limit exceeded</span>
+        </label>
+        <label class="dial">
+          <input type="radio" name="scenario" value="circuit_breaker"
+                 id="dial-circuit_breaker">
+          <span class="dial-label">Circuit breaker open</span>
+        </label>
+        <label class="dial">
+          <input type="radio" name="scenario" value="progressive_report"
+                 id="dial-progressive_report">
+          <span class="dial-label">Progressive authorization report</span>
+        </label>
+        <label class="dial">
+          <input type="radio" name="scenario" value="similar_case_exemplars"
+                 id="dial-similar_case_exemplars">
+          <span class="dial-label">Human-confirmed exemplars</span>
+        </label>
+        <label class="dial">
+          <input type="radio" name="scenario" value="statute_curation"
+                 id="dial-statute_curation">
+          <span class="dial-label">Statute curation</span>
+        </label>
+    </div>
+  </div>
+
+      <section class="panel" id="panel-earned_auto_contain" role="tabpanel"
+               aria-labelledby="dial-earned_auto_contain">
+        <h2>Earned auto-contain</h2>
+        <p class="headline">Containment is authorized, so a bounded directive is emitted.</p>
+        <div class="badges"><span class="badge badge-contain">AUTO_CONTAIN</span><span class="badge badge-directive">directive emitted</span></div>
+        <div class="notes">
+          <div class="note">
+            <h3>Architecture</h3>
+            <p>The provider proposes AUTO_CONTAIN, then PolicyGate independently authorizes the cited host, and the engine commits the directive together with the edict after the terminal ticket stamp resolves.</p>
+          </div>
+          <div class="note">
+            <h3>Wiring</h3>
+            <p>A scoped host allow rule is activated and both the Sysmon and Windows Security facts are cited. The emitted directive is bounded to the configured 300-second lifetime.</p>
+          </div>
+          <div class="note note-gotcha">
+            <h3>Gotcha</h3>
+            <p>Praetor emits an auditable directive; it does not actuate an EDR. A confident model judgment is never authority by itself.</p>
+          </div>
+        </div>
+        <h3 class="output-title">Engine output</h3>
+        <pre class="output"><code>SCENARIO START: earned_auto_contain
+alert             : ALERT-MAL-001
+scenario beat     : earned auto_contain
+model proposed    : auto_contain
+PRAETOR DECIDED   : AUTO_CONTAIN
+fault_flags       : []
+system_fault_esc. : False
+stamp_status      : succeeded
+decision_id       : 9ba241b9d9ab37e2b61c984e77c16e110999d255d948e24ef9620545996b832c
+  &gt;&gt; CONTAINMENT DIRECTIVE EMITTED
+     target          : host:WORKSTATION1 scope=host-isolation
+     lifetime        : 300s  (hard cap 300)
+     status          : emitted
+     idempotency_key : 9a5b37471a29425a758091e05771eb7803f985a86e1dc8476f7fdcc10c62fe7c
+     live_nc_hash    : 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+SCENARIO COMPLETE: earned_auto_contain</code></pre>
+      </section>
+      <section class="panel" id="panel-benign_review" role="tabpanel"
+               aria-labelledby="dial-benign_review" hidden>
+        <h2>Benign standard review</h2>
+        <p class="headline">The safe floor: a human still sees it, nothing is isolated.</p>
+        <div class="badges"><span class="badge badge-review">STANDARD_REVIEW</span><span class="badge badge-none">no directive</span></div>
+        <div class="notes">
+          <div class="note">
+            <h3>Architecture</h3>
+            <p>STANDARD_REVIEW is the safe human-review floor, so PolicyGate never needs to manufacture a containment authorization.</p>
+          </div>
+          <div class="note">
+            <h3>Wiring</h3>
+            <p>The scripted judgment classifies a routine interactive shell and the normal intake path persists the resulting edict.</p>
+          </div>
+          <div class="note note-gotcha">
+            <h3>Gotcha</h3>
+            <p>Standard review is not auto-close. Praetor has no auto_close disposition at all; uncertainty always routes to a human.</p>
+          </div>
+        </div>
+        <h3 class="output-title">Engine output</h3>
+        <pre class="output"><code>SCENARIO START: benign_review
+alert             : ALERT-BEN-001
+scenario beat     : safe human-review floor
+model proposed    : standard_review
+PRAETOR DECIDED   : STANDARD_REVIEW
+fault_flags       : []
+system_fault_esc. : False
+stamp_status      : succeeded
+decision_id       : dc20d330483a3156894db24b267a81852d68afb5dd3743fa324e0f82aec25a05
+  &gt;&gt; no containment directive - nothing isolated
+SCENARIO COMPLETE: benign_review</code></pre>
+      </section>
+      <section class="panel" id="panel-never_contain" role="tabpanel"
+               aria-labelledby="dial-never_contain" hidden>
+        <h2>Never-contain list</h2>
+        <p class="headline">A live never-contain entry overrides an explicit allow rule.</p>
+        <div class="badges"><span class="badge badge-blocked">ESCALATE</span><span class="badge badge-flag">never_contain_live_conflict</span><span class="badge badge-none">no directive</span></div>
+        <div class="notes">
+          <div class="note">
+            <h3>Architecture</h3>
+            <p>Emergency never-contain is live authorization state, checked by the gate and re-checked at the directive persistence boundary.</p>
+          </div>
+          <div class="note">
+            <h3>Wiring</h3>
+            <p>DC01 receives both an explicit allow rule and an authenticated emergency never-contain entry before the same AUTO_CONTAIN proposal is processed.</p>
+          </div>
+          <div class="note note-gotcha">
+            <h3>Gotcha</h3>
+            <p>Never-contain wins over allow. The result is an explicit ESCALATE carrying never_contain_live_conflict, not a silent suppression.</p>
+          </div>
+        </div>
+        <h3 class="output-title">Engine output</h3>
+        <pre class="output"><code>SCENARIO START: never_contain
+alert             : ALERT-DC-001
+scenario beat     : live never-contain wins over allow
+model proposed    : auto_contain
+PRAETOR DECIDED   : ESCALATE
+fault_flags       : [&#x27;never_contain_live_conflict&#x27;]
+system_fault_esc. : False
+stamp_status      : succeeded
+decision_id       : 08e776fa00ddb6fa4fa5785dda76a1d5e11833ebd6bc71d28d78a88ed11073f5
+  &gt;&gt; no containment directive - nothing isolated
+SCENARIO COMPLETE: never_contain</code></pre>
+      </section>
+      <section class="panel" id="panel-insufficient_corroboration" role="tabpanel"
+               aria-labelledby="dial-insufficient_corroboration" hidden>
+        <h2>Insufficient corroboration</h2>
+        <p class="headline">A single thin citation cannot earn containment.</p>
+        <div class="badges"><span class="badge badge-blocked">ESCALATE</span><span class="badge badge-flag">insufficient_corroboration</span><span class="badge badge-none">no directive</span></div>
+        <div class="notes">
+          <div class="note">
+            <h3>Architecture</h3>
+            <p>Host authorization evaluates only the evidence the judgment actually cited, never every fact present in the correlated bundle.</p>
+          </div>
+          <div class="note">
+            <h3>Wiring</h3>
+            <p>The bundle contains a second provenance source, but the judgment cites only one ambiguous Sysmon host fact.</p>
+          </div>
+          <div class="note note-gotcha">
+            <h3>Gotcha</h3>
+            <p>Adding evidence to a bundle does nothing unless the judgment cites it. Citation anchoring stops unrelated telemetry from silently granting authority.</p>
+          </div>
+        </div>
+        <h3 class="output-title">Engine output</h3>
+        <pre class="output"><code>SCENARIO START: insufficient_corroboration
+alert             : ALERT-THIN-001
+scenario beat     : corroboration floor
+model proposed    : auto_contain
+PRAETOR DECIDED   : ESCALATE
+fault_flags       : [&#x27;insufficient_corroboration&#x27;]
+system_fault_esc. : False
+stamp_status      : succeeded
+decision_id       : e34eac9b22ee53458ebc020880206ca1f0e405530602d257df5693db3ad0182d
+  &gt;&gt; no containment directive - nothing isolated
+SCENARIO COMPLETE: insufficient_corroboration</code></pre>
+      </section>
+      <section class="panel" id="panel-not_allowlisted" role="tabpanel"
+               aria-labelledby="dial-not_allowlisted" hidden>
+        <h2>Target not allowlisted</h2>
+        <p class="headline">Perfect evidence still loses to a missing allow rule.</p>
+        <div class="badges"><span class="badge badge-blocked">ESCALATE</span><span class="badge badge-flag">containment_policy_escalation_required</span><span class="badge badge-none">no directive</span></div>
+        <div class="notes">
+          <div class="note">
+            <h3>Architecture</h3>
+            <p>ContainmentPolicy runs default_action=escalate. Scoped rules are the positive authorization surface; omission is never permission.</p>
+          </div>
+          <div class="note">
+            <h3>Wiring</h3>
+            <p>The evidence is fully corroborated, but no rule allows WORKSTATION9.</p>
+          </div>
+          <div class="note note-gotcha">
+            <h3>Gotcha</h3>
+            <p>Evidence quality and policy authority are independent gates. Containment is earned, not granted by omission.</p>
+          </div>
+        </div>
+        <h3 class="output-title">Engine output</h3>
+        <pre class="output"><code>SCENARIO START: not_allowlisted
+alert             : ALERT-POSTURE-001
+scenario beat     : escalate-by-default posture
+model proposed    : auto_contain
+PRAETOR DECIDED   : ESCALATE
+fault_flags       : [&#x27;containment_policy_escalation_required&#x27;]
+system_fault_esc. : False
+stamp_status      : succeeded
+decision_id       : 1b70ad1264700bcf15e2a936672919165a6e9a086d42221437ee46ac8f809bba
+  &gt;&gt; no containment directive - nothing isolated
+pin: containment not granted by omission
+SCENARIO COMPLETE: not_allowlisted</code></pre>
+      </section>
+      <section class="panel" id="panel-rate_limit" role="tabpanel"
+               aria-labelledby="dial-rate_limit" hidden>
+        <h2>Rate limit exceeded</h2>
+        <p class="headline">Blast-radius ceiling refuses an otherwise valid containment.</p>
+        <div class="badges"><span class="badge badge-blocked">ESCALATE</span><span class="badge badge-flag">rate_limit_exceeded</span><span class="badge badge-none">no directive</span></div>
+        <div class="notes">
+          <div class="note">
+            <h3>Architecture</h3>
+            <p>The policy layer evaluates sliding-window counters for every applicable configured scope before the directive is persisted.</p>
+          </div>
+          <div class="note">
+            <h3>Wiring</h3>
+            <p>The target is explicitly allowed, then its per-host counter is seeded at the configured ceiling before intake runs.</p>
+          </div>
+          <div class="note note-gotcha">
+            <h3>Gotcha</h3>
+            <p>A rate-limit refusal is an authorization decision, not an infrastructure fault, so system_fault_escalation stays false while it still feeds breaker failure tracking.</p>
+          </div>
+        </div>
+        <h3 class="output-title">Engine output</h3>
+        <pre class="output"><code>SCENARIO START: rate_limit
+alert             : ALERT-RATE-001
+scenario beat     : transactional rate-limit refusal
+model proposed    : auto_contain
+PRAETOR DECIDED   : ESCALATE
+fault_flags       : [&#x27;rate_limit_exceeded&#x27;]
+system_fault_esc. : False
+stamp_status      : succeeded
+decision_id       : 2fd26d2f23c29c47cb17adf7b0dee275084f88195eefc6dced3a9e2950502ff8
+  &gt;&gt; no containment directive - nothing isolated
+SCENARIO COMPLETE: rate_limit</code></pre>
+      </section>
+      <section class="panel" id="panel-circuit_breaker" role="tabpanel"
+               aria-labelledby="dial-circuit_breaker" hidden>
+        <h2>Circuit breaker open</h2>
+        <p class="headline">A tripped containment breaker blocks all new isolation.</p>
+        <div class="badges"><span class="badge badge-blocked">ESCALATE</span><span class="badge badge-flag">containment_breaker_open</span><span class="badge badge-none">no directive</span></div>
+        <div class="notes">
+          <div class="note">
+            <h3>Architecture</h3>
+            <p>The containment breaker is independent of provider health and blocks new AUTO_CONTAIN authorization while its window stays open.</p>
+          </div>
+          <div class="note">
+            <h3>Wiring</h3>
+            <p>The target is allowed and corroborated, but the containment breaker row is opened with a fresh window timestamp.</p>
+          </div>
+          <div class="note note-gotcha">
+            <h3>Gotcha</h3>
+            <p>This breaker can only recover by window elapse, because blocking containment also blocks the success signals that would close it.</p>
+          </div>
+        </div>
+        <h3 class="output-title">Engine output</h3>
+        <pre class="output"><code>SCENARIO START: circuit_breaker
+alert             : ALERT-BREAKER-001
+scenario beat     : containment circuit breaker
+model proposed    : auto_contain
+PRAETOR DECIDED   : ESCALATE
+fault_flags       : [&#x27;containment_breaker_open&#x27;]
+system_fault_esc. : False
+stamp_status      : succeeded
+decision_id       : 8bd95245c258c91e2d8e3dbf484e5956ae112cf0e551f0c3a0f52f99e1e2156e
+  &gt;&gt; no containment directive - nothing isolated
+SCENARIO COMPLETE: circuit_breaker</code></pre>
+      </section>
+      <section class="panel" id="panel-progressive_report" role="tabpanel"
+               aria-labelledby="dial-progressive_report" hidden>
+        <h2>Progressive authorization report</h2>
+        <p class="headline">Read-only override rates, never an automatic policy promotion.</p>
+        <div class="notes">
+          <div class="note">
+            <h3>Architecture</h3>
+            <p>The report aggregates persisted PolicyGate evaluations and analyst annotations. It is query-only and never writes configuration.</p>
+          </div>
+          <div class="note">
+            <h3>Wiring</h3>
+            <p>Three evaluation rows are seeded with one model-to-gate override, then grouped by target type and asset class.</p>
+          </div>
+          <div class="note note-gotcha">
+            <h3>Gotcha</h3>
+            <p>Override rates are decision support. Widening real authority stays a separate, authenticated human workflow.</p>
+          </div>
+        </div>
+        <h3 class="output-title">Engine output</h3>
+        <pre class="output"><code>SCENARIO START: progressive_report
+PROGRESSIVE AUTHORIZATION REPORT (read-only)
+  read_only=True
+  host/workstation: evals=3 overrides=1 override_rate=33%
+SCENARIO COMPLETE: progressive_report</code></pre>
+      </section>
+      <section class="panel" id="panel-similar_case_exemplars" role="tabpanel"
+               aria-labelledby="dial-similar_case_exemplars" hidden>
+        <h2>Human-confirmed exemplars</h2>
+        <p class="headline">Past confirmed cases inform the prompt without granting power.</p>
+        <div class="badges"><span class="badge badge-contain">AUTO_CONTAIN</span><span class="badge badge-directive">directive emitted</span></div>
+        <div class="notes">
+          <div class="note">
+            <h3>Architecture</h3>
+            <p>Similar-case retrieval reads finalized edicts plus post-hoc analyst annotations and injects bounded, illustration-only exemplars into the judgment prompt.</p>
+          </div>
+          <div class="note">
+            <h3>Wiring</h3>
+            <p>A real decision is persisted, an analyst marks it correct, and a matching office-to-PowerShell query asks the prompt builder for precedents.</p>
+          </div>
+          <div class="note note-gotcha">
+            <h3>Gotcha</h3>
+            <p>Exemplars shape model context but carry no containment authority. The deterministic gate still decides the final action.</p>
+          </div>
+        </div>
+        <h3 class="output-title">Engine output</h3>
+        <pre class="output"><code>SCENARIO START: similar_case_exemplars
+alert             : ALERT-EXEMPLAR-SOURCE
+scenario beat     : seed a human-confirmed precedent
+model proposed    : auto_contain
+PRAETOR DECIDED   : AUTO_CONTAIN
+fault_flags       : []
+system_fault_esc. : False
+stamp_status      : succeeded
+decision_id       : c4d8f439739c169b16f36112da042c8e3bf4e4d50ebc595895ded011cb8074a1
+  &gt;&gt; CONTAINMENT DIRECTIVE EMITTED
+     target          : host:WORKSTATION-EXEMPLAR scope=host-isolation
+     lifetime        : 300s  (hard cap 300)
+     status          : emitted
+     idempotency_key : 9c1e13f1dc0d96bc38908d1cbf11f5910c20098f9ceddc4797fc0e97cca62bcc
+     live_nc_hash    : 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+prompt has prompt_exemplar_block: True
+exemplar count: 1
+  - precedent-1: auto_contain
+    Confirmed office-to-PowerShell precedent. encoded powershell office parent scheduled IT automation A...
+exemplar_scope: prompt_exemplar_block lists human-confirmed past cases for illustration only. Do not cite exemplar_i ...
+SCENARIO COMPLETE: similar_case_exemplars</code></pre>
+      </section>
+      <section class="panel" id="panel-statute_curation" role="tabpanel"
+               aria-labelledby="dial-statute_curation" hidden>
+        <h2>Statute curation</h2>
+        <p class="headline">Proposed policy edits are refused at preflight by design.</p>
+        <div class="badges"><span class="badge badge-contain">AUTO_CONTAIN</span><span class="badge badge-directive">directive emitted</span></div>
+        <div class="notes">
+          <div class="note">
+            <h3>Architecture</h3>
+            <p>Curation produces a provenance-linked proposed statute artifact that lives outside the active configuration path.</p>
+          </div>
+          <div class="note">
+            <h3>Wiring</h3>
+            <p>A finalized decision and its analyst annotation support a proposed normal-admin-pattern edit.</p>
+          </div>
+          <div class="note note-gotcha">
+            <h3>Gotcha</h3>
+            <p>The artifact is deliberately non-activatable. Preflight refuses it until a SOC lead runs the separate promotion workflow.</p>
+          </div>
+        </div>
+        <h3 class="output-title">Engine output</h3>
+        <pre class="output"><code>SCENARIO START: statute_curation
+alert             : ALERT-CURATION-SOURCE
+scenario beat     : seed curation provenance
+model proposed    : auto_contain
+PRAETOR DECIDED   : AUTO_CONTAIN
+fault_flags       : []
+system_fault_esc. : False
+stamp_status      : succeeded
+decision_id       : acf10da3233d08d54f791904a86aedd676f3179bbca31d83880bbb20ae186db6
+  &gt;&gt; CONTAINMENT DIRECTIVE EMITTED
+     target          : host:WORKSTATION-CURATION scope=host-isolation
+     lifetime        : 300s  (hard cap 300)
+     status          : emitted
+     idempotency_key : a6915447c2b08c2d8d7fc060ca3e5e594d3a107a9c98fbde3f803675a3c0a6db
+     live_nc_hash    : 4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945
+artifact_kind     : proposed_statute
+activation_status : proposed_for_review_only
+preflight refused : proposed_artifact_not_activatable
+pin: proposed_for_review_only
+SCENARIO COMPLETE: statute_curation</code></pre>
+      </section>
+
+  <footer>
+    <p>
+      There is no <code>auto_close</code> disposition; uncertainty always routes
+      to a human. Run it yourself with
+      <code>notebooks/praetor_walkthrough.ipynb</code>, or regenerate this page
+      with <code>python tools/build_demo_page.py</code>.
+    </p>
+    <p>Generated 2026-07-31 16:01 UTC from the live engine.</p>
+  </footer>
+</div>
+<script>
+  const keys = ["earned_auto_contain", "benign_review", "never_contain", "insufficient_corroboration", "not_allowlisted", "rate_limit", "circuit_breaker", "progressive_report", "similar_case_exemplars", "statute_curation"];
+  for (const key of keys) {
+    document.getElementById("dial-" + key).addEventListener("change", () => {
+      for (const other of keys) {
+        document.getElementById("panel-" + other).hidden = other !== key;
+      }
+    });
+  }
+</script>
+</body>
+</html>

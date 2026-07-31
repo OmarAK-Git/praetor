@@ -1,5 +1,23 @@
 # Progress Log
 
+## 2026-07-31 — Public clickable demo page COMPLETE
+
+- Constraint that forced this: ipywidgets need a live kernel, and github.com is a
+  static previewer, so notebook dials render as `VBox(children=(RadioButtons(...)))`
+  text for anyone browsing the repo.
+- Extracted the scenario registry to `notebooks/walkthrough_scenarios.py`; the
+  notebook, the CI sweep, and the demo build now share one definition.
+- `tools/build_demo_page.py` executes all ten scenarios against the real engine and
+  emits a self-contained `demo/index.html` with HTML radio dials, outcome badges,
+  and per-scenario architecture/wiring/gotcha panels.
+- `python tools/build_demo_page.py --check` fails when the committed page drifts
+  from the engine (decision ids, idempotency keys, and build time normalized).
+- Publishing: `.github/workflows/demo-pages.yml` (Pages source must be set to
+  GitHub Actions); walkthrough workflow now also runs the staleness check.
+- Verify: page built and clicked through in a browser; `--check` OK;
+  `python notebooks/check_walkthrough.py notebooks/praetor_walkthrough.ipynb` OK;
+  ruff and mypy clean.
+
 ## 2026-07-31 — Interactive walkthrough COMPLETE
 
 - Spec/plan: `docs/superpowers/specs/2026-07-31-interactive-walkthrough-design.md`, `docs/superpowers/plans/2026-07-31-interactive-walkthrough.md`.
