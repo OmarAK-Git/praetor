@@ -188,3 +188,18 @@ prints sustained rate vs the active provisional targets. No pre-existing
 ``state/bench.db`` is required.
 
 Pass: org-config sweep produces review-only proposed artifacts; production throughput ceiling measured and documented in `docs/operator_runbook.md`; operator runbook and architecture cover responsibility boundaries; Splunk live demo is env-gated (`PRAETOR_SPLUNK_HEC_HOST` / `PRAETOR_SPLUNK_HEC_TOKEN`) per `splunk/README.md` — default CI excludes `@pytest.mark.integration`.
+
+## Non-gating: judgment capability spike
+
+`python -m evals.capability_spike --manifest <m.yaml> --capture <c.jsonl> --out <r.jsonl>`
+
+Measures whether the single-shot judgment layer separates malicious from benign
+telemetry, and how much of any failure is caused by correlation's two-event-type
+coverage limit (Path A vs Path B).
+
+**Not a CI gate.** Requires `PRAETOR_CAPABILITY_SPIKE=1` and a Gemini API key;
+exits 0 with a skip message otherwise. Scores `ModelJudgment.proposed_disposition`
+only — PolicyGate output is recorded but never scored, because the gate controls
+authority rather than judgment quality.
+
+Design: `docs/superpowers/specs/2026-08-01-capability-spike-design.md`
