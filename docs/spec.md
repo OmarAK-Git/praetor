@@ -64,7 +64,8 @@ Every failure class produces a specified disposition and a specific fault flag. 
 | Target on live never-contain list at emission time | `escalate` | `never_contain_live_conflict` | `false` |
 | Account target with insufficient identity corroboration | `escalate` | `ambiguous_target_identity` | `false` |
 | Containment target spans multiple cited hosts | `escalate` | `ambiguous_containment_target` | `false` |
-| Host target with insufficient cited-evidence corroboration | `escalate` | `insufficient_corroboration` | `false` |
+| Host target with insufficient provenance corroboration | `escalate` | `insufficient_corroboration` | `false` |
+| Host target with insufficient cited source-event enrichment | `escalate` | `insufficient_enrichment` | `false` |
 | Account containment production feature gate disabled | `escalate` | `account_containment_disabled` | `false` |
 | Target-scoped containment rules conflict with no precedence | `escalate` | `policy_ambiguity` | `false` |
 | Containment rate limit exceeded | `escalate` | `rate_limit_exceeded` | `false` |
@@ -208,7 +209,7 @@ Breaker trips emit durable SOC-lead `SystemHealthAlert`s through the outbox.
 
 **`target_id` format.** When `target_type = host`, `target_id` is the host identifier from the asset registry or evidence. When `target_type = account`, `target_id` is the SID from the corroborated `CanonicalAccountIdentity`. Name-based account identifiers are not used as `target_id` for account directives.
 
-v1 target types are `host` and strictly corroborated `account`. Production account `auto_contain` remains disabled behind `account_auto_contain_enabled=false` by default. Preflight permits enabling the flag only when identity-compliance evidence is present (V2-024); the example org keeps the gate off. Host containment ships with citation-anchored targeting (DEC-052) and the host corroboration floor (DEC-059).
+v1 target types are `host` and strictly corroborated `account`. Production account `auto_contain` remains disabled behind `account_auto_contain_enabled=false` by default. Preflight permits enabling the flag only when identity-compliance evidence is present (V2-024); the example org keeps the gate off. Host containment ships with citation-anchored targeting (DEC-052) and host corroboration + enrichment (DEC-066).
 
 `expires_at` must be no more than 5 minutes after `issued_at`. Org config may choose a shorter lifetime but not a longer one. Idempotency is keyed on alert-target-scope.
 
@@ -322,15 +323,14 @@ Account containment requires at least two normalized facts from distinct telemet
 
 Production account `auto_contain` remains blocked with `escalate(account_containment_disabled)` until a SOC lead explicitly enables `account_auto_contain_enabled` after identity-compliance preflight succeeds. The example org keeps the flag `false`.
 
-## Host Corroboration Floor (DEC-059)
+## Host Corroboration and Enrichment (DEC-066)
 
-Corroboration is a first-class authorization concept for both host and account `auto_contain`. Before authorizing **host** `auto_contain`, the cited facts anchoring the host target (DEC-052) must satisfy:
+Corroboration and enrichment are first-class authorization concepts for host `auto_contain` (DEC-066 supersedes DEC-065 host temporary floor). Before authorizing **host** `auto_contain`:
 
-1. **Distinct provenance** — cited facts span ≥2 distinct `provenance_path` values.
-2. **Independent source** — at least one cited fact comes from a non-attacker-controllable `provenance_path` (contracts §12a table).
-3. **No sole ambiguous basis** — host containment must not rest on a single cited fact when that fact has `ambiguity_flag = true`.
+1. **Corroboration (presence)** — host-scoped bundle facts include **≥2 distinct** corroboration-eligible `provenance_path` values (`ledger_history` excluded).
+2. **Enrichment (cited depth)** — target-anchoring cited facts include **≥2 distinct** `source_event_reference` values (same path allowed when events differ).
 
-When any check fails, PolicyGate escalates with `insufficient_corroboration` (`system_fault_escalation = false`). Provenance trust classifications and the full pin live in `docs/contracts.md` §12a.
+Corroboration failure → `insufficient_corroboration` (`system_fault_escalation = false`). Enrichment failure → `insufficient_enrichment` (`system_fault_escalation = false`). Sole `ambiguity_flag = true` cite is subsumed by enrichment ≥2. Provenance trust classifications and full pins live in `docs/contracts.md` §12a. Account path retains DEC-065 temporary floor.
 
 ## Human Governance Loop
 
@@ -393,7 +393,7 @@ Sigma is the portable detection format; pysigma compiles Sigma to Splunk SPL; OT
 - `raw_source` is excluded from the prompt structurally, not by operator switch.
 - Org config included in full; selective omission can hide global safety exclusions.
 - Containment is earned by configuration: required `default_action`; no-rule targets do not reach `auto_contain` by omission; sole matching `escalate` rules block containment (DEC-058).
-- Host `auto_contain` requires corroborated cited evidence (`insufficient_corroboration` otherwise; DEC-059).
+- Host `auto_contain` requires bundle presence corroboration and cited source-event enrichment (`insufficient_corroboration` / `insufficient_enrichment` otherwise; DEC-066).
 - Containment scope is host by default; account requires SID-backed distinct-provenance corroboration and remains production feature-gated (`account_auto_contain_enabled`, default `false`).
 - `system_fault_escalation = true` indicates infra/model/feed failure. Policy/safety-gate fault flags carry `false`.
 - Half-open probe payloads are synthetic canary content specified in the provider Protocol; no real alert data transits the provider during probing.
@@ -409,7 +409,7 @@ Sigma is the portable detection format; pysigma compiles Sigma to Splunk SPL; OT
 Praetor v1 is acceptable when:
 
 - All named contracts are versioned Pydantic models with exported JSON Schema, including `NeverContainSnapshotRecord`, `EmergencyNeverContainRecord`, `DirectiveRevocationRecord`, and `RevocationFeedRecord`.
-- The full Outcome Matrix is enforced by the eval harness with correct `system_fault_escalation` values, including `provider_unavailable`, `insufficient_corroboration`, `ambiguous_containment_target`, `revocation_feed_unhealthy`, and `account_containment_disabled`.
+- The full Outcome Matrix is enforced by the eval harness with correct `system_fault_escalation` values, including `provider_unavailable`, `insufficient_corroboration`, `insufficient_enrichment`, `ambiguous_containment_target`, `revocation_feed_unhealthy`, and `account_containment_disabled`.
 - One completed edict exists per alert/bundle/config tuple; duplicate intake races cannot produce duplicate edicts.
 - `decision_id`, idempotency key, `stamp_id`, and feed checksum formulas are fixed in `docs/contracts.md` before hashing code ships.
 - Durable attempt lifecycle, stamp outbox, health-alert outbox, revocation-feed outbox, and startup reconciliation pass crash-recovery tests.
@@ -424,7 +424,7 @@ Praetor v1 is acceptable when:
 - Half-open probe calls use synthetic canary payloads; probe outcome metrics are independent from production call metrics.
 - `raw_source` is stored and hashed but absent from prompts; excerpts use Unicode-boundary-safe, omission-marked truncation.
 - Account containment requires SID-backed `CanonicalAccountIdentity` and distinct-provenance corroboration; production account auto-containment remains feature-gated (`account_auto_contain_enabled`).
-- Host containment requires citation-anchored targeting plus the host corroboration floor (DEC-052/059).
+- Host containment requires citation-anchored targeting plus host corroboration and enrichment (DEC-052/066).
 - Org config requires `containment_policy.default_action`; malformed rule scopes fail preflight (DEC-058 / V2-005).
 - Three external write surfaces are authenticated and role-tagged: config activation, emergency never-contain, annotation.
 - SQLite WAL journal mode, singleton enforcement, provisional Sprint 1 alert-rate targets, Task 11 smoke benchmark, and Task 33 production benchmark are documented.

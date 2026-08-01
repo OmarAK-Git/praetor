@@ -23,6 +23,7 @@ This file records implementation choices that refine or operationalize those doc
 | DEC-061 | 2026-06-29 | V2 `provider_unavailable` Outcome Matrix row for `ProviderUnavailableError`: `escalate` with `system_fault_escalation=true`; distinct from `provider_timeout`, `provider_refusal`, and `provider_health_breaker_open`; breaker tripping unchanged | Intake lacked documented fault flag for provider unavailability; closes Gate 0 provider mapping | V2-004; `docs/contracts.md` §13; V2-007 extends intake/metrics tests |
 | DEC-064 | 2026-07-30 | Agentic judgment: corroboration trust extension (**superseded by DEC-065** — `ledger_history` is **not** corroboration-eligible); `org_config_section` and `similar_cases` remain explicitly **not** corroboration-eligible; new Outcome Matrix row `agentic_evidence_gathering_failed` (`system_fault_escalation=true`) for all-Phase-1-sources-failed; `session_trace_hash` on agentic-mode edicts | Original trust extension extended DEC-059 before multi-telemetry landed; DEC-065 supersedes only the corroboration-eligibility pin — OM row and session trace hash remain | `docs/superpowers/specs/2026-07-30-agentic-judgment-design.md`; `src/praetor/judgment/agentic/`; `src/praetor/metrics/events.py`; `src/praetor/contracts/fault_flags.py` |
 | DEC-065 | 2026-07-31 | Temporary corroboration floor: host `auto_contain` requires **≥1** cited fact anchoring the host target (DEC-052), any `provenance_path`; account `auto_contain` requires **≥1** supporting cited fact, any provenance (still feature-gated); sole `ambiguity_flag=true` cited fact still fails host corroboration; `ledger_history` is **not** corroboration-eligible (supersedes DEC-064 trust-table extension); attacker-controllable / trusted-path enforcement **deferred** until real multi-source telemetry; **upgrade flag:** restore ≥2 distinct `provenance_path` values (+ attacker-controllable table enforcement) when multi-telemetry lands | Host/ledger history is Praetor SoT, not an independent event source; with only Sysmon+Security today, the DEC-059 ≥2-path floor blocks single-shot judgment without genuine multi-source convergence; temporary relaxation unblocks production while preserving sole-ambiguity reject | `docs/contracts.md` §12a; `docs/spec.md` host/account corroboration; `docs/superpowers/plans/2026-07-31-corroboration-floor-temporary.md` |
+| DEC-066 | 2026-08-01 | Host authorization split (Approach A): **corroboration** = ≥2 distinct corroboration-eligible `provenance_path` values among **host-scoped bundle facts** → `insufficient_corroboration` (SFE=false); **enrichment** = ≥2 distinct `source_event_reference` values among **target-anchoring cited** facts → `insufficient_enrichment` (SFE=false); supersedes DEC-065 **host** temporary cited ≥1 floor; account DEC-065 temporary floor **remains**; sole-ambiguity rule **subsumed** by enrichment ≥2; rejected ≥2 cited provenance paths as enrichment unit; trusted-path table stays **advisory** (DEC-059 enforcement not re-enabled) | Ratified product split: presence corroboration vs cited-event enrichment are distinct authorization concerns; lands while Sysmon+Security exist without conflating citation depth with provenance presence | `docs/superpowers/specs/2026-08-01-enrichment-vs-corroboration-design.md`; `docs/contracts.md` §12a/§13; implementation in enrichment sprint |
 
 Add rows when implementation choices diverge from or refine authoritative docs.
 
@@ -375,3 +376,46 @@ Document the upgrade in contracts §12a and retire the temporary ≥1 floor in a
 - DEC-064 Outcome Matrix row `agentic_evidence_gathering_failed` and `session_trace_hash` unchanged.
 
 **Doc placement.** `docs/contracts.md` §12a is the source of truth for the temporary corroboration floor while `docs/spec.md` remains frozen; implementation in follow-on tasks per `docs/superpowers/plans/2026-07-31-corroboration-floor-temporary.md`.
+
+**Host path superseded by DEC-066 (2026-08-01).** The temporary host cited ≥1 floor and sole-ambiguity branch are superseded for host `auto_contain` by DEC-066 (bundle presence corroboration + cited source-event enrichment). Account temporary floor pins in this section remain in force until a separate decision.
+
+## DEC-066 — Host corroboration vs enrichment split
+
+**Status:** accepted (2026-08-01)
+
+**Context.** DEC-065 temporarily relaxed host corroboration to a cited ≥1 floor while Sysmon+Security were the only telemetry sources. Product review ratified splitting two concerns: (1) **provenance presence** — are independent collection paths present in the host-scoped bundle? (2) **citation enrichment** — did the model cite enough distinct source events to justify containment? Conflating them under `insufficient_corroboration` blocked clear operator messaging and demo scenarios.
+
+**Decision (Approach A).**
+
+### Host corroboration (presence)
+
+Before authorizing host `auto_contain` for a citation-anchored host target (DEC-052), the **host-scoped evidence bundle** must include facts whose `normalized_fields.host_id` matches the target with **≥2 distinct** corroboration-eligible `provenance_path` values. `ledger_history` is not corroboration-eligible.
+
+Failure → `escalate(insufficient_corroboration)` with `system_fault_escalation = false`.
+
+### Host enrichment (cited source events)
+
+After corroboration passes, cited facts anchoring the host target must include **≥2 distinct** `source_event_reference` values among target-anchoring cites. Same `provenance_path` may contribute twice when events differ. `ledger_history` does not count toward enrichment depth.
+
+Failure → `escalate(insufficient_enrichment)` with `system_fault_escalation = false`.
+
+### Evaluation order (host `auto_contain` candidate path)
+
+1. Citation validation / DEC-052 target resolution (unchanged).
+2. Corroboration (bundle presence) → `insufficient_corroboration`.
+3. Enrichment (cited source-event depth) → `insufficient_enrichment`.
+4. Never-contain / policy / rate / breaker / feed (unchanged).
+
+### Supersedes / preserves
+
+| Rule | Disposition |
+|---|---|
+| DEC-065 host temporary cited ≥1 floor | **Superseded** for host |
+| DEC-065 account temporary ≥1 supporting fact | **Preserved** (still feature-gated) |
+| Sole `ambiguity_flag=true` cite cannot authorize | **Subsumed** by enrichment ≥2 |
+| DEC-059 trusted-path table enforcement | **Advisory only** — not re-enabled |
+| ≥2 cited `provenance_path` as enrichment unit | **Rejected** |
+
+**GR-0012.** Outcome Matrix row text ratified in contracts §13 in the decision task; `OutcomeMatrixFaultFlag.INSUFFICIENT_ENRICHMENT` enum member deferred to the implement task with harness scenario.
+
+**Doc placement.** `docs/contracts.md` §12a/§13; mirror pins in `docs/spec.md`; implementation per `docs/superpowers/plans/2026-08-01-enrichment-vs-corroboration.md`.

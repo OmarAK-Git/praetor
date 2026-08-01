@@ -548,13 +548,13 @@ These are Pydantic v2 `@model_validator` rules at the schema level (not the stor
 
 ---
 
-## 12a. Containment evidence corroboration (host and account)
+## 12a. Containment evidence corroboration and enrichment (host and account)
 
-Corroboration is a **first-class authorization concept** for `auto_contain`, not an account-only rule (DEC-059, **temporary floor DEC-065**). PolicyGate evaluates corroboration on **resolved citation metadata** (`provenance_path`, `ambiguity_flag`) from `validate_evidence_citations` — the same fields the citation validator already resolves today.
+Corroboration and enrichment are **first-class authorization concepts** for host `auto_contain` (DEC-059, **DEC-066**). Account `auto_contain` retains the DEC-065 temporary corroboration floor only. PolicyGate evaluates host corroboration on **host-scoped bundle facts** and host enrichment on **resolved citation metadata** (`source_event_reference`, `provenance_path`, `ambiguity_flag`) from `validate_evidence_citations`.
 
 ### Provenance-path trust classification (v1 Windows, advisory until multi-telemetry)
 
-The table below classifies paths for **future** enforcement when multi-source telemetry lands (DEC-065 upgrade flag). It is **not enforced** at the temporary corroboration floor.
+The table below classifies paths for **future** enforcement when multi-source telemetry lands (DEC-059 upgrade flag). It is **not enforced** at the DEC-066 corroboration floor (presence counting only).
 
 | `provenance_path` | Attacker-controllable | Corroboration-eligible | Rationale |
 |---|---|---|---|
@@ -574,18 +574,25 @@ When a SID-backed account target fails this check, PolicyGate escalates with fau
 
 **Upgrade (multi-telemetry):** restore ≥2 distinct `provenance_path` values with ≥1 non-attacker-controllable path per the table above (DEC-059 account semantics).
 
-### Host `auto_contain` corroboration floor (temporary, DEC-065)
+### Host `auto_contain` corroboration (presence, DEC-066)
 
-Before authorizing host `auto_contain`, the **cited facts** anchoring the host target (DEC-052) must satisfy:
+Before authorizing host `auto_contain`, the **host-scoped evidence bundle** (facts whose `normalized_fields.host_id` equals the citation-anchored target from DEC-052) must include **≥2 distinct** corroboration-eligible `provenance_path` values. `ledger_history` is not corroboration-eligible.
 
-1. **Anchoring cite present** — **≥1** cited fact anchors the host target (any `provenance_path`).
-2. **No sole ambiguous basis** — host containment must not rest on a **single** target-anchoring cited fact when that fact has `ambiguity_flag = true`.
+When this check fails, PolicyGate escalates with fault flag **`insufficient_corroboration`** (`system_fault_escalation = false`, policy/safety-gate class).
 
-When any check fails, PolicyGate escalates with fault flag **`insufficient_corroboration`** (`system_fault_escalation = false`, policy/safety-gate class). **Failing cases:** zero target-anchoring cited facts; exactly one target-anchoring cited fact with `ambiguity_flag = true`. **Implemented** in PolicyGate + `evidence/provenance.py`; harness scenario `insufficient_corroboration` (sole-ambiguous failure mode under temporary floor).
+**Supersedes:** DEC-065 host temporary cited ≥1 floor and sole-ambiguity branch for host targets.
 
-**Upgrade (multi-telemetry):** restore DEC-059 floor — cited facts span **≥2 distinct** `provenance_path` values with **≥1** non-attacker-controllable path; enforce the trust table above.
+**Future upgrade (DEC-059):** optionally enforce ≥1 non-attacker-controllable path per the trust table above when multi-telemetry enforcement is separately restored.
 
-**Scope note.** Host corroboration applies to **host** containment targets after citation-anchored target resolution. It does not replace account identity corroboration or multi-host ambiguity (`ambiguous_containment_target`).
+### Host `auto_contain` enrichment (cited source events, DEC-066)
+
+After corroboration passes, **target-anchoring cited** facts must include **≥2 distinct** `source_event_reference` values. A cite anchors the host when the cited fact's `normalized_fields.host_id` equals the DEC-052 target. Distinctness is keyed on `source_event_reference` (§3b.2), not `provenance_path` — two events from the same path may both count when references differ. `ledger_history` is not enrichment-eligible.
+
+When this check fails, PolicyGate escalates with fault flag **`insufficient_enrichment`** (`system_fault_escalation = false`, policy/safety-gate class).
+
+**Subsumes:** sole `ambiguity_flag = true` target-anchoring cite cannot authorize host containment (a single cite of any kind fails enrichment ≥2).
+
+**Scope note.** Host corroboration and enrichment apply to **host** containment targets after citation-anchored target resolution. They do not replace account identity corroboration or multi-host ambiguity (`ambiguous_containment_target`). Enrichment is **host-only**; account enrichment is out of scope (DEC-066).
 
 ---
 
@@ -607,7 +614,8 @@ The eval harness asserts, for every failure class, the disposition, the fault fl
 | Target on live never-contain list at emission | escalate | `never_contain_live_conflict` | false |
 | Account target, insufficient identity corroboration | escalate | `ambiguous_target_identity` | false |
 | Containment target spans multiple cited hosts | escalate | `ambiguous_containment_target` | false |
-| Host target, insufficient cited-evidence corroboration (zero anchoring cites or sole ambiguous anchoring cite; DEC-065 temporary floor) | escalate | `insufficient_corroboration` | false |
+| Host target, insufficient provenance corroboration (<2 distinct eligible `provenance_path` in host-scoped bundle; DEC-066) | escalate | `insufficient_corroboration` | false |
+| Host target, insufficient cited source-event enrichment (<2 distinct `source_event_reference` among target-anchoring cites; DEC-066) | escalate | `insufficient_enrichment` | false |
 | Account containment production feature gate disabled | escalate | `account_containment_disabled` | false |
 | Target-scoped containment rule conflict, no precedence | escalate | `policy_ambiguity` | false |
 | Containment rate limit exceeded | escalate | `rate_limit_exceeded` | false |
