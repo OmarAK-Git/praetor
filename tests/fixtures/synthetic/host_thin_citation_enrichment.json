@@ -1,0 +1,28 @@
+{
+  "facts": [
+    {
+      "evidence_id": "host-sysmon-dual",
+      "normalized_fields": {
+        "host_id": "ws-01",
+        "process_name": "cmd.exe"
+      },
+      "source_event_reference": "syn:sysmon:1",
+      "raw_source": "{}",
+      "provenance_path": "sysmon_event_log",
+      "ambiguity_flag": false,
+      "timestamp": "2026-06-08T12:00:00.000000Z"
+    },
+    {
+      "evidence_id": "host-security-dual",
+      "normalized_fields": {
+        "host_id": "ws-01",
+        "event_id": 4624
+      },
+      "source_event_reference": "syn:security:1",
+      "raw_source": "{}",
+      "provenance_path": "windows_security_log",
+      "ambiguity_flag": false,
+      "timestamp": "2026-06-08T12:00:00.000000Z"
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+schema_version: "1"
+scenario_id: insufficient_enrichment
+description: Host auto_contain with dual-path bundle but single cited source event escalates insufficient_enrichment.
+runner: policy_gate
+setup:
+  alert_identity: insufficient_enrichment
+  bundle: synthetic_fixture
+  synthetic_fixture: tests/fixtures/synthetic/host_thin_citation_enrichment.json
+  host_id: ws-01
+  proposed_disposition: auto_contain
+  citation_refs:
+    - evidence_id: host-sysmon-dual
+      field_path: host_id
+expectations:
+  final_disposition: escalate
+  fault_flags:
+    - insufficient_enrichment
+  system_fault_escalation: false

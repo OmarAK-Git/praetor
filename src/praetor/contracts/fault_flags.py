@@ -27,6 +27,7 @@ OUTCOME_MATRIX_SFE: dict[OutcomeMatrixFaultFlag, bool] = {
     OutcomeMatrixFaultFlag.AMBIGUOUS_TARGET_IDENTITY: False,
     OutcomeMatrixFaultFlag.AMBIGUOUS_CONTAINMENT_TARGET: False,
     OutcomeMatrixFaultFlag.INSUFFICIENT_CORROBORATION: False,
+    OutcomeMatrixFaultFlag.INSUFFICIENT_ENRICHMENT: False,
     OutcomeMatrixFaultFlag.ACCOUNT_CONTAINMENT_DISABLED: False,
     OutcomeMatrixFaultFlag.POLICY_AMBIGUITY: False,
     OutcomeMatrixFaultFlag.CONTAINMENT_POLICY_DENIED: False,

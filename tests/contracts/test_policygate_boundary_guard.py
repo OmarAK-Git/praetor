@@ -13,7 +13,8 @@ from praetor.policy.identity import (
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 _ACCOUNT_ELIGIBILITY_HELPER = "evaluate_account_containment_eligibility"
-_HOST_CORROBORATION_HELPER = "meets_host_cited_corroboration"
+_HOST_BUNDLE_CORROBORATION_HELPER = "meets_host_bundle_corroboration"
+_HOST_ENRICHMENT_HELPER = "meets_host_cited_enrichment"
 
 # Grandfathered unit tests that exercise helper semantics, not authorization.
 KNOWN_LEGACY_TEST_HELPER_CALLS: frozenset[tuple[str, str, int]] = frozenset(
@@ -64,9 +65,14 @@ KNOWN_LEGACY_TEST_HELPER_CALLS: frozenset[tuple[str, str, int]] = frozenset(
             245,
         ),
         (
-            _HOST_CORROBORATION_HELPER,
+            _HOST_BUNDLE_CORROBORATION_HELPER,
             "tests/evidence/test_host_corroboration.py",
-            63,
+            39,
+        ),
+        (
+            _HOST_ENRICHMENT_HELPER,
+            "tests/evidence/test_host_enrichment.py",
+            58,
         ),
     }
 )
@@ -93,7 +99,12 @@ def test_policy_gate_is_sole_production_account_eligibility_caller() -> None:
 
 def test_policy_gate_is_sole_production_host_corroboration_caller() -> None:
     violations = collect_unauthorized_containment_helper_calls(repo_root=REPO_ROOT)
-    assert violations[_HOST_CORROBORATION_HELPER] == []
+    assert violations[_HOST_BUNDLE_CORROBORATION_HELPER] == []
+
+
+def test_policy_gate_is_sole_production_host_enrichment_caller() -> None:
+    violations = collect_unauthorized_containment_helper_calls(repo_root=REPO_ROOT)
+    assert violations[_HOST_ENRICHMENT_HELPER] == []
 
 
 def test_non_approved_test_helper_calls_are_stable_legacy_set() -> None:

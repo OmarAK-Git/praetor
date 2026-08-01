@@ -1,15 +1,15 @@
 schema_version: "1"
 scenario_id: insufficient_corroboration
-description: Host auto_contain with sole ambiguous host citation escalates insufficient_corroboration.
+description: Host auto_contain with single provenance path in bundle escalates insufficient_corroboration.
 runner: policy_gate
 setup:
   alert_identity: insufficient_corroboration
   bundle: synthetic_fixture
-  synthetic_fixture: tests/fixtures/synthetic/host_sole_ambiguous_insufficient.json
+  synthetic_fixture: tests/fixtures/synthetic/host_single_path_insufficient.json
   host_id: ws-01
   proposed_disposition: auto_contain
   citation_refs:
-    - evidence_id: host-ambiguous-only
+    - evidence_id: host-sysmon-only
       field_path: host_id
 expectations:
   final_disposition: escalate

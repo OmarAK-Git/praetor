@@ -106,26 +106,3 @@ def meets_host_cited_enrichment(
         )
     }
     return len(source_refs) >= 2
-
-
-def meets_host_cited_corroboration(
-    cited: Sequence[ResolvedEvidenceCitation],
-    *,
-    target_host_id: str,
-    facts_by_id: Mapping[str, EvidenceFact],
-) -> bool:
-    """Return whether target-anchoring cited facts satisfy host corroboration."""
-    anchored = tuple(
-        ref
-        for ref in cited
-        if _is_corroboration_eligible_provenance(ref.provenance_path)
-        and _cited_fact_anchors_host(
-            facts_by_id.get(ref.evidence_id),
-            target_host_id=target_host_id,
-        )
-    )
-    if not anchored:
-        return False
-    if len(anchored) == 1 and anchored[0].ambiguity_flag:
-        return False
-    return True

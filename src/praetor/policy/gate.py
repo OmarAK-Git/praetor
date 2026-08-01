@@ -27,7 +27,10 @@ from praetor.contracts.judgment import ModelJudgment
 from praetor.contracts.org_config import OrgConfigSnapshot
 from praetor.contracts.policy import PolicyGateResult
 from praetor.evidence.citations import validate_evidence_citations
-from praetor.evidence.provenance import meets_host_cited_corroboration
+from praetor.evidence.provenance import (
+    meets_host_bundle_corroboration,
+    meets_host_cited_enrichment,
+)
 from praetor.hashing import derive_idempotency_key
 from praetor.policy.circuit_breaker import (
     BreakerTripResult,
@@ -53,6 +56,7 @@ from praetor.policy.identity import (
     AMBIGUOUS_CONTAINMENT_TARGET,
     AMBIGUOUS_TARGET_IDENTITY,
     INSUFFICIENT_CORROBORATION,
+    INSUFFICIENT_ENRICHMENT,
     evaluate_account_containment_eligibility,
 )
 from praetor.policy.rate_limit import (
@@ -351,12 +355,21 @@ def evaluate_policy_gate(
     if target is None:
         return _escalate(proposed, AMBIGUOUS_TARGET_IDENTITY, system_fault=False)
 
-    if target.target_type == "host" and not meets_host_cited_corroboration(
-        citation_result.resolved,
-        target_host_id=target.target_id,
-        facts_by_id={fact.evidence_id: fact for fact in evidence_bundle.facts},
-    ):
-        return _escalate(proposed, INSUFFICIENT_CORROBORATION, system_fault=False)
+    if target.target_type == "host":
+        facts_by_id = {
+            fact.evidence_id: fact for fact in evidence_bundle.facts
+        }
+        if not meets_host_bundle_corroboration(
+            evidence_bundle.facts,
+            target_host_id=target.target_id,
+        ):
+            return _escalate(proposed, INSUFFICIENT_CORROBORATION, system_fault=False)
+        if not meets_host_cited_enrichment(
+            citation_result.resolved,
+            target_host_id=target.target_id,
+            facts_by_id=facts_by_id,
+        ):
+            return _escalate(proposed, INSUFFICIENT_ENRICHMENT, system_fault=False)
 
     if target_blocked_by_snapshot(org_snapshot, target):
         return _escalate(proposed, NEVER_CONTAIN_SNAPSHOT, system_fault=False)

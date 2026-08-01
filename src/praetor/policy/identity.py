@@ -30,6 +30,7 @@ WINDOWS_SID_PATTERN = re.compile(r"^S-1-5(?:-\d+)+$", re.IGNORECASE)
 AMBIGUOUS_TARGET_IDENTITY = "ambiguous_target_identity"
 AMBIGUOUS_CONTAINMENT_TARGET = "ambiguous_containment_target"
 INSUFFICIENT_CORROBORATION = "insufficient_corroboration"
+INSUFFICIENT_ENRICHMENT = "insufficient_enrichment"
 ACCOUNT_CONTAINMENT_DISABLED = "account_containment_disabled"
 
 
@@ -81,7 +82,12 @@ def evaluate_account_containment_eligibility(
 
 
 _account_eligibility_helper = "evaluate_account_containment_eligibility"
-_host_corroboration_helper = "meets_host_cited_corroboration"
+_host_bundle_corroboration_helper = "meets_host_bundle_corroboration"
+_host_enrichment_helper = "meets_host_cited_enrichment"
+_host_containment_helpers = (
+    _host_bundle_corroboration_helper,
+    _host_enrichment_helper,
+)
 
 _AUTHORIZED_ACCOUNT_ELIGIBILITY_CALLERS = frozenset(
     {"src/praetor/policy/gate.py"}
@@ -122,7 +128,7 @@ def collect_unauthorized_containment_helper_calls(
     src_root = root / "src" / "praetor"
     violations: dict[str, list[tuple[str, int]]] = {
         _account_eligibility_helper: [],
-        _host_corroboration_helper: [],
+        **{helper: [] for helper in _host_containment_helpers},
     }
 
     for path in sorted(src_root.rglob("*.py")):
@@ -130,20 +136,19 @@ def collect_unauthorized_containment_helper_calls(
         if rel in _HELPER_DEFINITION_PATHS:
             continue
         source = path.read_text(encoding="utf-8")
-        for helper_name, authorized in (
-            (
-                _account_eligibility_helper,
-                _AUTHORIZED_ACCOUNT_ELIGIBILITY_CALLERS,
-            ),
-            (
-                _host_corroboration_helper,
-                _AUTHORIZED_HOST_CORROBORATION_CALLERS,
-            ),
-        ):
-            if rel in authorized:
-                continue
-            for lineno in _find_direct_helper_calls(source, helper_name=helper_name):
-                violations[helper_name].append((rel, lineno))
+        account_authorized = _AUTHORIZED_ACCOUNT_ELIGIBILITY_CALLERS
+        host_authorized = _AUTHORIZED_HOST_CORROBORATION_CALLERS
+        if rel not in account_authorized:
+            for lineno in _find_direct_helper_calls(
+                source, helper_name=_account_eligibility_helper
+            ):
+                violations[_account_eligibility_helper].append((rel, lineno))
+        if rel not in host_authorized:
+            for helper_name in _host_containment_helpers:
+                for lineno in _find_direct_helper_calls(
+                    source, helper_name=helper_name
+                ):
+                    violations[helper_name].append((rel, lineno))
 
     return violations
 
@@ -157,7 +162,7 @@ def collect_unauthorized_test_containment_helper_calls(
     approved_roots = ("tests/policy", "tests/contracts")
     violations: dict[str, list[tuple[str, int]]] = {
         _account_eligibility_helper: [],
-        _host_corroboration_helper: [],
+        **{helper: [] for helper in _host_containment_helpers},
     }
     tests_root = root / "tests"
     if not tests_root.is_dir():
@@ -168,7 +173,8 @@ def collect_unauthorized_test_containment_helper_calls(
         if any(rel.startswith(f"{approved}/") for approved in approved_roots):
             continue
         source = path.read_text(encoding="utf-8")
-        for helper_name in violations:
+        helper_names = (_account_eligibility_helper, *_host_containment_helpers)
+        for helper_name in helper_names:
             for lineno in _find_direct_helper_calls(source, helper_name=helper_name):
                 violations[helper_name].append((rel, lineno))
     return violations

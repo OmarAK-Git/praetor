@@ -16,13 +16,15 @@ from praetor.contracts.judgment import CitedEvidenceRef
 from praetor.evidence.citations import ResolvedEvidenceCitation
 from praetor.evidence.provenance import (
     SYSMON_EVENT_LOG,
-    meets_host_cited_corroboration,
+    WINDOWS_SECURITY_LOG,
+    meets_host_bundle_corroboration,
+    meets_host_cited_enrichment,
 )
 from praetor.policy.containment_policy import extract_account_identity
 from praetor.policy.gate import evaluate_policy_gate
 from praetor.policy.identity import (
     ACCOUNT_CONTAINMENT_DISABLED,
-    INSUFFICIENT_CORROBORATION,
+    INSUFFICIENT_ENRICHMENT,
     evaluate_account_containment_eligibility,
 )
 
@@ -91,7 +93,7 @@ def test_policy_gate_authorizes_when_feature_gate_enabled(
     assert gate_result.containment_directive is not None
 
 
-def test_host_corroboration_helper_pass_does_not_bypass_sole_ambiguous_gate(
+def test_host_enrichment_helper_pass_does_not_bypass_single_path_gate(
     activated, org_snapshot
 ) -> None:
     bundle = EvidenceBundle(
@@ -103,6 +105,15 @@ def test_host_corroboration_helper_pass_does_not_bypass_sole_ambiguous_gate(
                 raw_source="{}",
                 provenance_path=SYSMON_EVENT_LOG,
                 ambiguity_flag=True,
+                timestamp=NOW,
+            ),
+            EvidenceFact(
+                evidence_id="host-security",
+                normalized_fields={"host_id": "ws-01", "event_id": 4624},
+                source_event_reference="syn:sec:1",
+                raw_source="{}",
+                provenance_path=WINDOWS_SECURITY_LOG,
+                ambiguity_flag=False,
                 timestamp=NOW,
             ),
         ]
@@ -118,7 +129,8 @@ def test_host_corroboration_helper_pass_does_not_bypass_sole_ambiguous_gate(
     )
     facts_by_id = {fact.evidence_id: fact for fact in bundle.facts}
 
-    assert not meets_host_cited_corroboration(
+    assert meets_host_bundle_corroboration(bundle.facts, target_host_id="ws-01")
+    assert not meets_host_cited_enrichment(
         cited,
         target_host_id="ws-01",
         facts_by_id=facts_by_id,
@@ -143,5 +155,5 @@ def test_host_corroboration_helper_pass_does_not_bypass_sole_ambiguous_gate(
     )
 
     assert gate_result.final_disposition == Disposition.ESCALATE
-    assert gate_result.fault_flags == [INSUFFICIENT_CORROBORATION]
+    assert gate_result.fault_flags == [INSUFFICIENT_ENRICHMENT]
     assert gate_result.containment_directive is None

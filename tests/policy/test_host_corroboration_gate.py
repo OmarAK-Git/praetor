@@ -1,4 +1,4 @@
-"""PolicyGate host corroboration floor integration (V2-011)."""
+"""PolicyGate host corroboration and enrichment integration (DEC-066)."""
 
 from __future__ import annotations
 
@@ -15,11 +15,12 @@ from tests.policy.conftest import (
 from praetor.contracts.disposition import Disposition
 from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
 from praetor.contracts.judgment import CitedEvidenceRef
-from praetor.evidence.provenance import SYSMON_EVENT_LOG
+from praetor.evidence.provenance import SYSMON_EVENT_LOG, WINDOWS_SECURITY_LOG
 from praetor.policy.gate import evaluate_policy_gate
 from praetor.policy.identity import (
     ACCOUNT_CONTAINMENT_DISABLED,
     INSUFFICIENT_CORROBORATION,
+    INSUFFICIENT_ENRICHMENT,
 )
 
 
@@ -39,7 +40,9 @@ def _gate(
     )
 
 
-def test_host_single_cited_provenance_auto_contains(activated, org_snapshot) -> None:
+def test_host_single_cited_event_escalates_insufficient_enrichment(
+    activated, org_snapshot
+) -> None:
     bundle = host_bundle()
     judgment = auto_contain_judgment(
         bundle,
@@ -51,10 +54,9 @@ def test_host_single_cited_provenance_auto_contains(activated, org_snapshot) -> 
         ],
     )
     result = _gate(activated, org_snapshot, bundle=bundle, judgment=judgment)
-    assert result.final_disposition == Disposition.AUTO_CONTAIN
-    assert result.fault_flags == []
-    assert result.containment_directive is not None
-    assert result.containment_directive.target_id == "ws-01"
+    assert result.final_disposition == Disposition.ESCALATE
+    assert result.fault_flags == [INSUFFICIENT_ENRICHMENT]
+    assert result.containment_directive is None
 
 
 def test_host_sysmon_security_citations_auto_contain(activated, org_snapshot) -> None:
@@ -73,7 +75,9 @@ def test_host_sysmon_security_citations_auto_contain(activated, org_snapshot) ->
     assert result.containment_directive.target_id == "ws-corrob-ok"
 
 
-def test_sole_ambiguous_cited_fact_escalates(activated, org_snapshot) -> None:
+def test_single_path_bundle_escalates_insufficient_corroboration(
+    activated, org_snapshot
+) -> None:
     ts = datetime(2026, 6, 8, 12, 0, 0, tzinfo=UTC)
     bundle = EvidenceBundle(
         facts=[
@@ -136,6 +140,15 @@ def test_two_sysmon_citations_same_path_auto_contains(activated, org_snapshot) -
                 ambiguity_flag=False,
                 timestamp=ts,
             ),
+            EvidenceFact(
+                evidence_id="host-sec-1",
+                normalized_fields={"host_id": "ws-01", "event_id": 4624},
+                source_event_reference="syn:sec:1",
+                raw_source="{}",
+                provenance_path=WINDOWS_SECURITY_LOG,
+                ambiguity_flag=False,
+                timestamp=ts,
+            ),
         ]
     )
     judgment = auto_contain_judgment(
@@ -169,3 +182,4 @@ def test_account_path_unaffected_by_host_corroboration_flag(
     assert result.final_disposition == Disposition.ESCALATE
     assert result.fault_flags == [ACCOUNT_CONTAINMENT_DISABLED]
     assert INSUFFICIENT_CORROBORATION not in result.fault_flags
+    assert INSUFFICIENT_ENRICHMENT not in result.fault_flags

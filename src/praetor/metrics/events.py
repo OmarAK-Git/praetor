@@ -47,6 +47,7 @@ class OutcomeMatrixFaultFlag(StrEnum):
     AMBIGUOUS_TARGET_IDENTITY = "ambiguous_target_identity"
     AMBIGUOUS_CONTAINMENT_TARGET = "ambiguous_containment_target"
     INSUFFICIENT_CORROBORATION = "insufficient_corroboration"
+    INSUFFICIENT_ENRICHMENT = "insufficient_enrichment"
     ACCOUNT_CONTAINMENT_DISABLED = "account_containment_disabled"
     POLICY_AMBIGUITY = "policy_ambiguity"
     CONTAINMENT_POLICY_DENIED = "containment_policy_denied"
