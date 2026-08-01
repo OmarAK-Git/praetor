@@ -156,10 +156,10 @@ def model_proposes(
     narrative: str,
     tells: list[str],
     *,
-    corroborated: bool = False,
+    enriched: bool = False,
 ) -> ModelJudgment:
     refs = [CitedEvidenceRef(evidence_id=evidence_id, field_path="host_id")]
-    if corroborated:
+    if enriched:
         refs.append(
             CitedEvidenceRef(evidence_id=f"{evidence_id}-sec", field_path="host_id")
         )
@@ -305,7 +305,7 @@ def scenario_earned_auto_contain(store: Any) -> None:
             "ev-mal-1",
             "winword.exe spawned encoded PowerShell on WORKSTATION1.",
             ["encoded powershell", "office parent", "off-hours"],
-            corroborated=True,
+            enriched=True,
         ),
         label="earned auto_contain",
     )
@@ -324,7 +324,7 @@ def scenario_benign_review(store: Any) -> None:
             "ev-ben-1",
             "Routine interactive logon shell on WORKSTATION7.",
             ["interactive logon", "explorer.exe"],
-            corroborated=True,
+            enriched=True,
         ),
         label="safe human-review floor",
     )
@@ -351,7 +351,7 @@ def scenario_never_contain(store: Any) -> None:
             "ev-dc-1",
             "Suspicious PowerShell on domain controller DC01.",
             ["lsass handle access", "encoded command"],
-            corroborated=True,
+            enriched=True,
         ),
         label="live never-contain wins over allow",
     )
@@ -364,25 +364,49 @@ def scenario_insufficient_corroboration(store: Any) -> None:
     set_host_allow_rules(store, host)
     result = run_case(
         store,
-        alert_id="ALERT-THIN-001",
+        alert_id="ALERT-PRESENCE-001",
         bundle=host_evidence(
             host,
-            "ev-thin-1",
+            "ev-presence-1",
             "powershell.exe",
             "winword.exe",
-            dual_provenance=True,
-            primary_ambiguous=True,
+            dual_provenance=False,
         ),
         judgment=model_proposes(
             Disposition.AUTO_CONTAIN,
-            "ev-thin-1",
-            "Only the ambiguous Sysmon fact is cited; the second fact is unused.",
+            "ev-presence-1",
+            "Only Sysmon telemetry is present for this host.",
             ["encoded powershell"],
-            corroborated=False,
+            enriched=False,
         ),
-        label="corroboration floor",
+        label="presence corroboration",
     )
     assert "insufficient_corroboration" in result.edict.fault_flags
+
+
+def scenario_insufficient_enrichment(store: Any) -> None:
+    host = "WORKSTATION3"
+    set_host_allow_rules(store, host)
+    result = run_case(
+        store,
+        alert_id="ALERT-ENRICH-001",
+        bundle=host_evidence(
+            host,
+            "ev-enrich-1",
+            "powershell.exe",
+            "winword.exe",
+            dual_provenance=True,
+        ),
+        judgment=model_proposes(
+            Disposition.AUTO_CONTAIN,
+            "ev-enrich-1",
+            "Two log sources exist but the model cites only one event.",
+            ["encoded powershell"],
+            enriched=False,
+        ),
+        label="citation enrichment",
+    )
+    assert "insufficient_enrichment" in result.edict.fault_flags
 
 
 def scenario_not_allowlisted(store: Any) -> None:
@@ -397,7 +421,7 @@ def scenario_not_allowlisted(store: Any) -> None:
             "ev-pos-1",
             "Strong evidence, but the target has no scoped allow rule.",
             ["encoded powershell", "office parent"],
-            corroborated=True,
+            enriched=True,
         ),
         label="escalate-by-default posture",
     )
@@ -422,7 +446,7 @@ def scenario_rate_limit(store: Any) -> None:
             "ev-rate-1",
             "Authorized target arrives after its per-host ceiling is reached.",
             ["encoded powershell", "rate ceiling"],
-            corroborated=True,
+            enriched=True,
         ),
         label="transactional rate-limit refusal",
     )
@@ -448,7 +472,7 @@ def scenario_circuit_breaker(store: Any) -> None:
             "ev-breaker-1",
             "Authorized target evaluated while containment breaker is open.",
             ["encoded powershell", "breaker open"],
-            corroborated=True,
+            enriched=True,
         ),
         label="containment circuit breaker",
     )
@@ -505,7 +529,7 @@ def scenario_similar_case_exemplars(store: Any) -> None:
             "ev-exemplar-1",
             "Confirmed office-to-PowerShell precedent.",
             ["encoded powershell", "office parent"],
-            corroborated=True,
+            enriched=True,
         ),
         label="seed a human-confirmed precedent",
     )
@@ -566,7 +590,7 @@ def scenario_statute_curation(store: Any) -> None:
             "ev-curation-1",
             "A reviewed decision becomes provenance for a proposed statute edit.",
             ["encoded powershell", "office parent"],
-            corroborated=True,
+            enriched=True,
         ),
         label="seed curation provenance",
     )
@@ -694,21 +718,39 @@ SCENARIO_LIST: tuple[Scenario, ...] = (
     ),
     Scenario(
         key="insufficient_corroboration",
-        label="Thin evidence",
-        headline="One shaky log line is not enough to isolate a host.",
+        label="One log source only",
+        headline="Only one kind of telemetry is present for this host — we will not auto-isolate on a single collection path.",
         architecture=(
-            "Praetor only counts evidence the model actually points to — not "
-            "every log sitting nearby in the alert."
+            "Praetor requires independent collection paths in the evidence bundle "
+            "before host containment is even considered."
         ),
         wiring=(
-            "A second log source exists in the bundle, but the model only cites "
-            "one ambiguous Sysmon event."
+            "WORKSTATION2 has Sysmon facts only — no Security channel event in the "
+            "bundle for this host."
         ),
         gotcha=(
-            "Extra telemetry in the pile does nothing unless the model cites it. "
-            "That stops unrelated noise from unlocking containment."
+            "Citation quality cannot compensate for missing telemetry paths. "
+            "Presence corroboration fails first."
         ),
         run=scenario_insufficient_corroboration,
+    ),
+    Scenario(
+        key="insufficient_enrichment",
+        label="Model cited only one event",
+        headline="The pile has more than one log source, but the model only pointed at a single event — citation depth is too thin for auto-contain.",
+        architecture=(
+            "After presence corroboration passes, Praetor requires the model to cite "
+            "at least two distinct source events anchoring the host target."
+        ),
+        wiring=(
+            "WORKSTATION3 has Sysmon and Security events in the bundle, but the "
+            "judgment cites only the Sysmon fact."
+        ),
+        gotcha=(
+            "Extra logs in the bundle do not count unless the model cites them. "
+            "Thin citations escalate even when telemetry is rich."
+        ),
+        run=scenario_insufficient_enrichment,
     ),
     Scenario(
         key="not_allowlisted",

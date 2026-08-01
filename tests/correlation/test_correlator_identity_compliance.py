@@ -172,6 +172,16 @@ def test_two_sysmon_facts_authorize_host_contain_via_policy_gate(
 ) -> None:
     sysmon_events = _load_json_fixture(SYSMON_FIXTURES / "process_chain.json")
     bundle = _correlate(sysmon_events=sysmon_events)
+    aux_fact = EvidenceFact(
+        evidence_id="host-aux-path",
+        normalized_fields={"host_id": "WORKSTATION1", "event_id": 1},
+        source_event_reference="syn:aux:1",
+        raw_source="{}",
+        provenance_path="synthetic/walking_skeleton",
+        ambiguity_flag=False,
+        timestamp=NOW,
+    )
+    bundle = EvidenceBundle(facts=[*bundle.facts, aux_fact])
 
     sysmon_facts = [
         fact for fact in bundle.facts if fact.provenance_path == SYSMON_EVENT_LOG
@@ -186,7 +196,10 @@ def test_two_sysmon_facts_authorize_host_contain_via_policy_gate(
     assert target.target_id == "WORKSTATION1"
 
     snapshot = permissive_org_snapshot(activated, org_snapshot, "WORKSTATION1")
-    refs = [_judgment_for_bundle(bundle)]
+    refs = [
+        CitedEvidenceRef(evidence_id=fact.evidence_id, field_path="host_id")
+        for fact in sysmon_facts
+    ]
     judgment = auto_contain_judgment(bundle, refs=refs)
     result = evaluate_policy_gate(
         activated.conn,

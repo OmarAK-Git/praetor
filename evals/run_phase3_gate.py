@@ -36,7 +36,7 @@ from praetor.config.loader import load_org_config_source
 from praetor.config.preflight import run_preflight
 from praetor.config.state import fetch_active_snapshot
 from praetor.contracts.disposition import Disposition
-from praetor.contracts.evidence import EvidenceBundle
+from praetor.contracts.evidence import EvidenceBundle, EvidenceFact
 from praetor.contracts.judgment import CitedEvidenceRef, ModelJudgment
 from praetor.correlation import correlate_telemetry, load_fixture_events
 from praetor.evidence.provenance import (
@@ -352,26 +352,89 @@ def check_phase2_safety_on_noisy_bundle(
                     decision_id="dec-phase3-noisy-host-single-sysmon",
                     now=FIXED_NOW,
                 )
-                if host_single_sysmon.final_disposition != Disposition.AUTO_CONTAIN:
+                if host_single_sysmon.final_disposition != Disposition.ESCALATE:
                     errors.append(
-                        "single non-ambiguous sysmon host cite must auto_contain "
-                        "under DEC-065 temporary floor"
+                        "sysmon-only bundle must escalate under DEC-066 presence "
+                        "corroboration floor"
                     )
-                if host_single_sysmon.fault_flags:
+                if host_single_sysmon.fault_flags != [INSUFFICIENT_CORROBORATION]:
                     errors.append(
-                        "single non-ambiguous sysmon host cite must not record "
-                        f"fault flags, got {host_single_sysmon.fault_flags}"
+                        "sysmon-only host cite must record insufficient_corroboration, "
+                        f"got {host_single_sysmon.fault_flags}"
                     )
-                single_directive = host_single_sysmon.containment_directive
-                if single_directive is None:
+                if host_single_sysmon.containment_directive is not None:
                     errors.append(
-                        "single sysmon host auto_contain must emit containment directive"
+                        "sysmon-only host cite must not emit containment directive"
                     )
-                elif single_directive.target_id != INCIDENT_HOST_ID:
+
+                incident_sysmon_facts = [
+                    fact
+                    for fact in sysmon_only_bundle.facts
+                    if fact.provenance_path == SYSMON_EVENT_LOG
+                    and fact.normalized_fields.get("host_id") == INCIDENT_HOST_ID
+                    and not fact.ambiguity_flag
+                ]
+                if len(incident_sysmon_facts) < 2:
                     errors.append(
-                        "containment directive must target incident host "
-                        f"{INCIDENT_HOST_ID}, got {single_directive.target_id}"
+                        "sysmon-only bundle must include at least two non-ambiguous "
+                        f"Sysmon facts for {INCIDENT_HOST_ID}"
                     )
+                else:
+                    enriched_bundle = EvidenceBundle(
+                        facts=[
+                            *sysmon_only_bundle.facts,
+                            EvidenceFact(
+                                evidence_id="phase3-aux-path",
+                                normalized_fields={
+                                    "host_id": INCIDENT_HOST_ID,
+                                    "event_id": 1,
+                                },
+                                source_event_reference="syn:phase3:aux:1",
+                                raw_source="{}",
+                                provenance_path="synthetic/walking_skeleton",
+                                ambiguity_flag=False,
+                                timestamp=FIXED_NOW,
+                            ),
+                        ]
+                    )
+                    host_dual_path = evaluate_policy_gate(
+                        store.conn,
+                        judgment=_auto_contain_judgment(
+                            enriched_bundle,
+                            refs=[
+                                CitedEvidenceRef(
+                                    evidence_id=fact.evidence_id,
+                                    field_path="host_id",
+                                )
+                                for fact in incident_sysmon_facts[:2]
+                            ],
+                        ),
+                        evidence_bundle=enriched_bundle,
+                        org_snapshot=host_snapshot,
+                        alert_identity="phase3-noisy-host-dual-path",
+                        decision_id="dec-phase3-noisy-host-dual-path",
+                        now=FIXED_NOW,
+                    )
+                    if host_dual_path.final_disposition != Disposition.AUTO_CONTAIN:
+                        errors.append(
+                            "dual-path bundle with two cited source events must "
+                            "auto_contain under DEC-066"
+                        )
+                    if host_dual_path.fault_flags:
+                        errors.append(
+                            "dual-path enriched host cite must not record fault "
+                            f"flags, got {host_dual_path.fault_flags}"
+                        )
+                    dual_directive = host_dual_path.containment_directive
+                    if dual_directive is None:
+                        errors.append(
+                            "dual-path host auto_contain must emit containment directive"
+                        )
+                    elif dual_directive.target_id != INCIDENT_HOST_ID:
+                        errors.append(
+                            "containment directive must target incident host "
+                            f"{INCIDENT_HOST_ID}, got {dual_directive.target_id}"
+                        )
 
                 ambiguous_sysmon = next(
                     fact

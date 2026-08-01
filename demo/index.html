@@ -196,7 +196,12 @@ refuses.">
         <label class="dial">
           <input type="radio" name="scenario" value="insufficient_corroboration"
                  id="dial-insufficient_corroboration">
-          <span class="dial-label">Thin evidence</span>
+          <span class="dial-label">One log source only</span>
+        </label>
+        <label class="dial">
+          <input type="radio" name="scenario" value="insufficient_enrichment"
+                 id="dial-insufficient_enrichment">
+          <span class="dial-label">Model cited only one event</span>
         </label>
         <label class="dial">
           <input type="radio" name="scenario" value="not_allowlisted"
@@ -259,7 +264,7 @@ PRAETOR DECIDED   : AUTO_CONTAIN
 fault_flags       : []
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 58b9a89ae7fce75ca52b2037e90013de2f5b8707eeb5d4898e5a652ec45e067c
+decision_id       : 671c611a3c33f923483f79b356e45a1c44cf578584ee57b7594d8c240f0f15ff
   &gt;&gt; CONTAINMENT DIRECTIVE EMITTED
      target          : host:WORKSTATION1 scope=host-isolation
      lifetime        : 300s  (hard cap 300)
@@ -296,7 +301,7 @@ PRAETOR DECIDED   : STANDARD_REVIEW
 fault_flags       : []
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : f0b4c639a64bb97348e739a8d5aab0bb0a8832ef62b687f4967fb82966447933
+decision_id       : dbe022fd646de28a5d70b7f7f56ad1e5250b12e875cbd2716ddf1734e60699b3
   &gt;&gt; no containment directive - nothing isolated
 SCENARIO COMPLETE: benign_review</code></pre>
       </section>
@@ -328,41 +333,73 @@ PRAETOR DECIDED   : ESCALATE
 fault_flags       : [&#x27;never_contain_live_conflict&#x27;]
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : f055dc0f6e13f7094dbbcc7caecbca76b4ec77bd337e71cf11f948e2304cd0b4
+decision_id       : 3678bd7746e48926de4274db3a5334d001fd8f9ef021dedd5e99ccaed73fa596
   &gt;&gt; no containment directive - nothing isolated
 SCENARIO COMPLETE: never_contain</code></pre>
       </section>
       <section class="panel" id="panel-insufficient_corroboration" role="tabpanel"
                aria-labelledby="dial-insufficient_corroboration" hidden>
-        <h2>Thin evidence</h2>
-        <p class="headline">One shaky log line is not enough to isolate a host.</p>
+        <h2>One log source only</h2>
+        <p class="headline">Only one kind of telemetry is present for this host — we will not auto-isolate on a single collection path.</p>
         <div class="badges"><span class="badge badge-blocked">ESCALATE</span><span class="badge badge-flag">insufficient_corroboration</span><span class="badge badge-none">no directive</span></div>
         <div class="notes">
           <div class="note">
             <h3>What happens</h3>
-            <p>Praetor only counts evidence the model actually points to — not every log sitting nearby in the alert.</p>
+            <p>Praetor requires independent collection paths in the evidence bundle before host containment is even considered.</p>
           </div>
           <div class="note">
             <h3>Setup</h3>
-            <p>A second log source exists in the bundle, but the model only cites one ambiguous Sysmon event.</p>
+            <p>WORKSTATION2 has Sysmon facts only — no Security channel event in the bundle for this host.</p>
           </div>
           <div class="note note-gotcha">
             <h3>Why it matters</h3>
-            <p>Extra telemetry in the pile does nothing unless the model cites it. That stops unrelated noise from unlocking containment.</p>
+            <p>Citation quality cannot compensate for missing telemetry paths. Presence corroboration fails first.</p>
           </div>
         </div>
         <h3 class="output-title">What the engine printed</h3>
         <pre class="output"><code>SCENARIO START: insufficient_corroboration
-alert             : ALERT-THIN-001
-scenario beat     : corroboration floor
+alert             : ALERT-PRESENCE-001
+scenario beat     : presence corroboration
 model proposed    : auto_contain
 PRAETOR DECIDED   : ESCALATE
 fault_flags       : [&#x27;insufficient_corroboration&#x27;]
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 038a15b16a9b0799ff39482bdf14a39335982227aac66eda2d31f70cf281cdd4
+decision_id       : 816ce572480a6efa0b263418c11ece5df032529e49ff3b3b40e0498d2252d353
   &gt;&gt; no containment directive - nothing isolated
 SCENARIO COMPLETE: insufficient_corroboration</code></pre>
+      </section>
+      <section class="panel" id="panel-insufficient_enrichment" role="tabpanel"
+               aria-labelledby="dial-insufficient_enrichment" hidden>
+        <h2>Model cited only one event</h2>
+        <p class="headline">The pile has more than one log source, but the model only pointed at a single event — citation depth is too thin for auto-contain.</p>
+        <div class="badges"><span class="badge badge-blocked">ESCALATE</span><span class="badge badge-flag">insufficient_enrichment</span><span class="badge badge-none">no directive</span></div>
+        <div class="notes">
+          <div class="note">
+            <h3>What happens</h3>
+            <p>After presence corroboration passes, Praetor requires the model to cite at least two distinct source events anchoring the host target.</p>
+          </div>
+          <div class="note">
+            <h3>Setup</h3>
+            <p>WORKSTATION3 has Sysmon and Security events in the bundle, but the judgment cites only the Sysmon fact.</p>
+          </div>
+          <div class="note note-gotcha">
+            <h3>Why it matters</h3>
+            <p>Extra logs in the bundle do not count unless the model cites them. Thin citations escalate even when telemetry is rich.</p>
+          </div>
+        </div>
+        <h3 class="output-title">What the engine printed</h3>
+        <pre class="output"><code>SCENARIO START: insufficient_enrichment
+alert             : ALERT-ENRICH-001
+scenario beat     : citation enrichment
+model proposed    : auto_contain
+PRAETOR DECIDED   : ESCALATE
+fault_flags       : [&#x27;insufficient_enrichment&#x27;]
+system_fault_esc. : False
+stamp_status      : succeeded
+decision_id       : 40bc1f1ce4a5ed59c55090e93c6dd3069daec401a069a1135296dfd63fd3c83c
+  &gt;&gt; no containment directive - nothing isolated
+SCENARIO COMPLETE: insufficient_enrichment</code></pre>
       </section>
       <section class="panel" id="panel-not_allowlisted" role="tabpanel"
                aria-labelledby="dial-not_allowlisted" hidden>
@@ -392,7 +429,7 @@ PRAETOR DECIDED   : ESCALATE
 fault_flags       : [&#x27;containment_policy_escalation_required&#x27;]
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : e2b22a4a74975ff7a23c30a4148c21249dfa00b9feed477628edeea043eb037d
+decision_id       : 52d34152620b10afb6d4baeb4628c5096ef9955b293bb718dc85b41e0b528eed
   &gt;&gt; no containment directive - nothing isolated
 pin: containment not granted by omission
 SCENARIO COMPLETE: not_allowlisted</code></pre>
@@ -425,7 +462,7 @@ PRAETOR DECIDED   : ESCALATE
 fault_flags       : [&#x27;rate_limit_exceeded&#x27;]
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 58a217d5e53f48478a7aceb07a965c49a5c42bfc2dd57be4952cc2755d203533
+decision_id       : 4b063c55fe4a9296e692eb2c2b26a98024dde40dd38ee4d6ce1e2439e560b8c0
   &gt;&gt; no containment directive - nothing isolated
 SCENARIO COMPLETE: rate_limit</code></pre>
       </section>
@@ -457,7 +494,7 @@ PRAETOR DECIDED   : ESCALATE
 fault_flags       : [&#x27;containment_breaker_open&#x27;]
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : f929e5b2f192cd859be84f36a39375bd6de76dc7c2583a9180e1d7b80260199a
+decision_id       : c3905534702c8661c7734275f4866d77802dc52f43354bca60b6423bec4b2c40
   &gt;&gt; no containment directive - nothing isolated
 SCENARIO COMPLETE: circuit_breaker</code></pre>
       </section>
@@ -514,7 +551,7 @@ PRAETOR DECIDED   : AUTO_CONTAIN
 fault_flags       : []
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 809c16ce8289e8960cc1c03f4b3db3b0bd4eae3dc54179301394eb95003ffbc9
+decision_id       : f6959b85e2827dcf0ba0d6a305882e1f876f336b0b9ac6844f6794a121482260
   &gt;&gt; CONTAINMENT DIRECTIVE EMITTED
      target          : host:WORKSTATION-EXEMPLAR scope=host-isolation
      lifetime        : 300s  (hard cap 300)
@@ -560,7 +597,7 @@ PRAETOR DECIDED   : AUTO_CONTAIN
 fault_flags       : []
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 6df50c70d3090cd321138217753d2ca5bd707fd158e29e396c0a344314ebe088
+decision_id       : a14e7f4cbc40e5426d4261181ddd864b7c8dd3e87219833348b6a4236f99bbeb
   &gt;&gt; CONTAINMENT DIRECTIVE EMITTED
      target          : host:WORKSTATION-CURATION scope=host-isolation
      lifetime        : 300s  (hard cap 300)
@@ -581,11 +618,11 @@ SCENARIO COMPLETE: statute_curation</code></pre>
       <code>notebooks/praetor_walkthrough.ipynb</code>. Regenerate this page with
       <code>python tools/build_demo_page.py</code>.
     </p>
-    <p>Generated 2026-08-01 19:18 UTC from the live engine.</p>
+    <p>Generated 2026-08-01 19:58 UTC from the live engine.</p>
   </footer>
 </div>
 <script>
-  const keys = ["earned_auto_contain", "benign_review", "never_contain", "insufficient_corroboration", "not_allowlisted", "rate_limit", "circuit_breaker", "progressive_report", "similar_case_exemplars", "statute_curation"];
+  const keys = ["earned_auto_contain", "benign_review", "never_contain", "insufficient_corroboration", "insufficient_enrichment", "not_allowlisted", "rate_limit", "circuit_breaker", "progressive_report", "similar_case_exemplars", "statute_curation"];
   for (const key of keys) {
     document.getElementById("dial-" + key).addEventListener("change", () => {
       for (const other of keys) {

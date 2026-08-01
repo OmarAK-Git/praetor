@@ -2784,7 +2784,12 @@
       "evidence": [
         ".workflow/enrichment-split-02-helpers/results/verifier-result.md"
       ],
-      "status": "pending",
+      "source_plan": "docs/superpowers/plans/2026-08-01-enrichment-vs-corroboration.md",
+      "researcher_decision": "skipped: single prescribed path from ratified design"
+    },
+    {
+      "id": "enrichment-split-03-gate-harness",
+      "status": "done",
       "tier": "T2",
       "depends_on": [
         "enrichment-split-02-helpers"
@@ -2832,13 +2837,15 @@
       "run_dir": ".workflow/enrichment-split-03-gate-harness",
       "attempts": 0,
       "max_retries": 1,
-      "evidence": [],
+      "evidence": [
+        ".workflow/enrichment-split-03-gate-harness/results/verifier-result.md"
+      ],
       "source_plan": "docs/superpowers/plans/2026-08-01-enrichment-vs-corroboration.md",
       "researcher_decision": "skipped: single prescribed path from ratified design"
     },
     {
       "id": "enrichment-split-04-demo",
-      "status": "pending",
+      "status": "done",
       "tier": "T2",
       "depends_on": [
         "enrichment-split-03-gate-harness"
@@ -2879,13 +2886,15 @@
       "run_dir": ".workflow/enrichment-split-04-demo",
       "attempts": 0,
       "max_retries": 1,
-      "evidence": [],
+      "evidence": [
+        ".workflow/enrichment-split-04-demo/results/verifier-result.md"
+      ],
       "source_plan": "docs/superpowers/plans/2026-08-01-enrichment-vs-corroboration.md",
       "researcher_decision": "skipped: demo copy shape prescribed by public-demo design + this plan"
     },
     {
       "id": "enrichment-split-gate",
-      "status": "pending",
+      "status": "done",
       "tier": "T3",
       "depends_on": [
         "enrichment-split-01-decision",
@@ -2929,7 +2938,9 @@
       "run_dir": ".workflow/enrichment-split-gate",
       "attempts": 0,
       "max_retries": 1,
-      "evidence": [],
+      "evidence": [
+        ".workflow/enrichment-split-gate/results/verifier-result.md"
+      ],
       "source_plan": "docs/superpowers/plans/2026-08-01-enrichment-vs-corroboration.md",
       "researcher_decision": "skipped: gate is verify-only"
     }

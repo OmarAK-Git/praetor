@@ -106,18 +106,35 @@ def test_uncited_cross_host_noise_does_not_capture_target(
     org_snapshot,
 ) -> None:
     bundle = _sysmon_only_noisy_bundle()
-    incident_fact = next(
+    aux_fact = EvidenceFact(
+        evidence_id="noise-aux-path",
+        normalized_fields={"host_id": INCIDENT_HOST_ID, "event_id": 1},
+        source_event_reference="syn:noise:aux:1",
+        raw_source="{}",
+        provenance_path="synthetic/walking_skeleton",
+        ambiguity_flag=False,
+        timestamp=datetime(2026, 6, 8, 12, 0, 0, tzinfo=UTC),
+    )
+    bundle = EvidenceBundle(facts=[*bundle.facts, aux_fact])
+    incident_facts = [
         fact
         for fact in bundle.facts
         if fact.normalized_fields.get("host_id") == INCIDENT_HOST_ID
-    )
+        and fact.provenance_path == "sysmon_event_log"
+        and not fact.ambiguity_flag
+    ]
+    assert len(incident_facts) >= 2
     judgment = auto_contain_judgment(
         bundle,
         refs=[
             CitedEvidenceRef(
-                evidence_id=incident_fact.evidence_id,
+                evidence_id=incident_facts[0].evidence_id,
                 field_path="host_id",
-            )
+            ),
+            CitedEvidenceRef(
+                evidence_id=incident_facts[1].evidence_id,
+                field_path="host_id",
+            ),
         ],
     )
 

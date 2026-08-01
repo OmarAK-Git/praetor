@@ -27,12 +27,12 @@ KNOWN_LEGACY_TEST_HELPER_CALLS: frozenset[tuple[str, str, int]] = frozenset(
         (
             _ACCOUNT_ELIGIBILITY_HELPER,
             "tests/correlation/test_correlator_identity_compliance.py",
-            354,
+            367,
         ),
         (
             _ACCOUNT_ELIGIBILITY_HELPER,
             "tests/correlation/test_correlator_identity_compliance.py",
-            362,
+            375,
         ),
         (
             _ACCOUNT_ELIGIBILITY_HELPER,
