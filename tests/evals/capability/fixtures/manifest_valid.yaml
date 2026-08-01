@@ -1,0 +1,18 @@
+capture_id: test-capture
+anchors:
+  - anchor_id: mal-01
+    anchor_time: 2026-01-01T12:00:00Z
+    expected_class: malicious
+    rationale: Encoded PowerShell spawned by Office process per capture technique notes.
+  - anchor_id: mal-02
+    anchor_time: 2026-01-01T12:05:00Z
+    expected_class: malicious
+    rationale: Credential access tooling executed on the same host.
+  - anchor_id: ben-01
+    anchor_time: 2026-01-01T08:00:00Z
+    expected_class: benign
+    rationale: Scheduled inventory script, same host, hours before the attack window.
+  - anchor_id: ben-02
+    anchor_time: 2026-01-01T08:30:00Z
+    expected_class: benign
+    rationale: Routine administrator logon, same host, outside the attack window.
