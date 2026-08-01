@@ -69,6 +69,13 @@ def _panel(scenario: Scenario, output: str, *, index: int) -> str:
         for kind, text in _outcome_badges(output)
     )
     badges = f'\n        <div class="badges">{chips}</div>' if chips else ""
+    hint = ""
+    if scenario.hint:
+        hint = f"""
+        <aside class="hint" role="note">
+          <h3>Hint</h3>
+          <p>{html.escape(scenario.hint)}</p>
+        </aside>"""
     return f"""
       <section class="panel" id="panel-{scenario.key}" role="tabpanel"
                aria-labelledby="dial-{scenario.key}"{"" if index == 0 else " hidden"}>
@@ -87,7 +94,7 @@ def _panel(scenario: Scenario, output: str, *, index: int) -> str:
             <h3>Why it matters</h3>
             <p>{html.escape(scenario.gotcha)}</p>
           </div>
-        </div>
+        </div>{hint}
         <h3 class="output-title">What the engine printed</h3>
         <pre class="output"><code>{html.escape(output.strip())}</code></pre>
       </section>"""
@@ -224,6 +231,22 @@ refuses.">
   }}
   .note-gotcha h3 {{ color: var(--blocked); }}
   .note p {{ margin: 0; font-size: 14px; }}
+  .hint {{
+    background: var(--surface-2);
+    border: 1px solid #27436e;
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 0 0 22px;
+  }}
+  .hint h3 {{
+    margin: 0 0 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--accent);
+  }}
+  .hint p {{ margin: 0; font-size: 14px; color: var(--muted); }}
   .output-title {{
     margin: 0 0 8px;
     font-size: 11px;

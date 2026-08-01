@@ -634,6 +634,7 @@ class Scenario:
     wiring: str
     gotcha: str
     run: Callable[[Any], None]
+    hint: str | None = None
 
 
 SCENARIO_LIST: tuple[Scenario, ...] = (
@@ -805,8 +806,9 @@ SCENARIO_LIST: tuple[Scenario, ...] = (
         label="Propose a policy edit",
         headline="Analysts can draft a policy change from review notes — but it cannot go live by itself.",
         architecture=(
-            "After enough confirmed cases, Praetor can package a proposed org "
-            "policy edit for humans to review."
+            "Praetor does not invent the edit. Humans draft the org-policy "
+            "change from confirmed decisions and analyst notes; Praetor "
+            "packages that draft as a review-only artifact."
         ),
         wiring=(
             "A finalized decision plus an analyst note support a draft change to "
@@ -817,6 +819,12 @@ SCENARIO_LIST: tuple[Scenario, ...] = (
             "promote it in a separate workflow before it becomes real policy."
         ),
         run=scenario_statute_curation,
+        hint=(
+            "Related path: the org-config sweep can empirically propose "
+            "principals, assets, and admin patterns from telemetry. It still "
+            "never infers statute, containment policy, or never-contain — and "
+            "those artifacts are also refused until a SOC lead promotes them."
+        ),
     ),
 )
 
@@ -824,12 +832,14 @@ SCENARIOS: dict[str, Scenario] = {s.key: s for s in SCENARIO_LIST}
 
 
 def explainer_markdown(scenario: Scenario) -> str:
+    hint = f"\n\n**Hint.** {scenario.hint}" if scenario.hint else ""
     return (
         f"### {scenario.label}\n\n"
         f"{scenario.headline}\n\n"
         f"**What happens.** {scenario.architecture}\n\n"
         f"**Setup.** {scenario.wiring}\n\n"
-        f"**Why it matters.** {scenario.gotcha}\n\n"
+        f"**Why it matters.** {scenario.gotcha}"
+        f"{hint}\n\n"
         "---"
     )
 

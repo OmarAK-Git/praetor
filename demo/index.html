@@ -112,6 +112,22 @@ refuses.">
   }
   .note-gotcha h3 { color: var(--blocked); }
   .note p { margin: 0; font-size: 14px; }
+  .hint {
+    background: var(--surface-2);
+    border: 1px solid #27436e;
+    border-left: 3px solid var(--accent);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 0 0 22px;
+  }
+  .hint h3 {
+    margin: 0 0 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--accent);
+  }
+  .hint p { margin: 0; font-size: 14px; color: var(--muted); }
   .output-title {
     margin: 0 0 8px;
     font-size: 11px;
@@ -243,7 +259,7 @@ PRAETOR DECIDED   : AUTO_CONTAIN
 fault_flags       : []
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 43fcc1f8fdc893c7057fa65b69107ef83f4661a2b91323849d8efb268b5d1202
+decision_id       : 58b9a89ae7fce75ca52b2037e90013de2f5b8707eeb5d4898e5a652ec45e067c
   &gt;&gt; CONTAINMENT DIRECTIVE EMITTED
      target          : host:WORKSTATION1 scope=host-isolation
      lifetime        : 300s  (hard cap 300)
@@ -280,7 +296,7 @@ PRAETOR DECIDED   : STANDARD_REVIEW
 fault_flags       : []
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 91bc8379d1d375987d2819f26320975b37038211fa03aa3d50665f0c469f2843
+decision_id       : f0b4c639a64bb97348e739a8d5aab0bb0a8832ef62b687f4967fb82966447933
   &gt;&gt; no containment directive - nothing isolated
 SCENARIO COMPLETE: benign_review</code></pre>
       </section>
@@ -312,7 +328,7 @@ PRAETOR DECIDED   : ESCALATE
 fault_flags       : [&#x27;never_contain_live_conflict&#x27;]
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 0ce653ffce6e764ba7bbf4445fa0caae66eae5e81751f4f73fe13f631c3a7f87
+decision_id       : f055dc0f6e13f7094dbbcc7caecbca76b4ec77bd337e71cf11f948e2304cd0b4
   &gt;&gt; no containment directive - nothing isolated
 SCENARIO COMPLETE: never_contain</code></pre>
       </section>
@@ -344,7 +360,7 @@ PRAETOR DECIDED   : ESCALATE
 fault_flags       : [&#x27;insufficient_corroboration&#x27;]
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : f096671392fa9a41b545c2e9755012cbe2b4bcd0aaa132823419d24b42edb343
+decision_id       : 038a15b16a9b0799ff39482bdf14a39335982227aac66eda2d31f70cf281cdd4
   &gt;&gt; no containment directive - nothing isolated
 SCENARIO COMPLETE: insufficient_corroboration</code></pre>
       </section>
@@ -376,7 +392,7 @@ PRAETOR DECIDED   : ESCALATE
 fault_flags       : [&#x27;containment_policy_escalation_required&#x27;]
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : a4c2749be3a746ba38015755ff5ccf87868c4d369479ce2c102755c20caf69ec
+decision_id       : e2b22a4a74975ff7a23c30a4148c21249dfa00b9feed477628edeea043eb037d
   &gt;&gt; no containment directive - nothing isolated
 pin: containment not granted by omission
 SCENARIO COMPLETE: not_allowlisted</code></pre>
@@ -409,7 +425,7 @@ PRAETOR DECIDED   : ESCALATE
 fault_flags       : [&#x27;rate_limit_exceeded&#x27;]
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : dd151c0eb3d42d14e7129e073bd7461009f42ffd3473ff8d9c3900c1f45a8742
+decision_id       : 58a217d5e53f48478a7aceb07a965c49a5c42bfc2dd57be4952cc2755d203533
   &gt;&gt; no containment directive - nothing isolated
 SCENARIO COMPLETE: rate_limit</code></pre>
       </section>
@@ -441,7 +457,7 @@ PRAETOR DECIDED   : ESCALATE
 fault_flags       : [&#x27;containment_breaker_open&#x27;]
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : a40b79dd792853227c72e5aa841401686fcd95d99831589f03bece8105bff68e
+decision_id       : f929e5b2f192cd859be84f36a39375bd6de76dc7c2583a9180e1d7b80260199a
   &gt;&gt; no containment directive - nothing isolated
 SCENARIO COMPLETE: circuit_breaker</code></pre>
       </section>
@@ -498,7 +514,7 @@ PRAETOR DECIDED   : AUTO_CONTAIN
 fault_flags       : []
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 0cb7e53acf5d262df0a5cdfbd52712d6510b3b9fdd1ed968dacc34bf0cdc1816
+decision_id       : 809c16ce8289e8960cc1c03f4b3db3b0bd4eae3dc54179301394eb95003ffbc9
   &gt;&gt; CONTAINMENT DIRECTIVE EMITTED
      target          : host:WORKSTATION-EXEMPLAR scope=host-isolation
      lifetime        : 300s  (hard cap 300)
@@ -520,7 +536,7 @@ SCENARIO COMPLETE: similar_case_exemplars</code></pre>
         <div class="notes">
           <div class="note">
             <h3>What happens</h3>
-            <p>After enough confirmed cases, Praetor can package a proposed org policy edit for humans to review.</p>
+            <p>Praetor does not invent the edit. Humans draft the org-policy change from confirmed decisions and analyst notes; Praetor packages that draft as a review-only artifact.</p>
           </div>
           <div class="note">
             <h3>Setup</h3>
@@ -531,6 +547,10 @@ SCENARIO COMPLETE: similar_case_exemplars</code></pre>
             <p>The draft is refused for activation on purpose. A SOC lead must promote it in a separate workflow before it becomes real policy.</p>
           </div>
         </div>
+        <aside class="hint" role="note">
+          <h3>Hint</h3>
+          <p>Related path: the org-config sweep can empirically propose principals, assets, and admin patterns from telemetry. It still never infers statute, containment policy, or never-contain — and those artifacts are also refused until a SOC lead promotes them.</p>
+        </aside>
         <h3 class="output-title">What the engine printed</h3>
         <pre class="output"><code>SCENARIO START: statute_curation
 alert             : ALERT-CURATION-SOURCE
@@ -540,7 +560,7 @@ PRAETOR DECIDED   : AUTO_CONTAIN
 fault_flags       : []
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 9f70af9c3fc943b4ebfccad57a6e92e43351d7043a235ea27c3f789edda80382
+decision_id       : 6df50c70d3090cd321138217753d2ca5bd707fd158e29e396c0a344314ebe088
   &gt;&gt; CONTAINMENT DIRECTIVE EMITTED
      target          : host:WORKSTATION-CURATION scope=host-isolation
      lifetime        : 300s  (hard cap 300)
@@ -561,7 +581,7 @@ SCENARIO COMPLETE: statute_curation</code></pre>
       <code>notebooks/praetor_walkthrough.ipynb</code>. Regenerate this page with
       <code>python tools/build_demo_page.py</code>.
     </p>
-    <p>Generated 2026-08-01 19:06 UTC from the live engine.</p>
+    <p>Generated 2026-08-01 19:18 UTC from the live engine.</p>
   </footer>
 </div>
 <script>
