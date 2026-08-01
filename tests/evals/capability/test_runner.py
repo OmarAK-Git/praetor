@@ -118,6 +118,26 @@ def test_runs_parameter_repeats_each_path(tmp_path: Path) -> None:
     assert sorted(obs.run_index for obs in observations) == [0, 0, 1, 1, 2, 2]
 
 
+def test_path_a_correlates_in_window_events(tmp_path: Path) -> None:
+    """Path A must pass anchor_time so correlation finds fixture events."""
+    store = open_spike_store(tmp_path / "spike.db")
+    disposition = Disposition.STANDARD_REVIEW
+    try:
+        observations = run_anchor(
+            store,
+            anchor=ANCHOR,
+            events=[_sysmon("1"), _security("2")],
+            provider=FakeProvider(proposed_disposition=disposition),
+            runs=1,
+        )
+    finally:
+        store.conn.close()
+
+    path_a = next(obs for obs in observations if obs.path == PATH_A)
+    assert "correlation_failure" not in path_a.fault_flags
+    assert path_a.proposed_disposition == disposition.value
+
+
 def test_proposed_disposition_is_recorded(tmp_path: Path) -> None:
     store = open_spike_store(tmp_path / "spike.db")
     try:

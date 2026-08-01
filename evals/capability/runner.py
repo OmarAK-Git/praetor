@@ -154,6 +154,7 @@ def run_anchor(
                 "judgment_provider": provider,
                 "stamp_backend": stamp_backend,
                 "alert_identity": alert_identity,
+                "anchor_time": anchor.anchor_time,
             }
             if path == PATH_A:
                 intake_kwargs["sysmon_events"] = sysmon
