@@ -128,8 +128,8 @@ refuses.">
     --text: #e6edf7;
     --muted: #93a4bf;
     --accent: #5b9dff;
-    --contain: #f0a742;
-    --blocked: #ff6b6b;
+    --contain: #ff6b6b;
+    --blocked: #f0a742;
     --review: #46d19b;
   }}
   * {{ box-sizing: border-box; }}
@@ -197,11 +197,11 @@ refuses.">
     background: var(--surface-2);
     color: var(--muted);
   }}
-  .badge-contain {{ color: var(--contain); border-color: #5a4526; }}
-  .badge-blocked {{ color: var(--blocked); border-color: #5c2b2b; }}
+  .badge-contain {{ color: var(--contain); border-color: #5c2b2b; }}
+  .badge-blocked {{ color: var(--blocked); border-color: #5a4526; }}
   .badge-review {{ color: var(--review); border-color: #235142; }}
   .badge-flag {{ color: var(--accent); border-color: #27436e; }}
-  .badge-directive {{ color: var(--contain); border-color: #5a4526; }}
+  .badge-directive {{ color: var(--contain); border-color: #5c2b2b; }}
   .notes {{
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -214,7 +214,7 @@ refuses.">
     border-radius: 10px;
     padding: 14px 16px;
   }}
-  .note-gotcha {{ border-color: #4a3a24; }}
+  .note-gotcha {{ border-color: #5a4526; }}
   .note h3 {{
     margin: 0 0 6px;
     font-size: 11px;
@@ -222,7 +222,7 @@ refuses.">
     letter-spacing: 0.09em;
     color: var(--muted);
   }}
-  .note-gotcha h3 {{ color: var(--contain); }}
+  .note-gotcha h3 {{ color: var(--blocked); }}
   .note p {{ margin: 0; font-size: 14px; }}
   .output-title {{
     margin: 0 0 8px;

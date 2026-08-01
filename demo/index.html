@@ -16,8 +16,8 @@ refuses.">
     --text: #e6edf7;
     --muted: #93a4bf;
     --accent: #5b9dff;
-    --contain: #f0a742;
-    --blocked: #ff6b6b;
+    --contain: #ff6b6b;
+    --blocked: #f0a742;
     --review: #46d19b;
   }
   * { box-sizing: border-box; }
@@ -85,11 +85,11 @@ refuses.">
     background: var(--surface-2);
     color: var(--muted);
   }
-  .badge-contain { color: var(--contain); border-color: #5a4526; }
-  .badge-blocked { color: var(--blocked); border-color: #5c2b2b; }
+  .badge-contain { color: var(--contain); border-color: #5c2b2b; }
+  .badge-blocked { color: var(--blocked); border-color: #5a4526; }
   .badge-review { color: var(--review); border-color: #235142; }
   .badge-flag { color: var(--accent); border-color: #27436e; }
-  .badge-directive { color: var(--contain); border-color: #5a4526; }
+  .badge-directive { color: var(--contain); border-color: #5c2b2b; }
   .notes {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -102,7 +102,7 @@ refuses.">
     border-radius: 10px;
     padding: 14px 16px;
   }
-  .note-gotcha { border-color: #4a3a24; }
+  .note-gotcha { border-color: #5a4526; }
   .note h3 {
     margin: 0 0 6px;
     font-size: 11px;
@@ -110,7 +110,7 @@ refuses.">
     letter-spacing: 0.09em;
     color: var(--muted);
   }
-  .note-gotcha h3 { color: var(--contain); }
+  .note-gotcha h3 { color: var(--blocked); }
   .note p { margin: 0; font-size: 14px; }
   .output-title {
     margin: 0 0 8px;
@@ -243,7 +243,7 @@ PRAETOR DECIDED   : AUTO_CONTAIN
 fault_flags       : []
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 10acd9ab74601c6c9778ae75ecd10e48260252d4d761511cace7608f98abc404
+decision_id       : 43fcc1f8fdc893c7057fa65b69107ef83f4661a2b91323849d8efb268b5d1202
   &gt;&gt; CONTAINMENT DIRECTIVE EMITTED
      target          : host:WORKSTATION1 scope=host-isolation
      lifetime        : 300s  (hard cap 300)
@@ -280,7 +280,7 @@ PRAETOR DECIDED   : STANDARD_REVIEW
 fault_flags       : []
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 4dcb738f5213f86c23c1dabeb1f88863bc7a9fb7c07f58a81b9b98132cc50103
+decision_id       : 91bc8379d1d375987d2819f26320975b37038211fa03aa3d50665f0c469f2843
   &gt;&gt; no containment directive - nothing isolated
 SCENARIO COMPLETE: benign_review</code></pre>
       </section>
@@ -312,7 +312,7 @@ PRAETOR DECIDED   : ESCALATE
 fault_flags       : [&#x27;never_contain_live_conflict&#x27;]
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 32e97ecf65645052d9b312d5fbc5f362f21c1623335ab30191427c0afa001e2b
+decision_id       : 0ce653ffce6e764ba7bbf4445fa0caae66eae5e81751f4f73fe13f631c3a7f87
   &gt;&gt; no containment directive - nothing isolated
 SCENARIO COMPLETE: never_contain</code></pre>
       </section>
@@ -344,7 +344,7 @@ PRAETOR DECIDED   : ESCALATE
 fault_flags       : [&#x27;insufficient_corroboration&#x27;]
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 60f25349dbed83032d200595068bc2a3326f1fbc13693c5193cb19fdabfaa554
+decision_id       : f096671392fa9a41b545c2e9755012cbe2b4bcd0aaa132823419d24b42edb343
   &gt;&gt; no containment directive - nothing isolated
 SCENARIO COMPLETE: insufficient_corroboration</code></pre>
       </section>
@@ -376,7 +376,7 @@ PRAETOR DECIDED   : ESCALATE
 fault_flags       : [&#x27;containment_policy_escalation_required&#x27;]
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 7855ef57e6314ac68630e43b6853a29d8755717bd8787657e310189b222c706f
+decision_id       : a4c2749be3a746ba38015755ff5ccf87868c4d369479ce2c102755c20caf69ec
   &gt;&gt; no containment directive - nothing isolated
 pin: containment not granted by omission
 SCENARIO COMPLETE: not_allowlisted</code></pre>
@@ -409,7 +409,7 @@ PRAETOR DECIDED   : ESCALATE
 fault_flags       : [&#x27;rate_limit_exceeded&#x27;]
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 22d6b56f67d9fa2ae96555751b068c1b95ceaf12064bc66bb516f67af286118b
+decision_id       : dd151c0eb3d42d14e7129e073bd7461009f42ffd3473ff8d9c3900c1f45a8742
   &gt;&gt; no containment directive - nothing isolated
 SCENARIO COMPLETE: rate_limit</code></pre>
       </section>
@@ -441,7 +441,7 @@ PRAETOR DECIDED   : ESCALATE
 fault_flags       : [&#x27;containment_breaker_open&#x27;]
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 9909b901f54af5017a145f6453b602f1ffa25e73b0717e7509b8090996e25e17
+decision_id       : a40b79dd792853227c72e5aa841401686fcd95d99831589f03bece8105bff68e
   &gt;&gt; no containment directive - nothing isolated
 SCENARIO COMPLETE: circuit_breaker</code></pre>
       </section>
@@ -498,7 +498,7 @@ PRAETOR DECIDED   : AUTO_CONTAIN
 fault_flags       : []
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : 1f9ab401cef793707f4767ef216a839f27038623271a7e49232285c4f74793f0
+decision_id       : 0cb7e53acf5d262df0a5cdfbd52712d6510b3b9fdd1ed968dacc34bf0cdc1816
   &gt;&gt; CONTAINMENT DIRECTIVE EMITTED
      target          : host:WORKSTATION-EXEMPLAR scope=host-isolation
      lifetime        : 300s  (hard cap 300)
@@ -540,7 +540,7 @@ PRAETOR DECIDED   : AUTO_CONTAIN
 fault_flags       : []
 system_fault_esc. : False
 stamp_status      : succeeded
-decision_id       : b3d0c2d33fda62bc2eae8fa26eadceb14c57efde262d5f53b09c8bfd334ab9a2
+decision_id       : 9f70af9c3fc943b4ebfccad57a6e92e43351d7043a235ea27c3f789edda80382
   &gt;&gt; CONTAINMENT DIRECTIVE EMITTED
      target          : host:WORKSTATION-CURATION scope=host-isolation
      lifetime        : 300s  (hard cap 300)
@@ -561,7 +561,7 @@ SCENARIO COMPLETE: statute_curation</code></pre>
       <code>notebooks/praetor_walkthrough.ipynb</code>. Regenerate this page with
       <code>python tools/build_demo_page.py</code>.
     </p>
-    <p>Generated 2026-07-31 21:41 UTC from the live engine.</p>
+    <p>Generated 2026-08-01 19:06 UTC from the live engine.</p>
   </footer>
 </div>
 <script>
