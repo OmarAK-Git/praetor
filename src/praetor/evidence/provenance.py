@@ -50,6 +50,18 @@ def meets_account_corroboration(facts: Sequence[EvidenceFact]) -> bool:
     return len(eligible) >= 1
 
 
+def _fact_anchors_host(
+    fact: EvidenceFact,
+    *,
+    target_host_id: str,
+) -> bool:
+    """Return whether a bundle fact's normalized fields anchor ``target_host_id``."""
+    host_id = fact.normalized_fields.get(HOST_ID_FIELD)
+    if not isinstance(host_id, str) or not host_id.strip():
+        return False
+    return host_id.strip() == target_host_id.strip()
+
+
 def _cited_fact_anchors_host(
     fact: EvidenceFact | None,
     *,
@@ -58,10 +70,42 @@ def _cited_fact_anchors_host(
     """Return whether a cited fact's normalized fields anchor ``target_host_id``."""
     if fact is None:
         return False
-    host_id = fact.normalized_fields.get(HOST_ID_FIELD)
-    if not isinstance(host_id, str) or not host_id.strip():
-        return False
-    return host_id.strip() == target_host_id.strip()
+    return _fact_anchors_host(fact, target_host_id=target_host_id)
+
+
+def meets_host_bundle_corroboration(
+    facts: Sequence[EvidenceFact],
+    *,
+    target_host_id: str,
+) -> bool:
+    """Return whether host-scoped bundle facts satisfy presence corroboration."""
+    eligible_paths = {
+        fact.provenance_path
+        for fact in facts
+        if _is_corroboration_eligible_provenance(fact.provenance_path)
+        and _fact_anchors_host(fact, target_host_id=target_host_id)
+    }
+    return len(eligible_paths) >= 2
+
+
+def meets_host_cited_enrichment(
+    cited: Sequence[ResolvedEvidenceCitation],
+    *,
+    target_host_id: str,
+    facts_by_id: Mapping[str, EvidenceFact],
+) -> bool:
+    """Return whether target-anchoring cites satisfy source-event enrichment."""
+    source_refs = {
+        facts_by_id[ref.evidence_id].source_event_reference
+        for ref in cited
+        if ref.evidence_id in facts_by_id
+        and _is_corroboration_eligible_provenance(ref.provenance_path)
+        and _cited_fact_anchors_host(
+            facts_by_id.get(ref.evidence_id),
+            target_host_id=target_host_id,
+        )
+    }
+    return len(source_refs) >= 2
 
 
 def meets_host_cited_corroboration(

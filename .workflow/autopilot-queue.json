@@ -2744,7 +2744,7 @@
     },
     {
       "id": "enrichment-split-02-helpers",
-      "status": "pending",
+      "status": "done",
       "tier": "T2",
       "depends_on": [
         "enrichment-split-01-decision"
@@ -2781,12 +2781,9 @@
       "run_dir": ".workflow/enrichment-split-02-helpers",
       "attempts": 0,
       "max_retries": 1,
-      "evidence": [],
-      "source_plan": "docs/superpowers/plans/2026-08-01-enrichment-vs-corroboration.md",
-      "researcher_decision": "skipped: single prescribed path from ratified design"
-    },
-    {
-      "id": "enrichment-split-03-gate-harness",
+      "evidence": [
+        ".workflow/enrichment-split-02-helpers/results/verifier-result.md"
+      ],
       "status": "pending",
       "tier": "T2",
       "depends_on": [
