@@ -295,4 +295,3 @@ This README is the **showcase**. For depth, use the layered docs — each has a 
 | [`docs/operator_runbook.md`](docs/operator_runbook.md) | **Operate** — SQLite requirements, startup order, throughput ceiling, failure handling |
 | [`docs/architecture.md`](docs/architecture.md) | **Structure** — component boundaries and data flow |
 | [`docs/eval_gates.md`](docs/eval_gates.md) | **Verify** — phase gate commands and pass criteria |
-| [`docs/demo_run_of_show.md`](docs/demo_run_of_show.md) | **Demo** — Act I thesis + optional Act II V2 beats |

@@ -1,5 +1,7 @@
 # Reverse Spec RFCs
 
+> **HISTORICAL.** Archived under `docs/archive/`. Raw reverse-spec tool output over the 2026-07-18 as-built/debt extract. Do **not** treat as an open backlog — verdicts and shipped work live in [`docs/proposals/reverse_spec_rfc_disposition.md`](../proposals/reverse_spec_rfc_disposition.md). Live SSOT: [`docs/spec.md`](../spec.md), [`docs/contracts.md`](../contracts.md), [`docs/decisions.md`](../decisions.md).
+
 ## RFC-as-built-md-001: Reorder critical_transaction to strictly precede external execute_stamp
 
 **Severity:** S1 | **Scope:** behavior | **Personas:** sre_at_3am, hostile_pr_reviewer, attacker, premortem_10x

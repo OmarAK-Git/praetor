@@ -10,21 +10,33 @@ front-to-back.
 2. [`spec.md`](spec.md) — **What** it does (architecture, Outcome Matrix, acceptance criteria, non-goals). v1 baseline plus V2 mirrors (DEC-058+).
 3. [`architecture.md`](architecture.md) — **Structure** (subsystems, durable boundaries, data flow).
 4. [`contracts.md`](contracts.md) — **Pins** (hash domains, ID derivations, the Outcome Matrix). The single source of truth for anything that must not silently diverge.
+5. [`decisions.md`](decisions.md) — **Why we chose X** — the `DEC-xxx` ledger (cited by code & tests).
 
-## The full map
+## Live map (authoritative)
 
 | Document | Job | Status |
 |---|---|---|
 | [`prd.md`](prd.md) | Why — problem, thesis, product decisions, success criteria | Authoritative |
 | [`spec.md`](spec.md) | What — architecture, Outcome Matrix, acceptance criteria, non-goals | Authoritative (v1 + V2 mirrors) |
-| [`plan.md`](plan.md) | How (v1) — 35 tasks, sprint groupings, phase gates | Authoritative (v1 complete) |
-| [`contracts.md`](contracts.md) | Pins — hash domains, ID constructions, Outcome Matrix, consumer pre-actuation | Authoritative (SSOT for hashes/IDs; includes V2 rows) |
-| [`decisions.md`](decisions.md) | The `DEC-xxx` ledger — including V2 DEC-058–063 | Authoritative (cited by code & tests) |
-| [`architecture.md`](architecture.md) | Structure — component boundaries, durable boundaries, data flow | Reference (v1 + V2 packages) |
-| [`operator_runbook.md`](operator_runbook.md) | Operate — SQLite requirements, startup/recovery order, throughput ceiling, failure handling | Reference |
+| [`contracts.md`](contracts.md) | Pins — hash domains, ID constructions, Outcome Matrix, consumer pre-actuation | Authoritative (SSOT for hashes/IDs) |
+| [`decisions.md`](decisions.md) | The `DEC-xxx` ledger | Authoritative (cited by code & tests) |
+| [`architecture.md`](architecture.md) | Structure — component boundaries, durable boundaries, data flow | Reference |
 | [`eval_gates.md`](eval_gates.md) | Verify — deterministic vs probabilistic evals, per-phase gate commands | Reference |
-| [`demo_run_of_show.md`](demo_run_of_show.md) | Demo — Act I thesis + optional Act II V2 beats for `notebooks/praetor_walkthrough.ipynb` | Working aid |
-| [`proposals/`](proposals/) | V2 planning artifacts — **Gates 0–5 complete** | Complete + backlog reconcile |
+
+## Ops (skip unless you need it)
+
+| Document | Job | Notes |
+|---|---|---|
+| [`operator_runbook.md`](operator_runbook.md) | Deploy/operate — SQLite, startup/recovery, throughput, failure handling | Pin-tested; not day-to-day product reading |
+
+## Historical (complete — not live backlog)
+
+| Document | Job | Status |
+|---|---|---|
+| [`plan.md`](plan.md) | How (v1) — 35 tasks, sprint groupings, phase gates | v1 complete |
+| [`proposals/`](proposals/) | V2 planning + reverse-spec disposition trail | Gates 0–5 complete; history only |
+| [`superpowers/`](superpowers/) | Sprint specs/plans (agentic, RFC remediation, spikes, etc.) | Execution artifacts |
+| [`archive/`](archive/) | Reverse-spec as-built/debt snapshot, raw RFCs, spike checklist | **HISTORICAL** — do not treat as open work |
 
 ## How these relate (so nothing looks redundant)
 
@@ -38,18 +50,29 @@ front-to-back.
   verification respectively. They reference `schemas/` for field-level shapes rather than duplicating
   them.
 
-## `proposals/` — V2 (complete)
+## `proposals/` — V2 (complete history)
 
 V2 hardening (tasks V2-001–036, Gates 0–5) **shipped** as of 2026-07-10. Behavioral
-authority is `spec.md` (mirrored), `contracts.md`, and `decisions.md` (DEC-058+).
+authority is `spec.md` (mirrored), `contracts.md`, and `decisions.md` (DEC-058+). These files are
+planning trail, not an open backlog.
 
 | Document | Contents |
 |---|---|
 | [`proposals/v2_hardening.md`](proposals/v2_hardening.md) | Design rationale for corroboration, posture, feedback loop (now implemented) |
 | [`proposals/v2_implementation_plan.md`](proposals/v2_implementation_plan.md) | V2 task breakdown and gate criteria (**COMPLETE**, Gates 0–5) |
-| [`proposals/delivery_backlog.md`](proposals/delivery_backlog.md) | Harvested backlog — many rows closed by V2; residual Open rows are post-V2 follow-ups or pending reconcile |
+| [`proposals/delivery_backlog.md`](proposals/delivery_backlog.md) | Harvested backlog — mostly closed; residual Future / Accepted Deferral rows only |
+| [`proposals/reverse_spec_rfc_disposition.md`](proposals/reverse_spec_rfc_disposition.md) | Verdicts on the reverse-spec RFC dump |
 
 Correctness audit: [`.workflow/v2-correctness-audit/final-report.md`](../.workflow/v2-correctness-audit/final-report.md).
+
+## `archive/` — historical snapshots
+
+| Document | Contents |
+|---|---|
+| [`archive/as_built.md`](archive/as_built.md) | Reverse-spec extract of the codebase as of 2026-07-18 |
+| [`archive/debt_ledger.md`](archive/debt_ledger.md) | Debt probe companion to as-built (many items later closed) |
+| [`archive/reverse_spec_rfcs.md`](archive/reverse_spec_rfcs.md) | Raw RFC dump that fed the disposition doc |
+| [`archive/capability_spike_implementation_plan.md`](archive/capability_spike_implementation_plan.md) | Completed spike checklist (prefer `superpowers/plans/` for detail) |
 
 ## Generated, not authored
 

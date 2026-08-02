@@ -17,3 +17,10 @@ state/
 /dream-loop-success-story.md
 .worktrees/
 .worktrees/
+
+# Local tool dumps (do not commit)
+*_output.txt
+*_audit.txt
+ruff_fix*.txt
+mypy_*.txt
+pytest_*.txt

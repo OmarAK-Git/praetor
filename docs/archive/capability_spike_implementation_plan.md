@@ -1,5 +1,7 @@
 # Judgment Capability Spike
 
+> **HISTORICAL.** Archived root checklist for the judgment capability spike (complete). Prefer the detailed plan at [`docs/superpowers/plans/2026-08-01-judgment-capability-spike.md`](../superpowers/plans/2026-08-01-judgment-capability-spike.md). Live SSOT: [`docs/spec.md`](../spec.md), [`docs/contracts.md`](../contracts.md), [`docs/decisions.md`](../decisions.md).
+
 **Tier:** T2 (sprint with T3 phase-exit gate)  
 **Goal:** Offline-testable eval measuring whether single-shot judgment separates malicious from benign telemetry, and how much failure is correlation coverage vs judgment quality (Path A vs Path B).  
 **Status:** complete  

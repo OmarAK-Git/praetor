@@ -1,8 +1,10 @@
 # AS_BUILT — Praetor Reverse Specification
 
+> **HISTORICAL (2026-07-18 snapshot).** Archived under `docs/archive/`. Do **not** use as a live backlog or current system description. Later V2 hardening, RFC remediation, agentic judgment, and capability-spike work supersede much of this extract. Live sources of truth: [`docs/spec.md`](../spec.md), [`docs/contracts.md`](../contracts.md), [`docs/decisions.md`](../decisions.md). Companion debt extract: [`debt_ledger.md`](debt_ledger.md).
+
 **Status:** Reverse-engineered from the repository as of 2026-07-18.  
 **Method:** Structured extraction probes (module inventory, interfaces, data flows, invariants claimed-vs-enforced, error posture, test coverage map).  
-**Not:** Product intent docs. For claimed behavior see `docs/spec.md`, `docs/contracts.md`, `docs/architecture.md`. This document describes **what the system actually is**.
+**Not:** Product intent docs. For claimed behavior see `docs/spec.md`, `docs/contracts.md`, `docs/architecture.md`. This document describes **what the system actually is** (as of the snapshot date).
 
 ---
 
@@ -439,5 +441,5 @@ These are absent from the codebase, not merely undocumented:
 | Field | Value |
 |---|---|
 | Generated | 2026-07-18 |
-| Companion | `DEBT_LEDGER.md` |
+| Companion | [`debt_ledger.md`](debt_ledger.md) |
 | Sources | `src/praetor/**`, `tests/**`, `docs/{spec,architecture,contracts,decisions}.md`, `schemas/`, `pyproject.toml`, git history probes |

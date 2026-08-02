@@ -77,10 +77,10 @@
 
 ## 2026-07-18 â€” Reverse spec + debt ledger extraction COMPLETE
 
-- Structured probes (not open discovery) â†’ `AS_BUILT.md` + `DEBT_LEDGER.md` at repo root.
+- Structured probes (not open discovery) → archived as `docs/archive/as_built.md` + `docs/archive/debt_ledger.md` (moved from repo root 2026-08-02; HISTORICAL).
 - AS_BUILT: 20 packages + state, interfaces/Protocols, 6 data flows, 25 invariants claimed-vs-enforced, error posture, test coverage map.
 - DEBT_LEDGER: no classic TODO/FIXME; S1 = TicketStampBackend/TokenVerifier stubs + quiet excepts; S2 = no lockfile, provisional SLA, constant duplication.
-- Plan: `IMPLEMENTATION_PLAN.md` marked complete.
+- Plan: `docs/archive/capability_spike_implementation_plan.md` marked complete (historical checklist).
 
 ## 2026-07-10 â€” V2-038 delivery backlog reconcile COMPLETE
 

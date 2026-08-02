@@ -1,8 +1,10 @@
 # DEBT_LEDGER — Recoverable MVP-Era Traces
 
+> **HISTORICAL (2026-07-18 snapshot).** Archived under `docs/archive/`. Do **not** use as a live backlog — many entries were closed or superseded by later V2 / RFC remediation / agentic / spike work built from this extract. Live sources of truth: [`docs/spec.md`](../spec.md), [`docs/contracts.md`](../contracts.md), [`docs/decisions.md`](../decisions.md). Companion as-built: [`as_built.md`](as_built.md).
+
 **Status:** Structured probe extract as of 2026-07-18.  
 **Method:** Fixed probes only — comment markers, git-log debt language, hardcoded constants, swallowed exceptions, single-impl abstractions, complexity thresholds, untested paths, pinned dependencies.  
-**Companion:** `AS_BUILT.md` (what the system is).  
+**Companion:** [`as_built.md`](as_built.md) (what the system is, snapshot).  
 **Rule:** Every entry cites a findable artifact. Speculative “probably debt” items are excluded.
 
 ---
@@ -253,5 +255,5 @@ DEBT-080–093 (documented non-goals and accepted deferrals).
 | Field | Value |
 |---|---|
 | Generated | 2026-07-18 |
-| Companion | `AS_BUILT.md` |
-| Live task plan | `IMPLEMENTATION_PLAN.md` (extraction complete) |
+| Companion | [`as_built.md`](as_built.md) |
+| Live task plan | [`capability_spike_implementation_plan.md`](capability_spike_implementation_plan.md) (extraction complete; also historical) |
