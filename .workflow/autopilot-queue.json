@@ -16,9 +16,10 @@
     "researcher_policy": "multi_path_opportunity_cost",
     "code_review_policy": "frequent_after_implement",
     "test_runner_policy": "gates_and_major_sections",
-    "active_sprint": "enrichment-vs-corroboration",
-    "source_spec": "docs/superpowers/specs/2026-08-01-enrichment-vs-corroboration-design.md",
-    "source_plan": "docs/superpowers/plans/2026-08-01-enrichment-vs-corroboration.md"
+    "active_sprint": "judgment-capability-spike",
+    "source_spec": "docs/superpowers/specs/2026-08-01-capability-spike-design.md",
+    "source_plan": "docs/superpowers/plans/2026-08-01-judgment-capability-spike.md",
+    "gate_item_id": "capability-spike-gate"
   },
   "status_values": [
     "pending",
@@ -2942,6 +2943,336 @@
         ".workflow/enrichment-split-gate/results/verifier-result.md"
       ],
       "source_plan": "docs/superpowers/plans/2026-08-01-enrichment-vs-corroboration.md",
+      "researcher_decision": "skipped: gate is verify-only"
+    },
+    {
+      "id": "capability-spike-01-corpus",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [],
+      "goal": "Add labeled anchor manifest schema/loader for the judgment capability spike (balanced malicious/benign corpus).",
+      "scope": "evals/capability corpus loader + unit tests/fixtures only; no src/praetor changes; no evals/harness.py changes.",
+      "files_allowed": [
+        "evals/capability/__init__.py",
+        "evals/capability/corpus.py",
+        "tests/evals/capability/__init__.py",
+        "tests/evals/capability/test_corpus.py",
+        "tests/evals/capability/fixtures/",
+        ".workflow/capability-spike-01-corpus/"
+      ],
+      "acceptance_criteria": [
+        "load_anchor_manifest loads valid YAML into frozen Anchor/AnchorManifest.",
+        "Naive timestamps coerced to UTC; duplicate ids, unbalanced classes, invalid expected_class, and empty rationale raise ManifestError.",
+        "Committed tests pass offline with FakeProvider-free fixtures."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/capability/test_corpus.py -q",
+          "ruff check evals/capability tests/evals/capability",
+          "mypy evals/capability"
+        ],
+        "manual_checks": [
+          "No imports from praetor.judgment.agentic.",
+          "Nothing in evals/capability is imported by evals/harness.py.",
+          "No src/praetor/ edits."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/capability-spike-01-corpus",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/capability-spike-01-corpus/results/verifier-result.md"
+      ],
+      "source_plan": "docs/superpowers/plans/2026-08-01-judgment-capability-spike.md",
+      "researcher_decision": "skipped: Approach A prescribed in ratified design (docs/superpowers/specs/2026-08-01-capability-spike-design.md); measurement-only spike with fixed Path A/B harness"
+    },
+    {
+      "id": "capability-spike-02-flatten",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "capability-spike-01-corpus"
+      ],
+      "goal": "Add generic mechanical event flattener for Path B evidence facts (no hand-tuned per-event-type extraction).",
+      "scope": "evals/capability/flatten.py + unit tests only.",
+      "files_allowed": [
+        "evals/capability/flatten.py",
+        "tests/evals/capability/test_flatten.py",
+        ".workflow/capability-spike-02-flatten/"
+      ],
+      "acceptance_criteria": [
+        "flatten_event_to_fact emits EvidenceFact with flattened normalized_fields.",
+        "resolve_provenance_path labels known sources; unknown uses SPIKE_UNKNOWN_SOURCE.",
+        "Flattener stays mechanical (no per-EventID hand extraction)."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/capability/test_flatten.py -q",
+          "ruff check evals/capability/flatten.py tests/evals/capability/test_flatten.py",
+          "mypy evals/capability/flatten.py"
+        ],
+        "manual_checks": [
+          "Confirm flattener does not reimplement correlation window/host filters.",
+          "No src/praetor/ edits."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/capability-spike-02-flatten",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/capability-spike-02-flatten/results/verifier-result.md"
+      ],
+      "source_plan": "docs/superpowers/plans/2026-08-01-judgment-capability-spike.md",
+      "researcher_decision": "skipped: Approach A prescribed in ratified design (docs/superpowers/specs/2026-08-01-capability-spike-design.md); measurement-only spike with fixed Path A/B harness"
+    },
+    {
+      "id": "capability-spike-03-bundle",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "capability-spike-02-flatten"
+      ],
+      "goal": "Add Path B bundle builder that reuses correlation window and host filters, then flattens all event types.",
+      "scope": "evals/capability/bundle.py + unit tests only.",
+      "files_allowed": [
+        "evals/capability/bundle.py",
+        "tests/evals/capability/test_bundle.py",
+        ".workflow/capability-spike-03-bundle/"
+      ],
+      "acceptance_criteria": [
+        "build_spike_bundle calls filter_events_in_window and filter_events_to_anchor_host from praetor.correlation.",
+        "Non-1/4624 events appear in Path B bundles when in window/host.",
+        "Window/host filtering matches production correlation helpers."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/capability/test_bundle.py -q",
+          "ruff check evals/capability/bundle.py tests/evals/capability/test_bundle.py",
+          "mypy evals/capability/bundle.py"
+        ],
+        "manual_checks": [
+          "No reimplementation of window/host filtering.",
+          "No src/praetor/ edits."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/capability-spike-03-bundle",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/capability-spike-03-bundle/results/verifier-result.md"
+      ],
+      "source_plan": "docs/superpowers/plans/2026-08-01-judgment-capability-spike.md",
+      "researcher_decision": "skipped: Approach A prescribed in ratified design (docs/superpowers/specs/2026-08-01-capability-spike-design.md); measurement-only spike with fixed Path A/B harness"
+    },
+    {
+      "id": "capability-spike-04-runner",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "capability-spike-03-bundle"
+      ],
+      "goal": "Add Observation record and two-path runner that exercises process_alert_intake for Path A (correlate) and Path B (bundle).",
+      "scope": "evals/capability/runner.py + unit tests with FakeProvider only.",
+      "files_allowed": [
+        "evals/capability/runner.py",
+        "tests/evals/capability/test_runner.py",
+        ".workflow/capability-spike-04-runner/"
+      ],
+      "acceptance_criteria": [
+        "run_anchor produces Observations for PATH_A and PATH_B.",
+        "proposed_disposition read from result.edict.model_judgment when present.",
+        "final_disposition/fault_flags recorded but not scored here.",
+        "Offline FakeProvider tests pass with no API key."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/capability/test_runner.py -q",
+          "ruff check evals/capability/runner.py tests/evals/capability/test_runner.py",
+          "mypy evals/capability/runner.py"
+        ],
+        "manual_checks": [
+          "Never imports praetor.judgment.agentic.",
+          "Uses single-shot GenAI wrapper path only.",
+          "No src/praetor/ edits; no evals/harness.py edits."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/capability-spike-04-runner",
+      "attempts": 1,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/capability-spike-04-runner/results/verifier-result.md"
+      ],
+      "source_plan": "docs/superpowers/plans/2026-08-01-judgment-capability-spike.md",
+      "researcher_decision": "skipped: Approach A prescribed in ratified design (docs/superpowers/specs/2026-08-01-capability-spike-design.md); measurement-only spike with fixed Path A/B harness"
+    },
+    {
+      "id": "capability-spike-05-score",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "capability-spike-04-runner"
+      ],
+      "goal": "Add scoring, A/B delta attribution, and same-capture confound check for the capability spike.",
+      "scope": "evals/capability/score.py + unit tests only.",
+      "files_allowed": [
+        "evals/capability/score.py",
+        "tests/evals/capability/test_score.py",
+        ".workflow/capability-spike-05-score/"
+      ],
+      "acceptance_criteria": [
+        "Malicious correct on escalate/auto_contain; benign on standard_review.",
+        "Empty/missing proposed_disposition excluded from score and counted separately.",
+        "ab_delta attributes A-wrong/B-right vs both-wrong vs dilution cases.",
+        "confound_check flags trivial heuristics that separate classes."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/capability/test_score.py -q",
+          "ruff check evals/capability/score.py tests/evals/capability/test_score.py",
+          "mypy evals/capability/score.py"
+        ],
+        "manual_checks": [
+          "PolicyGate outcomes are not folded into the capability score.",
+          "No src/praetor/ edits."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/capability-spike-05-score",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/capability-spike-05-score/results/verifier-result.md"
+      ],
+      "source_plan": "docs/superpowers/plans/2026-08-01-judgment-capability-spike.md",
+      "researcher_decision": "skipped: Approach A prescribed in ratified design (docs/superpowers/specs/2026-08-01-capability-spike-design.md); measurement-only spike with fixed Path A/B harness"
+    },
+    {
+      "id": "capability-spike-06-cli",
+      "status": "done",
+      "tier": "T2",
+      "depends_on": [
+        "capability-spike-05-score"
+      ],
+      "goal": "Add offline-safe capability spike CLI and document it as non-gating in docs/eval_gates.md.",
+      "scope": "evals/capability_spike.py + CLI tests + eval_gates.md append only; must not be imported by evals/harness.py.",
+      "files_allowed": [
+        "evals/capability_spike.py",
+        "tests/evals/capability/test_cli.py",
+        "docs/eval_gates.md",
+        ".workflow/capability-spike-06-cli/"
+      ],
+      "acceptance_criteria": [
+        "main() exits 0 with skip message when PRAETOR_CAPABILITY_SPIKE unset.",
+        "Enabled without API key still skips (no network).",
+        "load_capture_events reads JSONL and skips blank/malformed lines.",
+        "Harness source does not import the spike module.",
+        "Non-gating section appended to docs/eval_gates.md."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/capability/test_cli.py -q",
+          "ruff check evals/capability_spike.py tests/evals/capability/test_cli.py",
+          "mypy evals/capability_spike.py",
+          "python -m evals.capability_spike"
+        ],
+        "manual_checks": [
+          "Spike remains opt-in via env flag + key; not a CI gate.",
+          "No src/praetor/ edits; no evals/harness.py or scenarios edits."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "implementation_model": "composer-2.5",
+      "verification_model": "cursor-grok-4.5-high",
+      "run_dir": ".workflow/capability-spike-06-cli",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/capability-spike-06-cli/results/verifier-result.md"
+      ],
+      "source_plan": "docs/superpowers/plans/2026-08-01-judgment-capability-spike.md",
+      "researcher_decision": "skipped: Approach A prescribed in ratified design (docs/superpowers/specs/2026-08-01-capability-spike-design.md); measurement-only spike with fixed Path A/B harness"
+    },
+    {
+      "id": "capability-spike-gate",
+      "status": "done",
+      "tier": "T3",
+      "depends_on": [
+        "capability-spike-01-corpus",
+        "capability-spike-02-flatten",
+        "capability-spike-03-bundle",
+        "capability-spike-04-runner",
+        "capability-spike-05-score",
+        "capability-spike-06-cli"
+      ],
+      "goal": "Verify judgment capability spike sprint with repository-wide test, lint, typecheck, and mandatory harness gates.",
+      "scope": "Verify-only final plan gate; no feature implementation.",
+      "files_allowed": [
+        ".workflow/capability-spike-gate/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md",
+        "IMPLEMENTATION_PLAN.md"
+      ],
+      "acceptance_criteria": [
+        "Full pytest suite passes (startup_guard race flake: re-run alone if needed).",
+        "Repository-wide ruff and mypy pass on src/tests/evals/consumer_sdk.",
+        "python -m evals.harness still reports 33 scenarios green.",
+        "python -m evals.capability_spike exits 0 skipped offline.",
+        "All six task verifier artifacts exist and PASS.",
+        "No src/praetor/ changes from this sprint; harness/scenarios untouched."
+      ],
+      "verification": {
+        "scope": "phase_exit",
+        "commands": [
+          "pytest -q",
+          "ruff check src tests evals consumer_sdk",
+          "mypy src evals consumer_sdk",
+          "python -m evals.harness",
+          "python -m evals.capability_spike"
+        ],
+        "manual_checks": [
+          "Confirm measurement-only: no production code changes for this spike.",
+          "Confirm agentic judgment path was not imported.",
+          "Confirm gating suite is still offline/network-free."
+        ]
+      },
+      "implementation_agent": "test-runner",
+      "verification_agent": "skeptic-verifier",
+      "gate_model": "cursor-grok-4.5-high",
+      "run_mode": "in_session_grok",
+      "run_dir": ".workflow/capability-spike-gate",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [
+        ".workflow/capability-spike-gate/results/verifier-result.md"
+      ],
+      "source_plan": "docs/superpowers/plans/2026-08-01-judgment-capability-spike.md",
       "researcher_decision": "skipped: gate is verify-only"
     }
   ]

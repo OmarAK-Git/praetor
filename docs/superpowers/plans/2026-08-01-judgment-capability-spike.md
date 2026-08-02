@@ -1070,6 +1070,9 @@ def run_anchor(
                 "judgment_provider": provider,
                 "stamp_backend": stamp_backend,
                 "alert_identity": alert_identity,
+                # Required for Path A: without this, orchestrator defaults to
+                # datetime.now(UTC) and historical capture events miss the window.
+                "anchor_time": anchor.anchor_time,
             }
             if path == PATH_A:
                 intake_kwargs["sysmon_events"] = sysmon

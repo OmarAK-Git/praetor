@@ -1,5 +1,24 @@
 # Progress Log
 
+## 2026-08-01 — Judgment capability spike COMPLETE
+
+- Design: `docs/superpowers/specs/2026-08-01-capability-spike-design.md`
+- Plan: `docs/superpowers/plans/2026-08-01-judgment-capability-spike.md`
+- Queue loader: `tools/load_capability_spike_queue.py` → sprint drained.
+- Gate: pytest **1146**, ruff/mypy clean, harness **34/34**, spike offline skip OK.
+- Fix during drain: Path A runner must pass `anchor_time` (commit `82b41ad`).
+- Evidence: `.workflow/capability-spike-gate/results/verifier-result.md`.
+
+## 2026-08-01 — Enrichment vs corroboration design + GSD queue LOADED
+
+- Design: `docs/superpowers/specs/2026-08-01-enrichment-vs-corroboration-design.md`
+  (Approach A recommended and locked for planning).
+- Plan: `docs/superpowers/plans/2026-08-01-enrichment-vs-corroboration.md`.
+- Queue loader: `tools/load_enrichment_split_queue.py` → sprint
+  `enrichment-vs-corroboration`; items
+  `enrichment-split-01-decision` … `enrichment-split-gate` all **pending**.
+- Engine not implemented yet; drain when operator runs `/gsd-autopilot-loop`.
+
 ## 2026-07-31 — Public demo copy rewrite COMPLETE
 
 - Audience: security leader / SOC manager.
@@ -816,7 +835,8 @@
 
 - Worktree .worktrees/agentic-judgment on gentic-judgment.
 - Queue loaded (14 tasks + final gate). Baseline: pytest 1047 / mypy / ruff green after LF normalize.
-- Merge: everse-spec-rfc-remediation FF into local master @ a3441a9.
+- Merge: 
+everse-spec-rfc-remediation FF into local master @ a3441a9.
 
 
 ## 2026-07-30 — Agentic judgment sprint COMPLETE

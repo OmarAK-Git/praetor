@@ -47,9 +47,24 @@ Index of `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints
 | V2-035 | Statute Curation Workflow | V2-5 | **complete** | V2-027, V2-032 | L |
 | V2-036 | Eval Regression Locking Discipline | V2-5 | **complete** | V2-034, V2-035 | M |
 
-**Next up:** V2 plan queue drained through Gate 5. Autopilot queue has no remaining pending items after `v2-gate-5-exit` **done**.
+**Next up:** Judgment capability spike sprint complete (build only). Live
+capture + labeled manifest + Gemini run remain operator-owned. Enrichment-split
+and V2 through Gate 5 are complete.
 
-Full task definitions, tests-first criteria, file paths, and done-when gates: **`docs/proposals/v2_implementation_plan.md`**.
+| ID | Goal | Status | Depends |
+|---|---|---|---|
+| capability-spike-01-corpus | Anchor manifest schema/loader | **done** | — |
+| capability-spike-02-flatten | Generic event flattener | **done** | 01 |
+| capability-spike-03-bundle | Path B bundle builder | **done** | 02 |
+| capability-spike-04-runner | Observation + two-path runner | **done** | 03 |
+| capability-spike-05-score | Scoring / A/B delta / confound | **done** | 04 |
+| capability-spike-06-cli | CLI + eval_gates docs | **done** | 05 |
+| capability-spike-gate | phase_exit full suite + harness | **done** | 01–06 |
+
+Design: `docs/superpowers/specs/2026-08-01-capability-spike-design.md`  
+Plan: `docs/superpowers/plans/2026-08-01-judgment-capability-spike.md`
+
+Full V2 task definitions: **`docs/proposals/v2_implementation_plan.md`**.
 
 ## V2 — upcoming (by sprint)
 

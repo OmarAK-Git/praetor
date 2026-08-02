@@ -136,6 +136,11 @@ class TestSingletonLock:
 
     def test_two_subprocesses_race_only_one_wins(self, tmp_path: Path) -> None:
         go_file = tmp_path / "go"
+        ready1 = tmp_path / "ready1"
+        ready2 = tmp_path / "ready2"
+        # Winner must hold the lock long enough that the loser is forced to
+        # contend; exiting immediately after acquire lets the OS release the
+        # lock before the peer attempts, so both can exit 0 under load.
         script = textwrap.dedent(
             f"""
             import sys
@@ -145,6 +150,8 @@ class TestSingletonLock:
 
             state_dir = Path({str(tmp_path)!r})
             go = Path({str(go_file)!r})
+            ready = Path(sys.argv[1])
+            ready.touch()
             while not go.exists():
                 time.sleep(0.001)
             lock = SingletonLock(state_dir)
@@ -152,19 +159,26 @@ class TestSingletonLock:
                 lock.acquire()
             except SingletonLockError as exc:
                 sys.exit(exc.exit_code)
+            time.sleep(0.5)
             sys.exit(0)
             """
         )
         repo_root = Path(__file__).resolve().parents[2]
         p1 = subprocess.Popen(
-            [sys.executable, "-c", script],
+            [sys.executable, "-c", script, str(ready1)],
             cwd=repo_root,
         )
         p2 = subprocess.Popen(
-            [sys.executable, "-c", script],
+            [sys.executable, "-c", script, str(ready2)],
             cwd=repo_root,
         )
-        time.sleep(0.05)
+        deadline = time.monotonic() + 30
+        while not (ready1.exists() and ready2.exists()):
+            if time.monotonic() > deadline:
+                p1.kill()
+                p2.kill()
+                raise AssertionError("children did not become ready")
+            time.sleep(0.001)
         go_file.touch()
         r1 = p1.wait(timeout=30)
         r2 = p2.wait(timeout=30)
