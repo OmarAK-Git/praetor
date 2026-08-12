@@ -89,3 +89,45 @@ def test_missing_rationale_rejected(tmp_path: Path) -> None:
     )
     with pytest.raises(ManifestError, match="rationale"):
         load_anchor_manifest(path)
+
+
+def test_unresolved_allowed_and_excluded_from_balance(tmp_path: Path) -> None:
+    path = tmp_path / "with_unresolved.yaml"
+    path.write_text(
+        "capture_id: c\n"
+        "emulation_steps_total: 10\n"
+        "unchained_steps: 2\n"
+        "anchors:\n"
+        "  - {anchor_id: m1, anchor_time: 2026-01-01T00:00:00Z,"
+        " expected_class: malicious, rationale: step}\n"
+        "  - {anchor_id: b1, anchor_time: 2026-01-01T01:00:00Z,"
+        " expected_class: benign, rationale: quiet}\n"
+        "  - {anchor_id: u1, anchor_time: 2026-01-01T00:30:00Z,"
+        " expected_class: unresolved, rationale: fileless}\n"
+        "  - {anchor_id: u2, anchor_time: 2026-01-01T00:45:00Z,"
+        " expected_class: unresolved, rationale: registry}\n",
+        encoding="utf-8",
+    )
+    manifest = load_anchor_manifest(path)
+    assert len(manifest.malicious) == 1
+    assert len(manifest.benign) == 1
+    assert len(manifest.unresolved) == 2
+    assert manifest.emulation_steps_total == 10
+    assert manifest.unchained_steps == 2
+    assert manifest.unchained_step_share == 0.2
+
+
+def test_step_fields_must_be_paired(tmp_path: Path) -> None:
+    path = tmp_path / "partial_steps.yaml"
+    path.write_text(
+        "capture_id: c\n"
+        "emulation_steps_total: 10\n"
+        "anchors:\n"
+        "  - {anchor_id: m1, anchor_time: 2026-01-01T00:00:00Z,"
+        " expected_class: malicious, rationale: r}\n"
+        "  - {anchor_id: b1, anchor_time: 2026-01-01T01:00:00Z,"
+        " expected_class: benign, rationale: r}\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ManifestError, match="both"):
+        load_anchor_manifest(path)

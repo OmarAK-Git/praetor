@@ -47,7 +47,8 @@ Index of `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints
 | V2-035 | Statute Curation Workflow | V2-5 | **complete** | V2-027, V2-032 | L |
 | V2-036 | Eval Regression Locking Discipline | V2-5 | **complete** | V2-034, V2-035 | M |
 
-**Next up:** Judgment capability spike sprint complete (build only). Live
+**Next up:** Capability spike — build ATLAS attack-day capture JSONL, then
+live run against `evals/capability/manifests/atlasv2_attack_day.yaml`. Live
 capture + labeled manifest + Gemini run remain operator-owned. Enrichment-split
 and V2 through Gate 5 are complete.
 
@@ -135,6 +136,17 @@ Full V2 task definitions: **`docs/proposals/v2_implementation_plan.md`**.
 - Static fault-flag guard, production-store table init tracked into V2-016/V2-017.
 - Live Splunk HEC demo remains env-gated (V2-029).
 - Phase 4 gate PASS-WITH-CONDITIONS items close in V2-029.
+
+## Production follow-ups from capability spike (DEC-067)
+
+Out of spike scope — do not bury in the results narrative alone.
+
+| ID | Severity | Item | Notes |
+|---|---|---|---|
+| PROD-CAP-001 | S2 | `src/praetor/judgment/vertex_provider.py` collapses `MAX_TOKENS` / `LENGTH` finishReasons into `ProviderMalformedResponseError` (parse path) | Spike wrapper (`evals/capability/spike_vertex_provider.py`) maps them to explicit truncation; production should match |
+| PROD-CAP-002 | S3 | Canonical hash rejects RFC3339-ish strings with ≠6 fractional digits; Windows EventData `NewTime`/`PreviousTime` often use 7 (100ns) digits | Spike Path B flattener coerces locally; audit whether any **production** normalizer can emit those keys into hashed `normalized_fields` |
+
+Follow-on measurement (not a production bug): AlertEnvelope-population spike on ATLASv2 `cbc-edr-alerts` / `cbc-ngav-alerts`.
 
 ## V2 — governing constraints (summary)
 

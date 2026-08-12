@@ -41,6 +41,11 @@ def test_event_data_is_flattened_into_normalized_fields() -> None:
     assert fact.normalized_fields["DestinationIp"] == "203.0.113.10"
     assert fact.normalized_fields["DestinationPort"] == "443"
     assert fact.normalized_fields["Image"].endswith("powershell.exe")
+    # Citation-mix join key must survive flattening.
+    assert fact.normalized_fields["EventID"] == 3
+    assert fact.normalized_fields["Channel"] == (
+        "Microsoft-Windows-Sysmon/Operational"
+    )
 
 
 def test_host_id_key_is_set_for_targeting() -> None:
@@ -94,3 +99,27 @@ def test_ambiguity_flag_defaults_false() -> None:
         SYSMON_NETWORK_EVENT, provenance_path=SYSMON_EVENT_LOG
     )
     assert fact.ambiguity_flag is False
+
+
+def test_seven_digit_eventdata_timestamps_are_canonicalized() -> None:
+    """Security 4616 NewTime/PreviousTime use 100ns (7-digit) fractions."""
+    from praetor.hashing.canonical import canonical_serialize
+
+    event = {
+        "EventID": 4616,
+        "Channel": "Security",
+        "EventRecordID": "42",
+        "Computer": "ws-01",
+        "UtcTime": "2022-07-19 17:24:49.641",
+        "EventData": {
+            "NewTime": "2022-07-19T17:24:49.6410000Z",
+            "PreviousTime": "2022-07-19T12:24:47.1110294Z",
+        },
+    }
+    fact = flatten_event_to_fact(event, provenance_path=WINDOWS_SECURITY_LOG)
+    assert fact.normalized_fields["NewTime"] == "2022-07-19T17:24:49.641000Z"
+    assert fact.normalized_fields["PreviousTime"] == (
+        "2022-07-19T12:24:47.111029Z"
+    )
+    # Bundle hashing walks normalized_fields; must not raise.
+    canonical_serialize(fact.model_dump(mode="python"))

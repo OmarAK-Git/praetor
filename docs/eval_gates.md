@@ -200,6 +200,9 @@ coverage limit (Path A vs Path B).
 **Not a CI gate.** Requires `PRAETOR_CAPABILITY_SPIKE=1` and a Gemini API key;
 exits 0 with a skip message otherwise. Scores `ModelJudgment.proposed_disposition`
 only — PolicyGate output is recorded but never scored, because the gate controls
-authority rather than judgment quality.
+authority rather than judgment quality. `unresolved` anchors and empty-bundle
+runs are excluded from the score. On A≈B ties, Path B citation mix vs EventID
+`{1, 4624}` (threshold 80%) disambiguates prompt vs coverage; thresholds are
+pre-registered in `evals/capability/score.py`.
 
 Design: `docs/superpowers/specs/2026-08-01-capability-spike-design.md`

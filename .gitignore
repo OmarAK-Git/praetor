@@ -24,3 +24,13 @@ state/
 ruff_fix*.txt
 mypy_*.txt
 pytest_*.txt
+
+# Large OTRF/Mordor captures kept at repo root for local spike runs
+apt29_evals_day1_manual*.json
+/apt29*.json
+
+# ATLASv2 local dataset tree (do not commit)
+/atlasv2/
+
+# Generated capability-spike captures (rebuild via tools/build_atlas_capability_capture.py)
+evals/capability/captures/*.jsonl

@@ -12,6 +12,7 @@ Path B score measures this file rather than Praetor.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Mapping
 from typing import Any
 
@@ -29,6 +30,37 @@ from praetor.evidence.provenance import SYSMON_EVENT_LOG, WINDOWS_SECURITY_LOG
 SPIKE_UNKNOWN_SOURCE = "spike_unknown_source"
 _RAW_SOURCE_KEY = "raw_source"
 _STRUCTURAL_KEYS = frozenset({"EventData", _RAW_SOURCE_KEY})
+
+# Windows EventData often carries RFC3339-ish times with 7 fractional digits
+# (100ns ticks). Canonical serialization requires exactly six (contracts §1).
+_RFC3339ISH_Z = re.compile(
+    r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})(\.\d+)?Z$"
+)
+
+
+def _canonicalize_timestamp_string(value: str) -> str:
+    """Coerce Z-suffixed RFC3339-ish strings to exactly six fractional digits.
+
+    Leaves non-matching strings unchanged so ordinary field values are intact.
+    """
+    match = _RFC3339ISH_Z.match(value)
+    if match is None:
+        return value
+    base, frac = match.group(1), match.group(2)
+    digits = (frac[1:] if frac else "")[:6].ljust(6, "0")
+    return f"{base}.{digits}Z"
+
+
+def _sanitize_normalized_value(value: Any) -> Any:
+    if isinstance(value, str):
+        return _canonicalize_timestamp_string(value)
+    if isinstance(value, Mapping):
+        return {str(k): _sanitize_normalized_value(v) for k, v in value.items()}
+    if isinstance(value, list):
+        return [_sanitize_normalized_value(item) for item in value]
+    if isinstance(value, tuple):
+        return [_sanitize_normalized_value(item) for item in value]
+    return value
 
 
 def resolve_provenance_path(event: Mapping[str, Any]) -> str:
@@ -51,13 +83,13 @@ def _flatten_fields(event: Mapping[str, Any]) -> dict[str, Any]:
     for key, value in event.items():
         if key in _STRUCTURAL_KEYS:
             continue
-        flattened[str(key)] = value
+        flattened[str(key)] = _sanitize_normalized_value(value)
     nested = event.get("EventData")
     if isinstance(nested, Mapping):
         for key, value in nested.items():
             if key == _RAW_SOURCE_KEY:
                 continue
-            flattened[str(key)] = value
+            flattened[str(key)] = _sanitize_normalized_value(value)
     return flattened
 
 
@@ -78,6 +110,9 @@ def flatten_event_to_fact(
 
     normalized_fields = _flatten_fields(event)
     normalized_fields["host_id"] = event_host_id(event) or ""
+    # Join key for citation-mix: evidence_id must map back to EventID/Channel.
+    normalized_fields["EventID"] = event_id
+    normalized_fields["Channel"] = channel
 
     return EvidenceFact(
         evidence_id=derive_evidence_id(

@@ -8,6 +8,53 @@
 
 **Tech Stack:** Python 3.11+, Pydantic v2, pytest, PyYAML, `praetor.judgment.vertex_provider.VertexProvider` (Gemini).
 
+## Amendment 2026-08-02 (post Task 1–6 drain)
+
+Design addendum in `docs/superpowers/specs/2026-08-01-capability-spike-design.md`. Implement before any APT29 manifest authoring (schema change).
+
+### A2 — `unresolved` label + label-quality counters
+
+- Extend `expected_class` to `{malicious, benign, unresolved}`.
+- Balance check remains **malicious count == benign count**; `unresolved` unrestricted.
+- Manifest fields `emulation_steps_total` and `unchained_steps` (both required together or both absent for unit fixtures; required for live APT29 manifests).
+- `score_path` / `ab_delta` exclude `unresolved` (and still exclude empty judgment).
+- CLI **always** prints `n_unresolved` and `unchained_step_share` (use `n/a` only when step fields absent on fixtures).
+
+### A3 — Citation-mix join key + A≈B read
+
+- Path B flattener pins `EventID` and `Channel` into `normalized_fields`.
+- `Observation` records `cited_event_ids` from resolved `cited_evidence_refs` joined through the path's bundle facts.
+- Pre-registered constants (do not change after seeing a live tie):
+  - `AB_TIE_SEPARATION_EPSILON = 0.05`
+  - `PATH_A_VISIBLE_EVENT_IDS = {1, 4624}`
+  - `PATH_A_CITATION_CONCENTRATION_THRESHOLD = 0.80`
+- CLI always prints Path B concentration and tie interpretation (`not_a_tie` | `prompt_constrained` | `coverage_not_bottleneck` | `citations_unavailable`).
+
+### A4 — Commit gate for this amendment
+
+- [x] `pytest tests/evals/capability -q` (45 passed)
+- [x] `ruff check evals/capability evals/capability_spike.py tests/evals/capability`
+- [x] `mypy evals/capability evals/capability_spike.py`
+- [ ] Do **not** author the APT29 manifest until A2/A3 are green (schema landed; authoring still operator-owned).
+
+## Amendment 2026-08-02b (ATLAS corpus + confound wiring)
+
+Prefer ATLASv2 over APT29 when local. Design corpus section updated.
+
+### A5 — ATLAS same-file labeling + residue semantics
+
+- Scored benign/malicious from **attack-day** `msft-security-h*-*.xml` + `groundtruth/` only (not `data/benign/`).
+- Path A does **not** consume GT; empty-bundle rate is the measurement.
+- Malicious = distinct attack-action GT times (not every GT row / `_MEI*` handle noise).
+- Benign = same file, outside GT, spread across full file time range.
+- `emulation_steps_total = 10`; `unchained_steps` = scenarios with **no usable Path B anchor** (label quality), not Path A visibility.
+
+### A6 — Wire Guard #2 + graded separation
+
+- `confound_report` / `confound_graded_separation` beside boolean `confound_check`.
+- `CONFOUND_GRADED_WARN_THRESHOLD = 0.90`.
+- CLI builds capture-derived features and prints confound **before** provider calls and again in the summary.
+
 ## Global Constraints
 
 - **No changes to `src/praetor/`.** This spike is measurement only. If a task appears to require a `src/` change, stop and report.
@@ -1800,10 +1847,10 @@ git commit -m "Add capability spike CLI with offline-safe default."
 
 The spike is then **run**, not built. That is a separate activity requiring:
 
-1. A chosen OTRF capture, verified to contain an attack window and same-host benign activity at usable density.
-2. A committed anchor manifest — labels authored from capture ground truth **before** the first provider call.
+1. A chosen OTRF capture (APT29 Day 1 host recommended), verified for attack steps + same-host benign density.
+2. A committed anchor manifest — **after** amendment A2/A3 schema lands — labels from plan-step ancestry; `unresolved` for unchained steps; `emulation_steps_total` / `unchained_steps` set; committed **before** the first provider call.
 3. `PRAETOR_CAPABILITY_SPIKE=1` and a working Gemini API key.
 
-Both items 1 and 2 are the user's, by agreement. The confound check from Task 5 should be run against the finished manifest before any live run.
+Both items 1 and 2 are the user's, by agreement. The confound check from Task 5 should be run against the finished manifest before any live run. Read A≈B ties via the pre-registered citation-mix thresholds, not post-hoc.
 
-**Interpreting results:** a clean negative is a successful spike. If Path B is no better than Path A, coverage is not the bottleneck and normalizer work would be wasted. If Path B is materially better, the generic flattener is a validated prototype for a production generic normalizer — which is then a `docs/decisions.md` decision, not a quiet promotion.
+**Interpreting results:** a clean negative is a successful spike. If Path B is no better than Path A, use citation mix to choose prompt vs "coverage not bottleneck." If Path B is materially better, the generic flattener is a validated prototype for a production generic normalizer — which is then a `docs/decisions.md` decision, not a quiet promotion. Strong scores on APT29 are a floor test under thin lab benign.

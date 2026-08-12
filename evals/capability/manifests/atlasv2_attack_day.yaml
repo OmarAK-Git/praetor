@@ -1,0 +1,284 @@
+# ATLASv2 attack-day capability spike anchors (labels frozen before provider calls).
+# Malicious: user-context Security 4688 payload.exe creates.
+# Benign: same host/channel/EventID/SubjectUserSid, outside GT, allowlisted user apps (not CB/Wireshark instrumentation).
+# Path A uses anchor_time only; seed_* fields are Guard #2 confound metadata.
+capture_id: atlasv2-attack-day-2022-07-19
+emulation_steps_total: 10
+unchained_steps: 0
+anchors:
+- anchor_id: mal-01
+  anchor_time: '2022-07-19T13:32:20.390Z'
+  expected_class: malicious
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '2876962'
+  seed_host_id: WIN-32-H1
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h1_s1 payload stage (Security EID 4688 EventRecordID 2876962; image=C:\Users\aalsahee\payload.exe;
+    SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000).
+- anchor_id: mal-02
+  anchor_time: '2022-07-19T17:24:47.468Z'
+  expected_class: malicious
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '3944176'
+  seed_host_id: WIN-32-H1
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h1_m1 payload stage (Security EID 4688 EventRecordID 3944176; image=C:\Users\aalsahee\payload.exe;
+    SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000).
+- anchor_id: mal-03
+  anchor_time: '2022-07-19T17:28:34.242Z'
+  expected_class: malicious
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '2831307'
+  seed_host_id: WIN-32-H2
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h2_m1 payload stage (Security EID 4688 EventRecordID 2831307; image=C:\Users\aalsahee\Downloads\payload.exe;
+    SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000).
+- anchor_id: mal-04
+  anchor_time: '2022-07-19T19:48:00.713Z'
+  expected_class: malicious
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '3861105'
+  seed_host_id: WIN-32-H1
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h1_m2 payload stage (Security EID 4688 EventRecordID 3861105; image=C:\Users\aalsahee\payload.exe;
+    SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000).
+- anchor_id: mal-05
+  anchor_time: '2022-07-19T19:53:09.421Z'
+  expected_class: malicious
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '2781504'
+  seed_host_id: WIN-32-H2
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h2_m2 payload stage (Security EID 4688 EventRecordID 2781504; image=C:\Users\aalsahee\Downloads\payload.exe;
+    SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000).
+- anchor_id: mal-06
+  anchor_time: '2022-07-19T20:31:29.373Z'
+  expected_class: malicious
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '4031172'
+  seed_host_id: WIN-32-H1
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h1_m3 payload stage (Security EID 4688 EventRecordID 4031172; image=C:\Users\aalsahee\payload.exe;
+    SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000).
+- anchor_id: mal-07
+  anchor_time: '2022-07-19T20:34:25.985Z'
+  expected_class: malicious
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '2665029'
+  seed_host_id: WIN-32-H2
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h2_m3 payload stage (Security EID 4688 EventRecordID 2665029; image=C:\Users\aalsahee\Downloads\payload.exe;
+    SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000).
+- anchor_id: mal-08
+  anchor_time: '2022-07-19T22:53:23.851Z'
+  expected_class: malicious
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '4675661'
+  seed_host_id: WIN-32-H1
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h1_m4 payload stage (Security EID 4688 EventRecordID 4675661; image=C:\Users\aalsahee\payload.exe;
+    SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000).
+- anchor_id: mal-09
+  anchor_time: '2022-07-19T22:55:43.914Z'
+  expected_class: malicious
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '2610829'
+  seed_host_id: WIN-32-H2
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h2_m4 payload stage (Security EID 4688 EventRecordID 2610829; image=C:\Users\aalsahee\Downloads\payload.exe;
+    SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000).
+- anchor_id: mal-10
+  anchor_time: '2022-07-19T23:41:29.623Z'
+  expected_class: malicious
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '4993760'
+  seed_host_id: WIN-32-H1
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h1_m5 payload stage (Security EID 4688 EventRecordID 4993760; image=C:\Users\aalsahee\payload.exe;
+    SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000).
+- anchor_id: mal-11
+  anchor_time: '2022-07-19T23:44:52.120Z'
+  expected_class: malicious
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '2625172'
+  seed_host_id: WIN-32-H2
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h2_m5 payload stage (Security EID 4688 EventRecordID 2625172; image=C:\Users\aalsahee\Downloads\payload.exe;
+    SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000).
+- anchor_id: mal-12
+  anchor_time: '2022-07-20T00:11:43.110Z'
+  expected_class: malicious
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '4937137'
+  seed_host_id: WIN-32-H1
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h1_m6 payload stage (Security EID 4688 EventRecordID 4937137; image=C:\Users\aalsahee\payload.exe;
+    SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000).
+- anchor_id: mal-13
+  anchor_time: '2022-07-20T00:16:36.753Z'
+  expected_class: malicious
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '2614036'
+  seed_host_id: WIN-32-H2
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h2_m6 payload stage (Security EID 4688 EventRecordID 2614036; image=C:\Users\aalsahee\Downloads\payload.exe;
+    SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000).
+- anchor_id: ben-01
+  anchor_time: '2022-07-19T15:17:31.953Z'
+  expected_class: benign
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '2586310'
+  seed_host_id: WIN-32-H2
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: >-
+    ATLAS h2_m3 ordinary user-context process create (Security EID 4688
+    EventRecordID 2586310; image=C:\Windows\System32\cmd.exe;
+    SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000; outside GT;
+    profile-matched; reseeds prior h2_m1 12:18 firefox seed that sat inside a
+    Carbon Black / session-start Sysmon EID 1 storm).
+- anchor_id: ben-02
+  anchor_time: '2022-07-19T13:30:35.787Z'
+  expected_class: benign
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '2856834'
+  seed_host_id: WIN-32-H1
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h1_s1 ordinary user-context process create (Security EID 4688 EventRecordID 2856834;
+    image=C:\Windows\System32\cmd.exe; SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000; outside
+    GT; profile-matched to malicious seeds).
+- anchor_id: ben-03
+  anchor_time: '2022-07-19T14:33:20.226Z'
+  expected_class: benign
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '3253952'
+  seed_host_id: WIN-32-H1
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h1_s3 ordinary user-context process create (Security EID 4688 EventRecordID 3253952;
+    image=C:\Program Files\Microsoft Office\Office14\WINWORD.EXE; SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000;
+    outside GT; profile-matched to malicious seeds).
+- anchor_id: ben-04
+  anchor_time: '2022-07-19T20:21:36.571Z'
+  expected_class: benign
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '2634774'
+  seed_host_id: WIN-32-H2
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h2_m3 ordinary user-context process create (Security EID 4688 EventRecordID 2634774;
+    image=C:\Windows\explorer.exe; SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000; outside
+    GT; profile-matched to malicious seeds).
+- anchor_id: ben-05
+  anchor_time: '2022-07-19T16:31:08.736Z'
+  expected_class: benign
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '3777816'
+  seed_host_id: WIN-32-H1
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h1_m1 ordinary user-context process create (Security EID 4688 EventRecordID 3777816;
+    image=C:\Program Files\Microsoft Office\Office14\EXCEL.EXE; SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000;
+    outside GT; profile-matched to malicious seeds).
+- anchor_id: ben-06
+  anchor_time: '2022-07-19T19:09:08.258Z'
+  expected_class: benign
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '2666491'
+  seed_host_id: WIN-32-H2
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h2_m2 ordinary user-context process create (Security EID 4688 EventRecordID 2666491;
+    image=C:\Program Files\Windows Media Player\wmpnscfg.exe; SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000;
+    outside GT; profile-matched to malicious seeds).
+- anchor_id: ben-07
+  anchor_time: '2022-07-19T19:07:31.089Z'
+  expected_class: benign
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '2640717'
+  seed_host_id: WIN-32-H2
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h2_m2 ordinary user-context process create (Security EID 4688 EventRecordID 2640717;
+    image=C:\Program Files\Mozilla Firefox\firefox.exe; SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000;
+    outside GT; profile-matched to malicious seeds).
+- anchor_id: ben-08
+  anchor_time: '2022-07-19T19:33:07.953Z'
+  expected_class: benign
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '3802739'
+  seed_host_id: WIN-32-H1
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h1_m2 ordinary user-context process create (Security EID 4688 EventRecordID 3802739;
+    image=C:\Program Files\Mozilla Firefox\firefox.exe; SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000;
+    outside GT; profile-matched to malicious seeds).
+- anchor_id: ben-09
+  anchor_time: '2022-07-19T20:09:06.502Z'
+  expected_class: benign
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '3940236'
+  seed_host_id: WIN-32-H1
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h1_m3 ordinary user-context process create (Security EID 4688 EventRecordID 3940236;
+    image=C:\Program Files\Mozilla Firefox\firefox.exe; SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000;
+    outside GT; profile-matched to malicious seeds).
+- anchor_id: ben-10
+  anchor_time: '2022-07-19T22:39:52.494Z'
+  expected_class: benign
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '4608175'
+  seed_host_id: WIN-32-H1
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h1_m4 ordinary user-context process create (Security EID 4688 EventRecordID 4608175;
+    image=C:\Program Files\Microsoft Office\Office14\EXCEL.EXE; SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000;
+    outside GT; profile-matched to malicious seeds).
+- anchor_id: ben-11
+  anchor_time: '2022-07-19T23:25:19.203Z'
+  expected_class: benign
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '2582047'
+  seed_host_id: WIN-32-H2
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h2_m5 ordinary user-context process create (Security EID 4688 EventRecordID 2582047;
+    image=C:\Program Files\Mozilla Firefox\firefox.exe; SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000;
+    outside GT; profile-matched to malicious seeds).
+- anchor_id: ben-12
+  anchor_time: '2022-07-20T00:05:02.661Z'
+  expected_class: benign
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '2584361'
+  seed_host_id: WIN-32-H2
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h2_m6 ordinary user-context process create (Security EID 4688 EventRecordID 2584361;
+    image=C:\Program Files\Mozilla Firefox\firefox.exe; SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000;
+    outside GT; profile-matched to malicious seeds).
+- anchor_id: ben-13
+  anchor_time: '2022-07-19T23:58:51.696Z'
+  expected_class: benign
+  seed_event_id: 4688
+  seed_channel: Security
+  seed_event_record_id: '4859304'
+  seed_host_id: WIN-32-H1
+  seed_subject_sid: S-1-5-21-450080267-1945256726-3465656282-1000
+  rationale: ATLAS h1_m6 ordinary user-context process create (Security EID 4688 EventRecordID 4859304;
+    image=C:\Program Files\Microsoft Office\Office14\EXCEL.EXE; SubjectUserSid=S-1-5-21-450080267-1945256726-3465656282-1000;
+    outside GT; profile-matched to malicious seeds).

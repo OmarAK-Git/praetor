@@ -1,5 +1,17 @@
 # Progress Log
 
+## 2026-08-03 — Judgment capability spike LIVE RESULTS + DEC-067
+
+- Write-up: `docs/superpowers/results/2026-08-02-judgment-capability-spike-results.md`
+- Decision: DEC-067 (do not expand normalizers; Path A ≈ fact-count stump p=0.625;
+  A>B McNemar p=0.015625; absolute rates scoped to synthetic 50/50 windows).
+- JSONL: `evals/capability/captures/atlasv2_capability_spike_results.jsonl`
+  (pre-refill backup `*.prerefill.jsonl`).
+- Mid-flight: Path B 7-digit EventData timestamps sanitized in spike flattener;
+  18 cells refilled — Path B cell sep 66.67% → 61.04% (against favorable reading).
+- Production follow-ups filed in `memory-bank/tasks.md` (Vertex `MAX_TOKENS`
+  collapse; production timestamp coerce if correlators emit those keys).
+
 ## 2026-08-01 — Judgment capability spike COMPLETE
 
 - Design: `docs/superpowers/specs/2026-08-01-capability-spike-design.md`
