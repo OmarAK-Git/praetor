@@ -47,6 +47,7 @@ from praetor.judgment.provider import (
     JudgmentProvider,
     JudgmentRequest,
     ProviderMalformedResponseError,
+    ProviderOutputTruncatedError,
     ProviderProbeResult,
     ProviderRefusalError,
     ProviderRetryPolicy,
@@ -377,7 +378,7 @@ def process_alert_intake(
             retry_policy=provider_retry_policy,
             max_latency_seconds=max_provider_latency_seconds,
         )
-    except ProviderMalformedResponseError:
+    except (ProviderMalformedResponseError, ProviderOutputTruncatedError):
         return _finish_provider_fault(
             store,
             attempt,

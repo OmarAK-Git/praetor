@@ -27,6 +27,10 @@ class ProviderMalformedResponseError(ProviderError):
     """Provider output was not valid JSON for the ModelJudgment contract."""
 
 
+class ProviderOutputTruncatedError(ProviderError):
+    """Provider stopped for length / max tokens before a complete judgment."""
+
+
 class ProviderRefusalError(ProviderError):
     """Provider refused to produce a judgment for the supplied request."""
 

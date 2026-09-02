@@ -11,7 +11,11 @@ from tests.engine.helpers import (
 from praetor.contracts.disposition import Disposition
 from praetor.engine.orchestrator import SucceedingStampBackend, process_alert_intake
 from praetor.judgment.fake_provider import FakeProvider, FakeProviderMode
-from praetor.judgment.provider import JudgmentRequest, ProviderUnavailableError
+from praetor.judgment.provider import (
+    JudgmentRequest,
+    ProviderOutputTruncatedError,
+    ProviderUnavailableError,
+)
 from praetor.judgment.provider_health_breaker import read_provider_health_metrics
 from praetor.metrics.events import LLM_FAILURE_FAULT_FLAGS, OutcomeMatrixFaultFlag
 
@@ -55,3 +59,27 @@ def test_provider_unavailable_records_breaker_production_failure(activated) -> N
     assert result.edict is not None
     after = read_provider_health_metrics(activated.conn).production_failure_total
     assert after == before + 1
+
+
+class _TruncatingProvider:
+    def generate_judgment(self, request: JudgmentRequest):
+        raise ProviderOutputTruncatedError("vertex output truncated: finishReason=MAX_TOKENS")
+
+
+def test_provider_truncated_intake_escalates_as_malformed(activated) -> None:
+    result = process_alert_intake(
+        activated,
+        judgment_provider=_TruncatingProvider(),
+        stamp_backend=SucceedingStampBackend(),
+        alert_identity="engine-provider-truncated",
+    )
+
+    assert result.edict is not None
+    assert_outcome_matrix_edict(
+        result.edict,
+        final_disposition=Disposition.ESCALATE,
+        fault_flags=["provider_malformed_json"],
+        system_fault_escalation=True,
+        proposed_disposition=Disposition.STANDARD_REVIEW,
+    )
+    assert_edict_snapshot_pairing(activated.conn, result.edict)

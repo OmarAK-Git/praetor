@@ -27,6 +27,7 @@ from praetor.judgment.provider import (
     PROVIDER_HEALTH_CANARY_PAYLOAD,
     JudgmentProvider,
     JudgmentRequest,
+    ProviderOutputTruncatedError,
     ProviderProbeResult,
     ProviderUnavailableError,
 )
@@ -186,6 +187,12 @@ def _gate(activated: StateStore, snapshot, *, alert_identity: str):
 
 def test_provider_unavailable_trips_breaker() -> None:
     assert provider_failure_trips_breaker(ProviderUnavailableError("stub"))
+
+
+def test_provider_output_truncated_trips_breaker() -> None:
+    assert provider_failure_trips_breaker(
+        ProviderOutputTruncatedError("finishReason=MAX_TOKENS")
+    )
 
 
 def test_provider_failures_trip_breaker(activated: StateStore) -> None:

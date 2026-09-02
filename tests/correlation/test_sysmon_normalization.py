@@ -66,6 +66,24 @@ def test_sysmon_process_creation_normalizes() -> None:
     assert fact.source_event_reference.startswith("microsoft-windows-sysmon:")
 
 
+def test_sysmon_normalized_fields_omit_eventdata_clock_strings() -> None:
+    events = _load_json_fixture(SYSMON_FIXTURES / "process_chain.json")
+    events[0] = {
+        **events[0],
+        "EventData": {
+            **events[0]["EventData"],
+            "NewTime": "2026-06-08T12:00:00.1234567Z",
+            "PreviousTime": "2026-06-08T11:59:59.7654321Z",
+        },
+    }
+    fact = normalize_sysmon_event(events[0])
+
+    assert "NewTime" not in fact.normalized_fields
+    assert "PreviousTime" not in fact.normalized_fields
+    hashed_values = [str(v) for v in fact.normalized_fields.values()]
+    assert not any("1234567" in value or "7654321" in value for value in hashed_values)
+
+
 def test_security_logon_normalizes() -> None:
     events = _load_json_fixture(SECURITY_FIXTURES / "successful_logon_4624.json")
     fact = normalize_security_event(events[0])

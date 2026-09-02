@@ -1,5 +1,13 @@
 # Progress Log
 
+## 2026-09-02 — PROD-CAP-001 landed; PROD-CAP-002 closed on Path A
+
+- `ProviderOutputTruncatedError` for Vertex `MAX_TOKENS`/`LENGTH` finishReasons.
+- Intake still fail-closed `provider_malformed_json` (no new Outcome Matrix row).
+- PROD-CAP-002: production Sysmon 1 / Security 4624 do not copy EventData clock
+  strings into hashed `normalized_fields`.
+- Next authorized: CBC AlertEnvelope spike spec (no live run until approved).
+
 ## 2026-08-03 — Judgment capability spike LIVE RESULTS + DEC-067
 
 - Write-up: `docs/superpowers/results/2026-08-02-judgment-capability-spike-results.md`

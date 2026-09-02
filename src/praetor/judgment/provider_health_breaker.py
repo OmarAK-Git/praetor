@@ -18,6 +18,7 @@ from praetor.judgment.provider import (
     JudgmentProvider,
     ProviderError,
     ProviderMalformedResponseError,
+    ProviderOutputTruncatedError,
     ProviderRefusalError,
     ProviderTimeoutError,
     ProviderUnavailableError,
@@ -35,6 +36,7 @@ _BREAKER_TRIPPING_ERRORS: tuple[type[ProviderError], ...] = (
     ProviderTimeoutError,
     ProviderRefusalError,
     ProviderMalformedResponseError,
+    ProviderOutputTruncatedError,
     ProviderUnavailableError,
 )
 

@@ -15,6 +15,7 @@ from praetor.judgment.provider import (
     JudgmentRequest,
     ProviderError,
     ProviderMalformedResponseError,
+    ProviderOutputTruncatedError,
     ProviderProbeResult,
     ProviderRefusalError,
     ProviderTimeoutError,
@@ -29,7 +30,17 @@ GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models"
 REFUSAL_FINISH_REASONS = frozenset(
     {"SAFETY", "RECITATION", "BLOCKED", "PROHIBITED_CONTENT"}
 )
+TERMINAL_OUTPUT_FAILURE_REASONS = frozenset({"MAX_TOKENS", "LENGTH"})
 TIMEOUT_HTTP_CODES = frozenset({408, 504})
+
+
+def _normalize_finish_reason(raw: Any) -> str | None:
+    if raw is None:
+        return None
+    text = str(raw)
+    if "." in text:
+        text = text.rsplit(".", 1)[-1]
+    return text.upper()
 
 
 @dataclass(frozen=True)
@@ -168,10 +179,13 @@ def extract_gemini_candidate_text(payload: Mapping[str, Any]) -> str:
         msg = "vertex response missing candidate text"
         raise ProviderMalformedResponseError(msg)
 
-    finish_reason = first.get("finishReason")
-    if isinstance(finish_reason, str) and finish_reason in REFUSAL_FINISH_REASONS:
+    finish_reason = _normalize_finish_reason(first.get("finishReason"))
+    if finish_reason in REFUSAL_FINISH_REASONS:
         msg = f"vertex refused judgment: finishReason={finish_reason}"
         raise ProviderRefusalError(msg)
+    if finish_reason in TERMINAL_OUTPUT_FAILURE_REASONS:
+        msg = f"vertex output truncated: finishReason={finish_reason}"
+        raise ProviderOutputTruncatedError(msg)
 
     content = first.get("content")
     if not isinstance(content, Mapping):

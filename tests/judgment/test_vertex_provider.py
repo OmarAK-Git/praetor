@@ -14,6 +14,7 @@ from praetor.judgment.provider import (
     JudgmentProvider,
     JudgmentRequest,
     ProviderMalformedResponseError,
+    ProviderOutputTruncatedError,
     ProviderRefusalError,
     ProviderTimeoutError,
     ProviderUnavailableError,
@@ -117,6 +118,42 @@ def test_vertex_provider_missing_candidate_raises_malformed() -> None:
     with patch("urllib.request.urlopen", mock_urlopen):
         with pytest.raises(ProviderMalformedResponseError, match="missing candidate"):
             provider.generate_judgment(JudgmentRequest(scenario_id="no-candidate"))
+
+
+def test_vertex_provider_max_tokens_finish_raises_truncated() -> None:
+    provider = VertexProvider(api_key="test-key")
+    mock_urlopen = _urlopen_mock(
+        {
+            "candidates": [
+                {
+                    "finishReason": "MAX_TOKENS",
+                    "content": {"parts": [{"text": '{"proposed_disposition":'}]},
+                }
+            ]
+        }
+    )
+
+    with patch("urllib.request.urlopen", mock_urlopen):
+        with pytest.raises(ProviderOutputTruncatedError, match="MAX_TOKENS"):
+            provider.generate_judgment(JudgmentRequest(scenario_id="max-tokens"))
+
+
+def test_vertex_provider_enum_length_finish_raises_truncated() -> None:
+    provider = VertexProvider(api_key="test-key")
+    mock_urlopen = _urlopen_mock(
+        {
+            "candidates": [
+                {
+                    "finishReason": "FinishReason.LENGTH",
+                    "content": {"parts": [{"text": '{"proposed_disposition":'}]},
+                }
+            ]
+        }
+    )
+
+    with patch("urllib.request.urlopen", mock_urlopen):
+        with pytest.raises(ProviderOutputTruncatedError, match="LENGTH"):
+            provider.generate_judgment(JudgmentRequest(scenario_id="length-enum"))
 
 
 def test_vertex_provider_safety_finish_raises_refusal() -> None:
