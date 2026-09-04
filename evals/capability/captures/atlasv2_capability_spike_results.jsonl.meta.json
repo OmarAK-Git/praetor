@@ -1,0 +1,9 @@
+{
+  "capture_id": "atlasv2-attack-day-2022-07-19",
+  "max_output_tokens": 16384,
+  "model_name": "gemini-2.5-flash",
+  "provider_name": "vertex-spike",
+  "runs": 3,
+  "temperature": 1.0,
+  "thinking_budget": 0
+}

@@ -1,0 +1,41 @@
+{
+  "anchor_id": "ben-06",
+  "citation_count": 4,
+  "citation_errors": [],
+  "citations_resolved": 4,
+  "citations_valid": true,
+  "elapsed_seconds": 24.386256,
+  "expected_class": "benign",
+  "failure_reasons": [
+    "finish_reason=STOP"
+  ],
+  "finish_reason": "STOP",
+  "http_status": 200,
+  "judgment_parsed": true,
+  "max_extra_facts": null,
+  "max_output_tokens": 16384,
+  "model": "gemini-2.5-flash",
+  "path": "flattened",
+  "path_a_fact_count": 181,
+  "path_b_fact_count": 437,
+  "probe": true,
+  "projected_full_run_calls": 156,
+  "projected_full_run_token_upper_bound": 72331896,
+  "prompt_char_length": 1315796,
+  "proposed_disposition": "escalate",
+  "provider": "vertex-spike",
+  "raw_response_chars": 2454,
+  "raw_response_head": "{\"proposed_disposition\": \"escalate\", \"cited_evidence_refs\": [{\"evidence_id\": \"ev-0d73783abb69d5ed7ab770d590c4f1b6\", \"field_path\": \"normalized_fields.Image\"}, {\"evidence_id\": \"ev-0d73783abb69d5ed7ab770d590c4f1b6\", \"field_path\": \"normalized_fields.CommandLine\"}, {\"evidence_id\": \"ev-f8eac86f44fc4e5da75e9dbcfd2354f2\", \"field_path\": \"normalized_fields.Image\"}, {\"evidence_id\": \"ev-f8eac86f44fc4e5da75e9dbcfd2354f2\", \"field_path\": \"normalized_fields.CommandLine\"}], \"key_tells\": [\"RepWmiUtils.exe execute",
+  "raw_response_tail": "ity is suspicious due to the nature of these executables being WMI utility tools and their execution from a non-standard program directory. The repetitive and parameterized execution of these tools without a clear benign context indicates potential malicious or unauthorized system interaction. This behavior suggests that an actor may be attempting to enumerate system information or manipulate system configurations using these WMI utilities.\", \"model_name\": \"Praetor\", \"provider_name\": \"Mandiant\"}",
+  "response_schema": "ModelJudgment",
+  "scored": false,
+  "smoke_pass": true,
+  "thinking_budget": 0,
+  "timestamp_utc": "2026-08-03T15:13:13.479202+00:00",
+  "usage_metadata": {
+    "candidatesTokenCount": 629,
+    "promptTokenCount": 463037,
+    "thoughtsTokenCount": null,
+    "totalTokenCount": 463666
+  }
+}
