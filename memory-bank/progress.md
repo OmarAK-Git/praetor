@@ -1,5 +1,11 @@
 # Progress Log
 
+## 2026-09-18 — Eval-kernel program SoT accepted
+
+- Merged [PR 1](https://github.com/OmarAK-Git/praetor/pull/1) (design spec) and [PR 2](https://github.com/OmarAK-Git/praetor/pull/2) (Sprint 1 TDD plan).
+- Loaded GSD sprint `eval-kernel-sprint1` (21 tasks + phase-exit gate) into `.workflow/autopilot-queue.json`.
+- Next runnable: `eval-kernel-01-scorecard`. CBC adapter remains rejected; full queue-item retire waits for Task 21 / Sprint 3.
+
 ## 2026-09-02 — PROD-CAP-001 landed; PROD-CAP-002 closed on Path A
 
 - `ProviderOutputTruncatedError` for Vertex `MAX_TOKENS`/`LENGTH` finishReasons.

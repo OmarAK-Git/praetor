@@ -2,6 +2,8 @@
 
 ## Current focus
 
+**2026-09-18 — Eval-kernel Sprint 1 loaded.** PRs #1 (design) and #2 (Sprint 1 plan) accepted and merged. GSD sprint `eval-kernel-sprint1` is in `.workflow/autopilot-queue.json` (22 items, gate `eval-kernel-sprint1-gate`). Next runnable: `eval-kernel-01-scorecard`. CBC AlertEnvelope adapter remains rejected (spec §2); full memory-bank retire waits for Task 21 / Sprint 3.
+
 **2026-09-02 — PROD-CAP-001 landed.** Truncation vs parse-error. Next: CBC AlertEnvelope spike spec (no live run until spec approved).
 
 **2026-09-02 — Authorized next: PROD-CAP-001 (+002 audit), then CBC AlertEnvelope spike spec (no live run until spec approved).** T1 production PR in progress.

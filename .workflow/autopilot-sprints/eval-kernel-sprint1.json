@@ -1,0 +1,1005 @@
+{
+  "sprint_id": "eval-kernel-sprint1",
+  "gate_item_id": "eval-kernel-sprint1-gate",
+  "prerequisite_done": [
+    "capability-spike-gate"
+  ],
+  "source_spec": "docs/superpowers/specs/2026-09-06-eval-kernel-judgment-readiness-design.md",
+  "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+  "items": [
+    {
+      "id": "eval-kernel-01-scorecard",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "capability-spike-gate"
+      ],
+      "goal": "Task 1 — Scorecard schema + Pydantic model: ScorecardRow with extra=forbid, pending legal only for capability quality new_build, failure_class none on pass/pending and required on fail/error.",
+      "scope": "Scorecard schema and validator only. Do not add kernel runner, scenarios, or CI. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/schemas/scorecard_schema.json",
+        "evals/scorecard.py",
+        "tests/evals/test_scorecard.py",
+        ".workflow/eval-kernel-01-scorecard/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "scorecard_schema.json has additionalProperties false and the spec §4 required fields.",
+        "ScorecardRow rejects unknown fields.",
+        "pending is legal only for cap.baseline_bag_path_a and cap.stump_parity_guard new_build.",
+        "pending is illegal for cap.no_label_leak_ids and non-capability rows.",
+        "failure_class is none when pass or pending, and not none when fail or error.",
+        "The verifier checks only Task 1 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/test_scorecard.py -q",
+          "ruff check evals/scorecard.py tests/evals/test_scorecard.py",
+          "mypy evals/scorecard.py"
+        ],
+        "manual_checks": [
+          "No src/praetor/ edits.",
+          "No evals/harness.py edits."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-01-scorecard",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-02-runner-cli",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-01-scorecard"
+      ],
+      "goal": "Task 2 — e2e_kernel runner skeleton + harness CLI: thin sibling imported by evals.harness; --e2e/--all flags; default no-arg path stays Outcome Matrix only; no Path B import.",
+      "scope": "Kernel skeleton and harness CLI wiring only. Do not add scenario YAML or executors. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/e2e_kernel.py",
+        "evals/e2e_scenarios/.gitkeep",
+        "evals/harness.py",
+        "tests/evals/test_e2e_kernel.py",
+        ".workflow/eval-kernel-02-runner-cli/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "python -m evals.harness with no args still runs only the Outcome Matrix suite.",
+        "--e2e and --all are recognized on the same CLI.",
+        "REQUIRED_E2E_SCENARIO_IDS lists the locked 15 IDs.",
+        "evals.e2e_kernel does not import evals.capability.flatten.",
+        "The verifier checks only Task 2 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/test_e2e_kernel.py tests/evals/test_eval_harness.py -q",
+          "ruff check evals/e2e_kernel.py evals/harness.py tests/evals/test_e2e_kernel.py",
+          "mypy evals/e2e_kernel.py evals/harness.py"
+        ],
+        "manual_checks": [
+          "Default no-arg harness path unchanged.",
+          "No Path B import on the kernel module."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-02-runner-cli",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-03-scenario-loader",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-01-scorecard"
+      ],
+      "goal": "Task 3 — E2E scenario YAML contract loader: sibling-tree schema, filename stem must match scenario_id, no skip flags, theater_detector required.",
+      "scope": "E2E YAML schema and loader only. Do not execute scenarios. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/schemas/e2e_scenario_schema.json",
+        "evals/e2e_scenario.py",
+        "tests/evals/test_e2e_scenario.py",
+        "tests/evals/fixtures/e2e/",
+        ".workflow/eval-kernel-03-scenario-loader/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "E2E YAML lives under evals/e2e_scenarios or a tests fixture tree, not evals/scenarios.",
+        "load_e2e_scenario rejects stem/id mismatch, missing theater_detector, and skip flags.",
+        "Required spec §4 fields are enforced.",
+        "The verifier checks only Task 3 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/test_e2e_scenario.py -q",
+          "ruff check evals/e2e_scenario.py tests/evals/test_e2e_scenario.py",
+          "mypy evals/e2e_scenario.py"
+        ],
+        "manual_checks": [
+          "Outcome Matrix scenario_schema.json is untouched.",
+          "No CBC JSON or extra envelope fields in the loader contract."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-03-scenario-loader",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-04-theater",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-03-scenario-loader"
+      ],
+      "goal": "Task 4 — Theater detector registry: all six named checks from spec §8, trips fail the suite even if disposition matched a label.",
+      "scope": "Theater detector registry only. Do not wire production scenarios yet. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/theater.py",
+        "tests/evals/test_theater.py",
+        ".workflow/eval-kernel-04-theater/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "THEATER_DETECTOR_NAMES includes all six spec §8 names.",
+        "Each named check has a unit test that trips and one that stays clean.",
+        "Unknown detector names raise a harness error.",
+        "The verifier checks only Task 4 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/test_theater.py -q",
+          "ruff check evals/theater.py tests/evals/test_theater.py",
+          "mypy evals/theater.py"
+        ],
+        "manual_checks": [
+          "No silent skip path in the registry."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-04-theater",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-05-gov-never-contain",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-02-runner-cli",
+        "eval-kernel-04-theater"
+      ],
+      "goal": "Task 5 — Kernel executor + gov.never_contain_live_shape: production process_alert_intake shape; both arms pass; no PolicyGate-only shortcut.",
+      "scope": "Executor plus the first governance scenario only. Do not add the remaining 14 IDs. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/e2e_kernel.py",
+        "evals/e2e_scenarios/gov.never_contain_live_shape.yaml",
+        "tests/evals/e2e/test_gov_never_contain_live_shape.py",
+        "tests/evals/e2e/__init__.py",
+        ".workflow/eval-kernel-05-gov-never-contain/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Scenario uses runner e2e_kernel and the production intake call shape.",
+        "old_build and new_build both pass on FakeProvider.",
+        "auto_contain is blocked by live never-contain on process_alert_intake, not a PolicyGate-only shortcut.",
+        "The verifier checks only Task 5 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/e2e/test_gov_never_contain_live_shape.py tests/evals/test_e2e_kernel.py -q",
+          "ruff check evals/e2e_kernel.py tests/evals/e2e/test_gov_never_contain_live_shape.py",
+          "mypy evals/e2e_kernel.py"
+        ],
+        "manual_checks": [
+          "No CBC JSON or extra AlertEnvelope fields.",
+          "Outcome Matrix runners unchanged."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-05-gov-never-contain",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-06-gov-feed-unhealthy",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-05-gov-never-contain"
+      ],
+      "goal": "Task 6 — gov.feed_unhealthy_blocks_contain: unhealthy revocation feed blocks auto_contain and still allows standard_review via production intake.",
+      "scope": "This governance pin only. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/e2e_kernel.py",
+        "evals/e2e_scenarios/gov.feed_unhealthy_blocks_contain.yaml",
+        "tests/evals/e2e/test_gov_feed_unhealthy_blocks_contain.py",
+        ".workflow/eval-kernel-06-gov-feed-unhealthy/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Both arms pass on FakeProvider.",
+        "Unhealthy feed blocks auto_contain and allows standard_review.",
+        "Uses the same degraded-mode contract as the playbook fixture.",
+        "The verifier checks only Task 6 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/e2e/test_gov_feed_unhealthy_blocks_contain.py -q",
+          "ruff check evals/e2e_kernel.py tests/evals/e2e/test_gov_feed_unhealthy_blocks_contain.py",
+          "mypy evals/e2e_kernel.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-06-gov-feed-unhealthy",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-07-gov-recovery",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-06-gov-feed-unhealthy"
+      ],
+      "goal": "Task 7 — gov.recovery_never_contains: engine recovery of a non-terminal attempt never emits auto_contain.",
+      "scope": "This governance pin only. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/e2e_kernel.py",
+        "evals/e2e_scenarios/gov.recovery_never_contains.yaml",
+        "tests/evals/e2e/test_gov_recovery_never_contains.py",
+        ".workflow/eval-kernel-07-gov-recovery/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Both arms pass on FakeProvider.",
+        "Recovery never emits auto_contain.",
+        "Pin uses run_engine_startup_recovery / recovery resolver, not a PolicyGate-only shortcut.",
+        "The verifier checks only Task 7 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/e2e/test_gov_recovery_never_contains.py -q",
+          "ruff check evals/e2e_kernel.py tests/evals/e2e/test_gov_recovery_never_contains.py",
+          "mypy evals/e2e_kernel.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-07-gov-recovery",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-08-des-envelope",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-07-gov-recovery"
+      ],
+      "goal": "Task 8 — des.envelope_rejects_extra_fields: AlertEnvelope construction with any field other than schema_version + alert_identity raises.",
+      "scope": "This design pin only. Do not change src/praetor contracts. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/e2e_kernel.py",
+        "evals/e2e_scenarios/des.envelope_rejects_extra_fields.yaml",
+        "tests/evals/e2e/test_des_envelope_rejects_extra_fields.py",
+        ".workflow/eval-kernel-08-des-envelope/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Both arms pass on FakeProvider.",
+        "Extra envelope fields raise; identity-only construction succeeds.",
+        "No AlertEnvelope field expansion in src/.",
+        "The verifier checks only Task 8 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/e2e/test_des_envelope_rejects_extra_fields.py -q",
+          "ruff check evals/e2e_kernel.py tests/evals/e2e/test_des_envelope_rejects_extra_fields.py",
+          "mypy evals/e2e_kernel.py"
+        ],
+        "manual_checks": [
+          "src/praetor/contracts/alert.py is unchanged."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-08-des-envelope",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-09-des-path-b",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-08-des-envelope"
+      ],
+      "goal": "Task 9 — des.path_b_stays_out_of_src: AST/import guard that src/praetor does not import Path B flatteners.",
+      "scope": "This design pin only. Do not promote Path B. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/e2e_kernel.py",
+        "evals/e2e_scenarios/des.path_b_stays_out_of_src.yaml",
+        "tests/evals/e2e/test_des_path_b_stays_out_of_src.py",
+        ".workflow/eval-kernel-09-des-path-b/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Both arms pass.",
+        "src/praetor import of evals.capability.flatten or a Path B flattener is a theater_detector fail.",
+        "Path B remains under evals/.",
+        "The verifier checks only Task 9 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/e2e/test_des_path_b_stays_out_of_src.py -q",
+          "ruff check evals/e2e_kernel.py tests/evals/e2e/test_des_path_b_stays_out_of_src.py",
+          "mypy evals/e2e_kernel.py"
+        ],
+        "manual_checks": [
+          "No src/praetor/ Path B import added."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-09-des-path-b",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-10-des-evidence-hash",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-09-des-path-b"
+      ],
+      "goal": "Task 10 — des.evidence_hash_stable: same logical EvidenceBundle yields the same evidence_bundle_hash across two kernel runs.",
+      "scope": "This design pin only. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/e2e_kernel.py",
+        "evals/e2e_scenarios/des.evidence_hash_stable.yaml",
+        "tests/evals/e2e/test_des_evidence_hash_stable.py",
+        ".workflow/eval-kernel-10-des-evidence-hash/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Both arms pass.",
+        "Two kernel runs of the same logical bundle produce the same evidence_bundle_hash.",
+        "Drift is classified harness/design, not model.",
+        "The verifier checks only Task 10 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/e2e/test_des_evidence_hash_stable.py -q",
+          "ruff check evals/e2e_kernel.py tests/evals/e2e/test_des_evidence_hash_stable.py",
+          "mypy evals/e2e_kernel.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-10-des-evidence-hash",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-11-thr-cmdline",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-10-des-evidence-hash"
+      ],
+      "goal": "Task 11 — thr.instruction_in_cmdline: instruction-like command_line text survives excerpting and is not a FakeProvider do-what-I-say win.",
+      "scope": "This threat pin only. Live-model half stays opt-in. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/e2e_kernel.py",
+        "evals/e2e_scenarios/thr.instruction_in_cmdline.yaml",
+        "tests/evals/e2e/test_thr_instruction_in_cmdline.py",
+        ".workflow/eval-kernel-11-thr-cmdline/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Both arms pass on the deterministic FakeProvider half.",
+        "Instruction-like command_line survives excerpting.",
+        "No silent skip of a live-model half if present.",
+        "The verifier checks only Task 11 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/e2e/test_thr_instruction_in_cmdline.py -q",
+          "ruff check evals/e2e_kernel.py tests/evals/e2e/test_thr_instruction_in_cmdline.py",
+          "mypy evals/e2e_kernel.py"
+        ],
+        "manual_checks": [
+          "Live Vertex is not a merge-gate requirement."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-11-thr-cmdline",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-12-thr-wrong-process",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-11-thr-cmdline"
+      ],
+      "goal": "Task 12 — thr.valid_cite_wrong_process: valid citations that omit the subject Path A fact are recorded as a cite-to-subject miss; authority must not treat valid cite as right subject.",
+      "scope": "Record the miss only. Do not implement Sprint 2 McNemar. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/e2e_kernel.py",
+        "evals/e2e_scenarios/thr.valid_cite_wrong_process.yaml",
+        "tests/evals/e2e/test_thr_valid_cite_wrong_process.py",
+        ".workflow/eval-kernel-12-thr-wrong-process/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Both arms pass the Sprint 1 authority pin.",
+        "Citations resolve but omit the subject Path A fact; that miss is recorded.",
+        "No cite-to-subject McNemar or Sprint 2 primary scoring is implemented.",
+        "The verifier checks only Task 12 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/e2e/test_thr_valid_cite_wrong_process.py -q",
+          "ruff check evals/e2e_kernel.py tests/evals/e2e/test_thr_valid_cite_wrong_process.py",
+          "mypy evals/e2e_kernel.py"
+        ],
+        "manual_checks": [
+          "Cite-to-subject remains Sprint 2 PRIMARY, not implemented here."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-12-thr-wrong-process",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-13-thr-multi-host",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-12-thr-wrong-process"
+      ],
+      "goal": "Task 13 — thr.ambiguous_multi_host_target: two distinct hosts in cited facts escalate ambiguous_containment_target on the production call shape.",
+      "scope": "This threat pin only. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/e2e_kernel.py",
+        "evals/e2e_scenarios/thr.ambiguous_multi_host_target.yaml",
+        "tests/evals/e2e/test_thr_ambiguous_multi_host_target.py",
+        ".workflow/eval-kernel-13-thr-multi-host/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Both arms pass.",
+        "Two distinct cited hosts produce ambiguous_containment_target escalate.",
+        "Uses production process_alert_intake call shape.",
+        "The verifier checks only Task 13 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/e2e/test_thr_ambiguous_multi_host_target.py -q",
+          "ruff check evals/e2e_kernel.py tests/evals/e2e/test_thr_ambiguous_multi_host_target.py",
+          "mypy evals/e2e_kernel.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-13-thr-multi-host",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-14-use-ledger",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-13-thr-multi-host"
+      ],
+      "goal": "Task 14 — use.reconstruct_from_ledger: after completed intake, ledger rows plus decision_id / evidence_bundle_hash reconstruct the asserted edict fields.",
+      "scope": "This usability pin only. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/e2e_kernel.py",
+        "evals/e2e_scenarios/use.reconstruct_from_ledger.yaml",
+        "tests/evals/e2e/test_use_reconstruct_from_ledger.py",
+        ".workflow/eval-kernel-14-use-ledger/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Both arms pass.",
+        "Ledger reconstruction matches the scorecard-asserted edict fields.",
+        "Inability to rebuild the story is failure_class=harness.",
+        "The verifier checks only Task 14 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/e2e/test_use_reconstruct_from_ledger.py -q",
+          "ruff check evals/e2e_kernel.py tests/evals/e2e/test_use_reconstruct_from_ledger.py",
+          "mypy evals/e2e_kernel.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-14-use-ledger",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-15-use-progressive-auth",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-14-use-ledger"
+      ],
+      "goal": "Task 15 — use.progressive_auth_report: build_progressive_authorization_report reads evaluation rows written by the same intake; report is read-only.",
+      "scope": "This usability pin only. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/e2e_kernel.py",
+        "evals/e2e_scenarios/use.progressive_auth_report.yaml",
+        "tests/evals/e2e/test_use_progressive_auth_report.py",
+        ".workflow/eval-kernel-15-use-progressive-auth/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Both arms pass.",
+        "Report reads evaluation rows from the same intake and is read-only.",
+        "A missing evaluation row is a harness fail.",
+        "The verifier checks only Task 15 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/e2e/test_use_progressive_auth_report.py -q",
+          "ruff check evals/e2e_kernel.py tests/evals/e2e/test_use_progressive_auth_report.py",
+          "mypy evals/e2e_kernel.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-15-use-progressive-auth",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-16-use-demo-honesty",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-15-use-progressive-auth"
+      ],
+      "goal": "Task 16 — use.demo_honesty_gate: demo/walkthrough/kernel copy must not claim judgment works while the Sprint 2 cite-to-subject primary is unearned.",
+      "scope": "This usability pin only. Do not claim capability. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/e2e_kernel.py",
+        "evals/e2e_scenarios/use.demo_honesty_gate.yaml",
+        "tests/evals/e2e/test_use_demo_honesty_gate.py",
+        ".workflow/eval-kernel-16-use-demo-honesty/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Both arms pass when demo copy does not claim unearned judgment.",
+        "Unearned capability claims trip theater_detector unearned_demo_claim.",
+        "A stump-only win is not treated as a claim.",
+        "The verifier checks only Task 16 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/e2e/test_use_demo_honesty_gate.py -q",
+          "ruff check evals/e2e_kernel.py tests/evals/e2e/test_use_demo_honesty_gate.py",
+          "mypy evals/e2e_kernel.py"
+        ],
+        "manual_checks": []
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-16-use-demo-honesty",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-17-cap-baseline",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-16-use-demo-honesty"
+      ],
+      "goal": "Task 17 — cap.baseline_bag_path_a: Path A bag is production correlator output fed to process_alert_intake; new_build is pending, not pass.",
+      "scope": "This capability pin only. Do not claim judgment quality. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/e2e_kernel.py",
+        "evals/e2e_scenarios/cap.baseline_bag_path_a.yaml",
+        "tests/evals/e2e/test_cap_baseline_bag_path_a.py",
+        ".workflow/eval-kernel-17-cap-baseline/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "old_build is recorded; new_build status is pending, not pass.",
+        "Bag is correlate_telemetry Path A (Sysmon 1 + Security 4624) into process_alert_intake.",
+        "FakeProvider stipulation is not scored as a capability quality pass.",
+        "The verifier checks only Task 17 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/e2e/test_cap_baseline_bag_path_a.py tests/evals/test_scorecard.py -q",
+          "ruff check evals/e2e_kernel.py tests/evals/e2e/test_cap_baseline_bag_path_a.py",
+          "mypy evals/e2e_kernel.py"
+        ],
+        "manual_checks": [
+          "No Path B import.",
+          "No judgment-quality pass claimed."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-17-cap-baseline",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-18-cap-stump",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-17-cap-baseline"
+      ],
+      "goal": "Task 18 — cap.stump_parity_guard: compute path_a_fact_count stump and emit McNemar-ready pairs; do not pass this as judgment beats stump; new_build pending.",
+      "scope": "Stump helper plus this capability pin only. Do not claim a quality win. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/stump.py",
+        "evals/e2e_kernel.py",
+        "evals/e2e_scenarios/cap.stump_parity_guard.yaml",
+        "tests/evals/test_stump.py",
+        "tests/evals/e2e/test_cap_stump_parity_guard.py",
+        ".workflow/eval-kernel-18-cap-stump/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "path_a_fact_count_stump and stump_pair exist and are McNemar-ready.",
+        "new_build is pending, not pass; no quality-win assertion.",
+        "old_build is recorded honestly (new≈stump or pending new).",
+        "The verifier checks only Task 18 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/test_stump.py tests/evals/e2e/test_cap_stump_parity_guard.py -q",
+          "ruff check evals/stump.py evals/e2e_kernel.py tests/evals/test_stump.py tests/evals/e2e/test_cap_stump_parity_guard.py",
+          "mypy evals/stump.py evals/e2e_kernel.py"
+        ],
+        "manual_checks": [
+          "Disposition-vs-stump is not treated as a Sprint 1 or Sprint 2 primary."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-18-cap-stump",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-19-cap-label-leak",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-18-cap-stump"
+      ],
+      "goal": "Task 19 — cap.no_label_leak_ids: ground-truth labels, seed EventRecordIDs, and expected_class do not appear in provider-visible excerpts or alert_identity; both arms pass.",
+      "scope": "This theater pin only. Do not mark it pending. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "evals/e2e_kernel.py",
+        "evals/theater.py",
+        "evals/e2e_scenarios/cap.no_label_leak_ids.yaml",
+        "tests/evals/e2e/test_cap_no_label_leak_ids.py",
+        ".workflow/eval-kernel-19-cap-label-leak/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "Both arms pass when IDs do not leak (no pending).",
+        "Leak of labels, seed EventRecordIDs, or expected_class is failure_class=theater_detector.",
+        "All 15 required scenario IDs now exist on disk.",
+        "The verifier checks only Task 19 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/e2e/test_cap_no_label_leak_ids.py tests/evals/test_e2e_kernel.py -q",
+          "ruff check evals/e2e_kernel.py evals/theater.py tests/evals/e2e/test_cap_no_label_leak_ids.py",
+          "mypy evals/e2e_kernel.py evals/theater.py"
+        ],
+        "manual_checks": [
+          "All 15 scenario files exist under evals/e2e_scenarios/."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-19-cap-label-leak",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-20-github-workflow",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-19-cap-label-leak"
+      ],
+      "goal": "Task 20 — GitHub Actions workflow: install .[dev], pytest, and python -m evals.harness --all on FakeProvider; fail on fail/error/missing row; not notebook-only; no Vertex required.",
+      "scope": "Workflow plus --all CLI verification only. Do not require live Vertex. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        ".github/workflows/eval-kernel.yml",
+        "evals/harness.py",
+        "tests/evals/test_e2e_kernel.py",
+        "tests/evals/test_eval_kernel_workflow.py",
+        ".workflow/eval-kernel-20-github-workflow/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "eval-kernel.yml installs .[dev], runs pytest, and runs python -m evals.harness --all.",
+        "Workflow does not require Vertex and is not notebook-only.",
+        "Suite fails the job on fail/error/missing scorecard rows.",
+        "The verifier checks only Task 20 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/evals/test_eval_kernel_workflow.py tests/evals/test_e2e_kernel.py -q",
+          "ruff check evals/harness.py tests/evals/test_eval_kernel_workflow.py",
+          "mypy evals/harness.py"
+        ],
+        "manual_checks": [
+          "walkthrough.yml / demo-pages.yml are not treated as this gate."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-20-github-workflow",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-21-docs-pointer",
+      "status": "pending",
+      "tier": "T2",
+      "depends_on": [
+        "eval-kernel-20-github-workflow"
+      ],
+      "goal": "Task 21 — Docs pointer: eval_gates and memory-bank point at the Sprint 1 plan; CBC queue-item retire stays deferred to Sprint 3.",
+      "scope": "Pointer docs only. Do not retire CBC items. Do not run Sprint 1 gate.",
+      "files_allowed": [
+        "docs/eval_gates.md",
+        "memory-bank/activeContext.md",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "tests/docs/test_eval_kernel_pointer.py",
+        ".workflow/eval-kernel-21-docs-pointer/"
+      ],
+      "acceptance_criteria": [
+        "docs/eval_gates.md points at the Sprint 1 plan and the new workflow.",
+        "memory-bank current-focus / next-up point here instead of CBC AlertEnvelope spike as the next authorized step.",
+        "CBC queue items are not fully retired (Sprint 3).",
+        "The verifier checks only Task 21 acceptance, not Sprint 1 gate completion."
+      ],
+      "verification": {
+        "scope": "task",
+        "commands": [
+          "pytest tests/docs/test_eval_kernel_pointer.py -q",
+          "ruff check tests/docs/test_eval_kernel_pointer.py"
+        ],
+        "manual_checks": [
+          "OM and capability-spike eval_gates text remain."
+        ]
+      },
+      "implementation_agent": "implementer",
+      "verification_agent": "skeptic-verifier",
+      "run_dir": ".workflow/eval-kernel-21-docs-pointer",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
+    },
+    {
+      "id": "eval-kernel-sprint1-gate",
+      "status": "pending",
+      "tier": "T3",
+      "depends_on": [
+        "eval-kernel-01-scorecard",
+        "eval-kernel-02-runner-cli",
+        "eval-kernel-03-scenario-loader",
+        "eval-kernel-04-theater",
+        "eval-kernel-05-gov-never-contain",
+        "eval-kernel-06-gov-feed-unhealthy",
+        "eval-kernel-07-gov-recovery",
+        "eval-kernel-08-des-envelope",
+        "eval-kernel-09-des-path-b",
+        "eval-kernel-10-des-evidence-hash",
+        "eval-kernel-11-thr-cmdline",
+        "eval-kernel-12-thr-wrong-process",
+        "eval-kernel-13-thr-multi-host",
+        "eval-kernel-14-use-ledger",
+        "eval-kernel-15-use-progressive-auth",
+        "eval-kernel-16-use-demo-honesty",
+        "eval-kernel-17-cap-baseline",
+        "eval-kernel-18-cap-stump",
+        "eval-kernel-19-cap-label-leak",
+        "eval-kernel-20-github-workflow",
+        "eval-kernel-21-docs-pointer"
+      ],
+      "goal": "Verify Sprint 1 eval kernel: 15 IDs present, FakeProvider suite green, capability quality new_build pending, no CBC/envelope/EventID work, OM harness intact.",
+      "scope": "Verify-only Sprint 1 exit; no feature implementation.",
+      "files_allowed": [
+        ".workflow/eval-kernel-sprint1-gate/",
+        "memory-bank/tasks.md",
+        "memory-bank/progress.md",
+        "memory-bank/activeContext.md"
+      ],
+      "acceptance_criteria": [
+        "All 15 E2E scenario IDs exist and appear in the scorecard.",
+        "python -m evals.harness --all is green on FakeProvider.",
+        "Governance, design, threat, and usability both arms pass.",
+        "Capability quality old_build recorded; new_build pending; cap.no_label_leak_ids both arms pass.",
+        "Full pytest, ruff, and mypy pass.",
+        "Existing Outcome Matrix harness still greens.",
+        "No CBC adapter, AlertEnvelope expansion, or EventID expansion.",
+        "All 21 task verifier artifacts exist and PASS."
+      ],
+      "verification": {
+        "scope": "phase_exit",
+        "commands": [
+          "pytest -q",
+          "ruff check src tests evals consumer_sdk",
+          "mypy src evals consumer_sdk",
+          "python -m evals.harness",
+          "python -m evals.harness --all"
+        ],
+        "manual_checks": [
+          "Capability quality new_build is pending, not pass.",
+          "Cite-to-subject McNemar was not implemented.",
+          "No src/praetor correlator or envelope contract changes."
+        ]
+      },
+      "implementation_agent": "test-runner",
+      "verification_agent": "skeptic-verifier",
+      "gate_model": "cursor-grok-4.6-high-fast",
+      "run_mode": "in_session_grok",
+      "run_dir": ".workflow/eval-kernel-sprint1-gate",
+      "attempts": 0,
+      "max_retries": 1,
+      "evidence": [],
+      "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
+      "researcher_decision": "skipped: gate is verify-only"
+    }
+  ]
+}
