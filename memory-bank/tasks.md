@@ -48,7 +48,7 @@ Index of `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints
 | V2-036 | Eval Regression Locking Discipline | V2-5 | **complete** | V2-034, V2-035 | M |
 
 **Next up:** Drain GSD sprint `eval-kernel-sprint1` (loaded 2026-09-18 from
-accepted PRs #1/#2). Tasks 1–19 done. Next runnable: `eval-kernel-20-github-workflow`.
+accepted PRs #1/#2). Tasks 1–20 done. Next runnable: `eval-kernel-21-docs-pointer`.
 CBC AlertEnvelope adapter remains **rejected** (design spec §2); do not expand
 normalizers or promote Path B (DEC-067). Full CBC queue-item retire waits
 for Task 21 / Sprint 3.
