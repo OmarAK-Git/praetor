@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from evals.harness import (
+    REPO_ROOT,
     _apply_emergency_never_contain_setup,
     _apply_policy_setup,
     _containment_allow_from_setup,
@@ -103,6 +104,8 @@ def run_e2e_scenario(
             observed = _run_des_hash(scenario)
         elif scenario.scenario_id == "thr.instruction_in_cmdline":
             observed = _run_thr_instruction(scenario)
+        elif scenario.scenario_id == "thr.valid_cite_wrong_process":
+            observed = _run_thr_wrong_process(scenario)
         else:
             raise LookupError(f"no executor for {scenario.scenario_id}")
         status = "pass"
@@ -336,6 +339,63 @@ def _run_des_path_b(scenario: E2EScenarioDocument) -> dict[str, object]:
     return {
         "path_b_import_found": finding.tripped,
         "theater_message": finding.message,
+    }
+
+
+def _load_fixture_events(relative: str) -> list[dict[str, object]]:
+    path = REPO_ROOT / relative
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return list(payload["events"])
+
+
+def _run_thr_wrong_process(scenario: E2EScenarioDocument) -> dict[str, object]:
+    from datetime import datetime
+
+    from praetor.contracts.judgment import CitedEvidenceRef
+    from praetor.correlation import correlate_telemetry
+    from praetor.correlation.entities import assemble_process_relationships
+    from praetor.engine.skeleton import skeleton_model_judgment
+    from praetor.evidence.citations import validate_evidence_citations
+
+    setup = scenario.setup
+    correlated = correlate_telemetry(
+        sysmon_events=_load_fixture_events(str(setup["sysmon_fixture"])),
+        security_events=_load_fixture_events(str(setup["security_fixture"])),
+        anchor_time=datetime.fromisoformat(
+            str(setup["anchor_time"]).replace("Z", "+00:00")
+        ),
+    )
+    graph = assemble_process_relationships(correlated.bundle.facts)
+    subject_guid = str(setup["subject_process_guid"])
+    cite_guid = str(setup["cite_process_guid"])
+    assert graph.entities.get(subject_guid) is not None
+    cited_fact = next(
+        fact
+        for fact in correlated.bundle.facts
+        if str(fact.normalized_fields.get("process_guid")) == cite_guid
+    )
+    subject_fact = next(
+        fact
+        for fact in correlated.bundle.facts
+        if str(fact.normalized_fields.get("process_guid")) == subject_guid
+    )
+    judgment = skeleton_model_judgment(
+        proposed=Disposition.ESCALATE,
+        cited_refs=[
+            CitedEvidenceRef(evidence_id=cited_fact.evidence_id, field_path="process_name")
+        ],
+    )
+    validation = validate_evidence_citations(judgment, correlated.bundle)
+    cited_ids = {ref.evidence_id for ref in judgment.cited_evidence_refs}
+    cite_to_subject = subject_fact.evidence_id in cited_ids
+    return {
+        "citations_valid": validation.valid,
+        "cite_to_subject": cite_to_subject,
+        "authority_treats_valid_cite_as_right_subject": (
+            validation.valid and cite_to_subject
+        ),
+        "subject_process_guid": subject_guid,
+        "cited_evidence_id": cited_fact.evidence_id,
     }
 
 

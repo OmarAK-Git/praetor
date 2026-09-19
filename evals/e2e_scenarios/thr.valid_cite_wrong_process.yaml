@@ -1,0 +1,30 @@
+schema_version: "1"
+scenario_id: thr.valid_cite_wrong_process
+realm: threat
+description: Resolved citations that omit the subject Path A fact are not treated as the right subject.
+runner: e2e_kernel
+setup:
+  alert_identity: thr.valid_cite_wrong_process
+  sysmon_fixture: tests/fixtures/sysmon/process_chain.json
+  security_fixture: tests/fixtures/security/successful_logon_4624.json
+  anchor_time: "2026-06-08T12:00:00.000000Z"
+  subject_process_guid: "{22222222-2222-2222-2222-222222222222}"
+  cite_process_guid: "{11111111-1111-1111-1111-111111111111}"
+arms:
+  old_build:
+    expected:
+      citations_valid: true
+      cite_to_subject: false
+      authority_treats_valid_cite_as_right_subject: false
+    provider: fake
+  new_build:
+    expected:
+      citations_valid: true
+      cite_to_subject: false
+      authority_treats_valid_cite_as_right_subject: false
+    provider: fake
+scorecard_pins:
+  - citations_valid
+  - cite_to_subject
+  - authority_treats_valid_cite_as_right_subject
+theater_detector: gate_scored_as_judgment
