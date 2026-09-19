@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://praetor.local/evals/schemas/e2e_scenario_schema.json",
+  "title": "PraetorE2EScenario",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "scenario_id",
+    "realm",
+    "description",
+    "runner",
+    "setup",
+    "arms",
+    "scorecard_pins",
+    "theater_detector"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1" },
+    "scenario_id": { "type": "string", "minLength": 1 },
+    "realm": {
+      "type": "string",
+      "enum": ["capability", "governance", "design", "threat", "usability"]
+    },
+    "description": { "type": "string", "minLength": 1 },
+    "runner": { "type": "string", "const": "e2e_kernel" },
+    "setup": { "type": "object" },
+    "arms": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["old_build", "new_build"],
+      "properties": {
+        "old_build": { "$ref": "#/$defs/arm" },
+        "new_build": { "$ref": "#/$defs/arm" }
+      }
+    },
+    "scorecard_pins": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1
+    },
+    "theater_detector": {
+      "type": "string",
+      "enum": [
+        "label_leak",
+        "stipulated_capability",
+        "unearned_demo_claim",
+        "path_b_in_src",
+        "post_hoc_protocol",
+        "gate_scored_as_judgment"
+      ]
+    }
+  },
+  "$defs": {
+    "arm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected", "provider"],
+      "properties": {
+        "expected": { "type": "object" },
+        "provider": { "type": "string", "enum": ["fake", "vertex"] }
+      }
+    }
+  }
+}
