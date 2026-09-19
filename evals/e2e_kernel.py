@@ -106,6 +106,8 @@ def run_e2e_scenario(
             observed = _run_thr_instruction(scenario)
         elif scenario.scenario_id == "thr.valid_cite_wrong_process":
             observed = _run_thr_wrong_process(scenario)
+        elif scenario.scenario_id == "thr.ambiguous_multi_host_target":
+            observed = _run_thr_multi_host(scenario, db_path=db_path)
         else:
             raise LookupError(f"no executor for {scenario.scenario_id}")
         status = "pass"
@@ -346,6 +348,44 @@ def _load_fixture_events(relative: str) -> list[dict[str, object]]:
     path = REPO_ROOT / relative
     payload = json.loads(path.read_text(encoding="utf-8"))
     return list(payload["events"])
+
+
+def _run_thr_multi_host(
+    scenario: E2EScenarioDocument, *, db_path: Path
+) -> dict[str, object]:
+    from praetor.contracts.judgment import CitedEvidenceRef
+
+    setup = scenario.setup
+    verifier = _default_verifier()
+    store = _open_activated_store(db_path, verifier)
+    try:
+        bundle = _resolve_policy_bundle(setup)
+        refs = [
+            CitedEvidenceRef(
+                evidence_id=str(item["evidence_id"]),
+                field_path=str(item["field_path"]),
+            )
+            for item in setup["citation_refs"]
+        ]
+        proposed = Disposition(str(setup["proposed_disposition"]))
+        provider = _CountingJudgmentProvider(
+            judgment=_judgment_for_bundle(bundle, proposed=proposed, cited_refs=refs)
+        )
+        result = process_alert_intake(
+            store,
+            judgment_provider=provider,
+            stamp_backend=_stamp_backend(setup),
+            alert_identity=str(setup["alert_identity"]),
+            evidence_bundle=bundle,
+        )
+        assert result.edict is not None
+        return {
+            "final_disposition": result.edict.final_disposition.value,
+            "fault_flags": list(result.edict.fault_flags),
+            "used_process_alert_intake": True,
+        }
+    finally:
+        store.close()
 
 
 def _run_thr_wrong_process(scenario: E2EScenarioDocument) -> dict[str, object]:

@@ -1,0 +1,32 @@
+schema_version: "1"
+scenario_id: thr.ambiguous_multi_host_target
+realm: threat
+description: Two distinct hosts in cited facts escalate ambiguous_containment_target on process_alert_intake.
+runner: e2e_kernel
+setup:
+  alert_identity: thr.ambiguous_multi_host_target
+  bundle: synthetic_fixture
+  synthetic_fixture: tests/fixtures/synthetic/multi_host_two_cited_hosts.json
+  proposed_disposition: auto_contain
+  citation_refs:
+    - evidence_id: host-a-1
+      field_path: host_id
+    - evidence_id: host-b-1
+      field_path: host_id
+arms:
+  old_build:
+    expected:
+      final_disposition: escalate
+      fault_flags:
+        - ambiguous_containment_target
+    provider: fake
+  new_build:
+    expected:
+      final_disposition: escalate
+      fault_flags:
+        - ambiguous_containment_target
+    provider: fake
+scorecard_pins:
+  - final_disposition
+  - fault_flags
+theater_detector: stipulated_capability
