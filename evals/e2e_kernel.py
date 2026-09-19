@@ -98,6 +98,8 @@ def run_e2e_scenario(
             observed = _run_des_envelope(scenario)
         elif scenario.scenario_id == "des.path_b_stays_out_of_src":
             observed = _run_des_path_b(scenario)
+        elif scenario.scenario_id == "des.evidence_hash_stable":
+            observed = _run_des_hash(scenario)
         else:
             raise LookupError(f"no executor for {scenario.scenario_id}")
         status = "pass"
@@ -331,6 +333,20 @@ def _run_des_path_b(scenario: E2EScenarioDocument) -> dict[str, object]:
     return {
         "path_b_import_found": finding.tripped,
         "theater_message": finding.message,
+    }
+
+
+def _run_des_hash(scenario: E2EScenarioDocument) -> dict[str, object]:
+    from praetor.engine.ids import hash_evidence_bundle
+
+    bundle = _resolve_policy_bundle(scenario.setup)
+    first = hash_evidence_bundle(bundle)
+    second = hash_evidence_bundle(bundle)
+    return {
+        "hashes_equal": first == second,
+        "hash_length": len(first),
+        "first": first,
+        "second": second,
     }
 
 
