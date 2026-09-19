@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Sequence
+from collections.abc import Iterator, Sequence
 from pathlib import Path
 from typing import TYPE_CHECKING, cast
 
@@ -453,18 +453,31 @@ def _run_use_progressive(
         store.close()
 
 
+class _DemoHonestyDocsRoot:
+    """Directory walk root whose rglob skips an excluded subtree."""
+
+    __slots__ = ("_exclude", "_root")
+
+    def __init__(self, root: Path, exclude: Path) -> None:
+        self._root = root
+        self._exclude = exclude
+
+    def rglob(self, pattern: str) -> Iterator[Path]:
+        for path in self._root.rglob(pattern):
+            if self._exclude in path.parents:
+                continue
+            yield path
+
+
 def _demo_honesty_copy_roots(copy_roots: object) -> tuple[Path, ...]:
-    roots: list[Path] = []
+    roots: list[Path | _DemoHonestyDocsRoot] = []
     for root in cast(Sequence[str], copy_roots):
         path = Path(str(root))
         if path == Path("docs") and path.is_dir():
-            for child in sorted(path.iterdir()):
-                if child.name == "superpowers":
-                    continue
-                roots.append(child)
+            roots.append(_DemoHonestyDocsRoot(path, path / "superpowers"))
         else:
             roots.append(path)
-    return tuple(roots)
+    return cast(tuple[Path, ...], tuple(roots))
 
 
 def _run_use_demo_honesty(scenario: E2EScenarioDocument) -> dict[str, object]:
