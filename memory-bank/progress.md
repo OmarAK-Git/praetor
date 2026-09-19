@@ -4,7 +4,7 @@
 
 - Merged [PR 1](https://github.com/OmarAK-Git/praetor/pull/1) (design spec) and [PR 2](https://github.com/OmarAK-Git/praetor/pull/2) (Sprint 1 TDD plan).
 - Loaded GSD sprint `eval-kernel-sprint1` (21 tasks + phase-exit gate).
-- Drained tasks 1–18 (scorecard through cap.stump_parity_guard). Next: `eval-kernel-19-cap-label-leak`.
+- Drained tasks 1–19 (scorecard through cap.no_label_leak_ids). Full 15-ID suite emits 30 rows; `--e2e` exits 0. Next: `eval-kernel-20-workflow`.
 - CBC adapter remains rejected; full queue-item retire waits for Task 21 / Sprint 3.
 
 ## 2026-09-02 — PROD-CAP-001 landed; PROD-CAP-002 closed on Path A

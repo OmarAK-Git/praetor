@@ -120,6 +120,8 @@ def run_e2e_scenario(
             observed = _run_cap_baseline(scenario, db_path=db_path)
         elif scenario.scenario_id == "cap.stump_parity_guard":
             observed = _run_cap_stump_parity_guard(scenario, db_path=db_path)
+        elif scenario.scenario_id == "cap.no_label_leak_ids":
+            observed = _run_cap_no_label_leak_ids(scenario)
         else:
             raise LookupError(f"no executor for {scenario.scenario_id}")
         status = "pass"
@@ -136,8 +138,10 @@ def run_e2e_scenario(
                 scenario_id=scenario.scenario_id,
                 realm=scenario.realm,
                 arm=arm,
-                alert_identity=str(scenario.setup.get("alert_identity", "")),
-                excerpt_blob="",
+                alert_identity=str(
+                    observed.get("alert_identity", scenario.setup.get("alert_identity", ""))
+                ),
+                excerpt_blob=str(observed.get("excerpt_blob", "")),
                 scorecard_status=status,
                 scorecard_is_quality_pass=_quality_pass_forbidden(
                     scenario.scenario_id, status
@@ -469,6 +473,57 @@ def _run_cap_stump_parity_guard(
         )
     finally:
         store.close()
+
+
+def _run_cap_no_label_leak_ids(scenario: E2EScenarioDocument) -> dict[str, object]:
+    from datetime import datetime
+
+    from evals.theater import TheaterContext, run_theater_detector
+    from praetor.correlation import correlate_telemetry
+    from praetor.judgment.prompt import build_judgment_prompt_payload
+
+    setup = scenario.setup
+    correlated = correlate_telemetry(
+        sysmon_events=_load_fixture_events(str(setup["sysmon_fixture"])),
+        security_events=_load_fixture_events(str(setup["security_fixture"])),
+        anchor_time=datetime.fromisoformat(str(setup["anchor_time"]).replace("Z", "+00:00")),
+    )
+    facts = [fact.model_dump(mode="python") for fact in correlated.bundle.facts]
+    payload = build_judgment_prompt_payload(
+        evidence_facts=facts,
+        evidence_bundle_hash="bundle-hash",
+        org_config_snapshot_hash="snapshot-hash",
+        org_config_verbatim="containment_policy:\n  default: escalate\n",
+    )
+    excerpt_blob = json.dumps(payload, sort_keys=True)
+    alert_identity = str(setup["alert_identity"])
+    finding = run_theater_detector(
+        "label_leak",
+        TheaterContext(
+            scenario_id=scenario.scenario_id,
+            realm=scenario.realm,
+            arm="old_build",
+            alert_identity=alert_identity,
+            excerpt_blob=excerpt_blob,
+            scorecard_status=None,
+            scorecard_is_quality_pass=False,
+            src_root=Path("src/praetor"),
+            copy_roots=(),
+            cite_to_subject_primary_earned=False,
+        ),
+    )
+    hidden = setup["hidden_ground_truth"]
+    leaked = (
+        finding.tripped
+        or str(hidden["expected_class"]) in excerpt_blob
+        or str(hidden["seed_event_record_id"]) in alert_identity
+    )
+    return {
+        "label_leak_found": leaked,
+        "excerpt_blob": excerpt_blob,
+        "alert_identity": alert_identity,
+        "theater_message": finding.message,
+    }
 
 
 def _run_use_reconstruct(

@@ -1,0 +1,25 @@
+schema_version: "1"
+scenario_id: cap.no_label_leak_ids
+realm: capability
+description: Ground-truth labels, seed EventRecordIDs, and expected_class do not appear in excerpts or alert_identity.
+runner: e2e_kernel
+setup:
+  alert_identity: cap.no_label_leak_ids
+  sysmon_fixture: tests/fixtures/sysmon/process_chain.json
+  security_fixture: tests/fixtures/security/successful_logon_4624.json
+  anchor_time: "2026-06-08T12:00:00.000000Z"
+  hidden_ground_truth:
+    expected_class: malicious
+    seed_event_record_id: "1001"
+arms:
+  old_build:
+    expected:
+      label_leak_found: false
+    provider: fake
+  new_build:
+    expected:
+      label_leak_found: false
+    provider: fake
+scorecard_pins:
+  - label_leak_found
+theater_detector: label_leak

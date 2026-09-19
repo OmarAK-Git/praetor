@@ -59,7 +59,7 @@ def test_scorecards_for_missing_ids_are_harness_errors() -> None:
     assert rows[0].failure_class == "harness"
 
 
-def test_harness_e2e_flag_exits_nonzero_on_empty_kernel() -> None:
+def test_harness_e2e_flag_exits_zero_after_full_suite() -> None:
     completed = subprocess.run(
         [sys.executable, "-m", "evals.harness", "--e2e"],
         cwd=REPO_ROOT,
@@ -67,8 +67,16 @@ def test_harness_e2e_flag_exits_nonzero_on_empty_kernel() -> None:
         text=True,
         check=False,
     )
-    assert completed.returncode == 1
+    assert completed.returncode == 0, completed.stdout + completed.stderr
     assert "gov.never_contain_live_shape" in completed.stdout
+    assert "cap.no_label_leak_ids" in completed.stdout
+
+
+def test_full_suite_has_thirty_rows_and_exits_zero(tmp_path: Path) -> None:
+    rows = run_e2e_kernel(tmp_root=tmp_path)
+    assert len(rows) == 30
+    assert {row.scenario_id for row in rows} == REQUIRED_E2E_SCENARIO_IDS
+    assert kernel_exit_code(rows) == 0
 
 
 def test_harness_default_still_runs_outcome_matrix_only() -> None:
