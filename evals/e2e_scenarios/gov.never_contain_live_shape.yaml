@@ -1,0 +1,35 @@
+schema_version: "1"
+scenario_id: gov.never_contain_live_shape
+realm: governance
+description: Live never-contain blocks auto_contain on process_alert_intake.
+runner: e2e_kernel
+setup:
+  alert_identity: gov.never_contain_live_shape
+  bundle: host
+  host_id: ws-01
+  proposed_disposition: auto_contain
+  emergency_never_contain:
+    target_type: host
+    target_id: ws-01
+    lifetime_seconds: 3600
+    audit_reason: e2e never-contain
+arms:
+  old_build:
+    expected:
+      final_disposition: escalate
+      fault_flags:
+        - never_contain_live_conflict
+      directive_emitted: false
+    provider: fake
+  new_build:
+    expected:
+      final_disposition: escalate
+      fault_flags:
+        - never_contain_live_conflict
+      directive_emitted: false
+    provider: fake
+scorecard_pins:
+  - final_disposition
+  - fault_flags
+  - directive_emitted
+theater_detector: stipulated_capability

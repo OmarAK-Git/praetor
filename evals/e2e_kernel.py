@@ -4,8 +4,32 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from evals.scorecard import Realm, ScorecardRow, validate_scorecard_row
+from evals.harness import (
+    _apply_emergency_never_contain_setup,
+    _default_verifier,
+    _fetch_directive_for_decision_id,
+    _judgment_for_bundle,
+    _open_activated_store,
+    _resolve_policy_bundle,
+    _stamp_backend,
+)
+from evals.scorecard import (
+    CAPABILITY_QUALITY_IDS,
+    Arm,
+    Realm,
+    ScorecardRow,
+    validate_scorecard_row,
+)
+from praetor.contracts.disposition import Disposition
+from praetor.engine.orchestrator import (
+    _CountingJudgmentProvider,
+    process_alert_intake,
+)
+
+if TYPE_CHECKING:
+    from evals.e2e_scenario import E2EScenarioDocument
 
 EVALS_DIR = Path(__file__).resolve().parent
 E2E_SCENARIOS_DIR = EVALS_DIR / "e2e_scenarios"
@@ -37,6 +61,131 @@ _REALM_BY_PREFIX: dict[str, Realm] = {
     "thr": "threat",
     "use": "usability",
 }
+
+
+def _quality_pass_forbidden(scenario_id: str, status: str) -> bool:
+    return scenario_id in CAPABILITY_QUALITY_IDS and status == "pass"
+
+
+def _pin_values(source: dict[str, object], pins: tuple[str, ...]) -> dict[str, object]:
+    return {pin: source[pin] for pin in pins if pin in source}
+
+
+def run_e2e_scenario(
+    scenario: E2EScenarioDocument,
+    *,
+    db_path: Path,
+    arm: Arm,
+) -> ScorecardRow:
+    arm_cfg = scenario.arms[arm]
+    expected = dict(arm_cfg.expected)
+    try:
+        if scenario.realm == "governance" and scenario.scenario_id == (
+            "gov.never_contain_live_shape"
+        ):
+            observed = _run_gov_never_contain(scenario, db_path=db_path)
+        else:
+            raise LookupError(f"no executor for {scenario.scenario_id}")
+        status = "pass"
+        failure_class = "none"
+        for pin in scenario.scorecard_pins:
+            if observed.get(pin) != expected.get(pin):
+                status = "fail"
+                failure_class = "harness"
+        from evals.theater import TheaterContext, run_theater_detector
+
+        theater = run_theater_detector(
+            scenario.theater_detector,
+            TheaterContext(
+                scenario_id=scenario.scenario_id,
+                realm=scenario.realm,
+                arm=arm,
+                alert_identity=str(scenario.setup.get("alert_identity", "")),
+                excerpt_blob="",
+                scorecard_status=status,
+                scorecard_is_quality_pass=_quality_pass_forbidden(
+                    scenario.scenario_id, status
+                ),
+                src_root=Path("src/praetor"),
+                copy_roots=(),
+                cite_to_subject_primary_earned=False,
+            ),
+        )
+        if theater.tripped:
+            status = "fail"
+            failure_class = "theater_detector"
+            observed = {**observed, "theater_message": theater.message}
+        if (
+            scenario.scenario_id in CAPABILITY_QUALITY_IDS
+            and arm == "new_build"
+            and status != "fail"
+        ):
+            status = "pending"
+            failure_class = "none"
+        row = ScorecardRow(
+            schema_version="1",
+            scenario_id=scenario.scenario_id,
+            realm=scenario.realm,
+            arm=arm,
+            status=status,
+            failure_class=failure_class,
+            expected=_pin_values(expected, scenario.scorecard_pins),
+            observed=_pin_values(observed, scenario.scorecard_pins)
+            | {k: observed[k] for k in observed if k not in scenario.scorecard_pins},
+            provider=arm_cfg.provider,
+            notes=str(observed.get("theater_message", "")),
+        )
+        return validate_scorecard_row(row)
+    except Exception as exc:  # noqa: BLE001 — scorecard must emit a row
+        row = ScorecardRow(
+            schema_version="1",
+            scenario_id=scenario.scenario_id,
+            realm=scenario.realm,
+            arm=arm,
+            status="error",
+            failure_class="harness",
+            expected=expected,
+            observed={"exception": type(exc).__name__, "message": str(exc)},
+            provider=arm_cfg.provider,
+            notes=str(exc),
+        )
+        return validate_scorecard_row(row)
+
+
+def _run_gov_never_contain(
+    scenario: E2EScenarioDocument, *, db_path: Path
+) -> dict[str, object]:
+    setup = scenario.setup
+    verifier = _default_verifier()
+    store = _open_activated_store(db_path, verifier)
+    try:
+        _apply_emergency_never_contain_setup(store, setup, verifier)
+        bundle = _resolve_policy_bundle(setup)
+        proposed = Disposition(str(setup["proposed_disposition"]))
+        provider = _CountingJudgmentProvider(
+            judgment=_judgment_for_bundle(bundle, proposed=proposed)
+        )
+        result = process_alert_intake(
+            store,
+            judgment_provider=provider,
+            stamp_backend=_stamp_backend(setup),
+            alert_identity=str(setup["alert_identity"]),
+            evidence_bundle=bundle,
+            correlate=True,
+        )
+        if result.edict is None:
+            raise RuntimeError("expected edict")
+        directive = _fetch_directive_for_decision_id(
+            store.conn, result.edict.decision_id
+        )
+        return {
+            "final_disposition": result.edict.final_disposition.value,
+            "fault_flags": list(result.edict.fault_flags),
+            "directive_emitted": directive is not None,
+            "used_process_alert_intake": True,
+        }
+    finally:
+        store.close()
 
 
 def missing_required_scenario_ids(present: set[str]) -> frozenset[str]:
@@ -81,10 +230,20 @@ def run_e2e_kernel(
     tmp_root: Path,
     scenarios_dir: Path | None = None,
 ) -> list[ScorecardRow]:
-    _ = tmp_root
+    from evals.e2e_scenario import list_e2e_scenarios
+
+    tmp_root.mkdir(parents=True, exist_ok=True)
     directory = scenarios_dir or E2E_SCENARIOS_DIR
-    present = {path.stem for path in directory.glob("*.yaml")}
-    return scorecards_for_missing_ids(missing_required_scenario_ids(present))
+    docs = list_e2e_scenarios(directory)
+    rows: list[ScorecardRow] = []
+    present: set[str] = set()
+    for index, scenario in enumerate(docs):
+        present.add(scenario.scenario_id)
+        for arm in ("old_build", "new_build"):
+            db_path = tmp_root / f"{index}-{arm}.db"
+            rows.append(run_e2e_scenario(scenario, db_path=db_path, arm=arm))
+    rows.extend(scorecards_for_missing_ids(missing_required_scenario_ids(present)))
+    return rows
 
 
 def format_scorecards(rows: Sequence[ScorecardRow]) -> str:
