@@ -2,7 +2,7 @@
 
 ## Current focus
 
-**2026-09-19 — Eval-kernel Sprint 1 draining.** Tasks 1–17 done. Next runnable: `eval-kernel-18-cap-stump`.
+**2026-09-19 — Eval-kernel Sprint 1 draining.** Tasks 1–18 done. Next runnable: `eval-kernel-19-cap-label-leak`.
 
 **2026-09-02 — PROD-CAP-001 landed.** Truncation vs parse-error. Next: CBC AlertEnvelope spike spec (no live run until spec approved).
 
