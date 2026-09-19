@@ -112,6 +112,8 @@ def run_e2e_scenario(
             observed = _run_use_reconstruct(scenario, db_path=db_path)
         elif scenario.scenario_id == "use.progressive_auth_report":
             observed = _run_use_progressive(scenario, db_path=db_path)
+        elif scenario.scenario_id == "use.demo_honesty_gate":
+            observed = _run_use_demo_honesty(scenario)
         else:
             raise LookupError(f"no executor for {scenario.scenario_id}")
         status = "pass"
@@ -449,6 +451,32 @@ def _run_use_progressive(
         }
     finally:
         store.close()
+
+
+def _run_use_demo_honesty(scenario: E2EScenarioDocument) -> dict[str, object]:
+    from evals.theater import TheaterContext, run_theater_detector
+
+    earned = bool(scenario.setup["cite_to_subject_primary_earned"])
+    finding = run_theater_detector(
+        "unearned_demo_claim",
+        TheaterContext(
+            scenario_id=scenario.scenario_id,
+            realm=scenario.realm,
+            arm="old_build",
+            alert_identity=scenario.scenario_id,
+            excerpt_blob="",
+            scorecard_status=None,
+            scorecard_is_quality_pass=False,
+            src_root=Path("src/praetor"),
+            copy_roots=tuple(Path(str(root)) for root in scenario.setup["copy_roots"]),
+            cite_to_subject_primary_earned=earned,
+        ),
+    )
+    return {
+        "unearned_claim_found": finding.tripped,
+        "cite_to_subject_primary_earned": earned,
+        "theater_message": finding.message,
+    }
 
 
 def _run_thr_multi_host(

@@ -1,0 +1,24 @@
+schema_version: "1"
+scenario_id: use.demo_honesty_gate
+realm: usability
+description: Demo/walkthrough/kernel copy must not claim judgment works while cite-to-subject is unearned.
+runner: e2e_kernel
+setup:
+  copy_roots:
+    - docs
+    - notebooks
+    - demo
+    - evals/e2e_scenarios
+  cite_to_subject_primary_earned: false
+arms:
+  old_build:
+    expected:
+      unearned_claim_found: false
+    provider: fake
+  new_build:
+    expected:
+      unearned_claim_found: false
+    provider: fake
+scorecard_pins:
+  - unearned_claim_found
+theater_detector: unearned_demo_claim
