@@ -1,17 +1,17 @@
-# Test-runner result — eval-kernel-sprint1-gate
+# Test-runner result — eval-kernel-sprint1-gate (attempt 2)
 
-Verify-only. Commands run from `C:\Users\oalan\Praetor` on 2026-09-19. No edits to `src/` or `tests/`.
+Verify-only. Commands run from `C:\Users\oalan\Praetor` on 2026-09-19 after mypy unblock. No edits to `src/` or `tests/`.
 
 ## 1. `pytest -q`
 
 - **Exit code:** 0
-- **Summary:** PASS — 1220 passed, 2 deselected in 255.13s (0:04:15). No failures.
+- **Summary:** PASS — 1220 passed, 2 deselected in 261.10s (0:04:21). No failures.
 
 ```
 ........................................................................ [  5%]
 ...
 ....................................................................     [100%]
-1220 passed, 2 deselected in 255.13s (0:04:15)
+1220 passed, 2 deselected in 261.10s (0:04:21)
 ```
 
 ## 2. `ruff check src tests evals consumer_sdk`
@@ -25,13 +25,11 @@ All checks passed!
 
 ## 3. `mypy src evals consumer_sdk`
 
-- **Exit code:** 1
-- **Summary:** FAIL — 2 errors in 2 files (checked 155 source files). Not a `src/` or `tests/` failure; both hits are under `evals/`.
+- **Exit code:** 0
+- **Summary:** PASS — no issues found in 155 source files. (Unblocked vs attempt 1.)
 
 ```
-evals\capability\spike_vertex_provider.py:97: error: Returning Any from function declared to return "ModelJudgment"  [no-any-return]
-evals\capability_spike.py:167: error: Unused "type: ignore" comment  [unused-ignore]
-Found 2 errors in 2 files (checked 155 source files)
+Success: no issues found in 155 source files
 ```
 
 ## 4. `python -m evals.harness`
@@ -130,12 +128,14 @@ Capability (6), design (6), governance (6), threat (6), usability (6):
 
 Governance, design, threat, and usability: both `old_build` and `new_build` arms PASS.
 
-## Gate command rollup
+## Gate command rollup (attempt 2)
 
 | # | Command | Exit | Result |
 |---|---------|------|--------|
 | 1 | `pytest -q` | 0 | 1220 passed, 2 deselected |
 | 2 | `ruff check src tests evals consumer_sdk` | 0 | All checks passed |
-| 3 | `mypy src evals consumer_sdk` | 1 | 2 errors in `evals/` |
+| 3 | `mypy src evals consumer_sdk` | 0 | Success: no issues found in 155 source files |
 | 4 | `python -m evals.harness` | 0 | OM 34/34 PASS |
 | 5 | `python -m evals.harness --all` | 0 | OM 34 PASS + kernel 30 rows (2 capability `new_build` PENDING) |
+
+All five gate commands exited 0. mypy is unblocked (exit 0, 155 files).

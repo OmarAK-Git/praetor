@@ -14,7 +14,7 @@
       "depends_on": [
         "capability-spike-gate"
       ],
-      "goal": "Task 1 — Scorecard schema + Pydantic model: ScorecardRow with extra=forbid, pending legal only for capability quality new_build, failure_class none on pass/pending and required on fail/error.",
+      "goal": "Task 1 \u2014 Scorecard schema + Pydantic model: ScorecardRow with extra=forbid, pending legal only for capability quality new_build, failure_class none on pass/pending and required on fail/error.",
       "scope": "Scorecard schema and validator only. Do not add kernel runner, scenarios, or CI. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/schemas/scorecard_schema.json",
@@ -26,7 +26,7 @@
         "memory-bank/activeContext.md"
       ],
       "acceptance_criteria": [
-        "scorecard_schema.json has additionalProperties false and the spec §4 required fields.",
+        "scorecard_schema.json has additionalProperties false and the spec \u00a74 required fields.",
         "ScorecardRow rejects unknown fields.",
         "pending is legal only for cap.baseline_bag_path_a and cap.stump_parity_guard new_build.",
         "pending is illegal for cap.no_label_leak_ids and non-capability rows.",
@@ -61,7 +61,7 @@
       "depends_on": [
         "eval-kernel-01-scorecard"
       ],
-      "goal": "Task 2 — e2e_kernel runner skeleton + harness CLI: thin sibling imported by evals.harness; --e2e/--all flags; default no-arg path stays Outcome Matrix only; no Path B import.",
+      "goal": "Task 2 \u2014 e2e_kernel runner skeleton + harness CLI: thin sibling imported by evals.harness; --e2e/--all flags; default no-arg path stays Outcome Matrix only; no Path B import.",
       "scope": "Kernel skeleton and harness CLI wiring only. Do not add scenario YAML or executors. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/e2e_kernel.py",
@@ -108,7 +108,7 @@
       "depends_on": [
         "eval-kernel-01-scorecard"
       ],
-      "goal": "Task 3 — E2E scenario YAML contract loader: sibling-tree schema, filename stem must match scenario_id, no skip flags, theater_detector required.",
+      "goal": "Task 3 \u2014 E2E scenario YAML contract loader: sibling-tree schema, filename stem must match scenario_id, no skip flags, theater_detector required.",
       "scope": "E2E YAML schema and loader only. Do not execute scenarios. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/schemas/e2e_scenario_schema.json",
@@ -123,7 +123,7 @@
       "acceptance_criteria": [
         "E2E YAML lives under evals/e2e_scenarios or a tests fixture tree, not evals/scenarios.",
         "load_e2e_scenario rejects stem/id mismatch, missing theater_detector, and skip flags.",
-        "Required spec §4 fields are enforced.",
+        "Required spec \u00a74 fields are enforced.",
         "The verifier checks only Task 3 acceptance, not Sprint 1 gate completion."
       ],
       "verification": {
@@ -154,7 +154,7 @@
       "depends_on": [
         "eval-kernel-03-scenario-loader"
       ],
-      "goal": "Task 4 — Theater detector registry: all six named checks from spec §8, trips fail the suite even if disposition matched a label.",
+      "goal": "Task 4 \u2014 Theater detector registry: all six named checks from spec \u00a78, trips fail the suite even if disposition matched a label.",
       "scope": "Theater detector registry only. Do not wire production scenarios yet. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/theater.py",
@@ -165,7 +165,7 @@
         "memory-bank/activeContext.md"
       ],
       "acceptance_criteria": [
-        "THEATER_DETECTOR_NAMES includes all six spec §8 names.",
+        "THEATER_DETECTOR_NAMES includes all six spec \u00a78 names.",
         "Each named check has a unit test that trips and one that stays clean.",
         "Unknown detector names raise a harness error.",
         "The verifier checks only Task 4 acceptance, not Sprint 1 gate completion."
@@ -198,7 +198,7 @@
         "eval-kernel-02-runner-cli",
         "eval-kernel-04-theater"
       ],
-      "goal": "Task 5 — Kernel executor + gov.never_contain_live_shape: production process_alert_intake shape; both arms pass; no PolicyGate-only shortcut.",
+      "goal": "Task 5 \u2014 Kernel executor + gov.never_contain_live_shape: production process_alert_intake shape; both arms pass; no PolicyGate-only shortcut.",
       "scope": "Executor plus the first governance scenario only. Do not add the remaining 14 IDs. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/e2e_kernel.py",
@@ -244,7 +244,7 @@
       "depends_on": [
         "eval-kernel-05-gov-never-contain"
       ],
-      "goal": "Task 6 — gov.feed_unhealthy_blocks_contain: unhealthy revocation feed blocks auto_contain and still allows standard_review via production intake.",
+      "goal": "Task 6 \u2014 gov.feed_unhealthy_blocks_contain: unhealthy revocation feed blocks auto_contain and still allows standard_review via production intake.",
       "scope": "This governance pin only. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/e2e_kernel.py",
@@ -286,7 +286,7 @@
       "depends_on": [
         "eval-kernel-06-gov-feed-unhealthy"
       ],
-      "goal": "Task 7 — gov.recovery_never_contains: engine recovery of a non-terminal attempt never emits auto_contain.",
+      "goal": "Task 7 \u2014 gov.recovery_never_contains: engine recovery of a non-terminal attempt never emits auto_contain.",
       "scope": "This governance pin only. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/e2e_kernel.py",
@@ -328,7 +328,7 @@
       "depends_on": [
         "eval-kernel-07-gov-recovery"
       ],
-      "goal": "Task 8 — des.envelope_rejects_extra_fields: AlertEnvelope construction with any field other than schema_version + alert_identity raises.",
+      "goal": "Task 8 \u2014 des.envelope_rejects_extra_fields: AlertEnvelope construction with any field other than schema_version + alert_identity raises.",
       "scope": "This design pin only. Do not change src/praetor contracts. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/e2e_kernel.py",
@@ -372,7 +372,7 @@
       "depends_on": [
         "eval-kernel-08-des-envelope"
       ],
-      "goal": "Task 9 — des.path_b_stays_out_of_src: AST/import guard that src/praetor does not import Path B flatteners.",
+      "goal": "Task 9 \u2014 des.path_b_stays_out_of_src: AST/import guard that src/praetor does not import Path B flatteners.",
       "scope": "This design pin only. Do not promote Path B. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/e2e_kernel.py",
@@ -416,7 +416,7 @@
       "depends_on": [
         "eval-kernel-09-des-path-b"
       ],
-      "goal": "Task 10 — des.evidence_hash_stable: same logical EvidenceBundle yields the same evidence_bundle_hash across two kernel runs.",
+      "goal": "Task 10 \u2014 des.evidence_hash_stable: same logical EvidenceBundle yields the same evidence_bundle_hash across two kernel runs.",
       "scope": "This design pin only. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/e2e_kernel.py",
@@ -458,7 +458,7 @@
       "depends_on": [
         "eval-kernel-10-des-evidence-hash"
       ],
-      "goal": "Task 11 — thr.instruction_in_cmdline: instruction-like command_line text survives excerpting and is not a FakeProvider do-what-I-say win.",
+      "goal": "Task 11 \u2014 thr.instruction_in_cmdline: instruction-like command_line text survives excerpting and is not a FakeProvider do-what-I-say win.",
       "scope": "This threat pin only. Live-model half stays opt-in. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/e2e_kernel.py",
@@ -502,7 +502,7 @@
       "depends_on": [
         "eval-kernel-11-thr-cmdline"
       ],
-      "goal": "Task 12 — thr.valid_cite_wrong_process: valid citations that omit the subject Path A fact are recorded as a cite-to-subject miss; authority must not treat valid cite as right subject.",
+      "goal": "Task 12 \u2014 thr.valid_cite_wrong_process: valid citations that omit the subject Path A fact are recorded as a cite-to-subject miss; authority must not treat valid cite as right subject.",
       "scope": "Record the miss only. Do not implement Sprint 2 McNemar. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/e2e_kernel.py",
@@ -546,7 +546,7 @@
       "depends_on": [
         "eval-kernel-12-thr-wrong-process"
       ],
-      "goal": "Task 13 — thr.ambiguous_multi_host_target: two distinct hosts in cited facts escalate ambiguous_containment_target on the production call shape.",
+      "goal": "Task 13 \u2014 thr.ambiguous_multi_host_target: two distinct hosts in cited facts escalate ambiguous_containment_target on the production call shape.",
       "scope": "This threat pin only. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/e2e_kernel.py",
@@ -588,7 +588,7 @@
       "depends_on": [
         "eval-kernel-13-thr-multi-host"
       ],
-      "goal": "Task 14 — use.reconstruct_from_ledger: after completed intake, ledger rows plus decision_id / evidence_bundle_hash reconstruct the asserted edict fields.",
+      "goal": "Task 14 \u2014 use.reconstruct_from_ledger: after completed intake, ledger rows plus decision_id / evidence_bundle_hash reconstruct the asserted edict fields.",
       "scope": "This usability pin only. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/e2e_kernel.py",
@@ -630,7 +630,7 @@
       "depends_on": [
         "eval-kernel-14-use-ledger"
       ],
-      "goal": "Task 15 — use.progressive_auth_report: build_progressive_authorization_report reads evaluation rows written by the same intake; report is read-only.",
+      "goal": "Task 15 \u2014 use.progressive_auth_report: build_progressive_authorization_report reads evaluation rows written by the same intake; report is read-only.",
       "scope": "This usability pin only. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/e2e_kernel.py",
@@ -672,7 +672,7 @@
       "depends_on": [
         "eval-kernel-15-use-progressive-auth"
       ],
-      "goal": "Task 16 — use.demo_honesty_gate: demo/walkthrough/kernel copy must not claim judgment works while the Sprint 2 cite-to-subject primary is unearned.",
+      "goal": "Task 16 \u2014 use.demo_honesty_gate: demo/walkthrough/kernel copy must not claim judgment works while the Sprint 2 cite-to-subject primary is unearned.",
       "scope": "This usability pin only. Do not claim capability. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/e2e_kernel.py",
@@ -714,7 +714,7 @@
       "depends_on": [
         "eval-kernel-16-use-demo-honesty"
       ],
-      "goal": "Task 17 — cap.baseline_bag_path_a: Path A bag is production correlator output fed to process_alert_intake; new_build is pending, not pass.",
+      "goal": "Task 17 \u2014 cap.baseline_bag_path_a: Path A bag is production correlator output fed to process_alert_intake; new_build is pending, not pass.",
       "scope": "This capability pin only. Do not claim judgment quality. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/e2e_kernel.py",
@@ -759,7 +759,7 @@
       "depends_on": [
         "eval-kernel-17-cap-baseline"
       ],
-      "goal": "Task 18 — cap.stump_parity_guard: compute path_a_fact_count stump and emit McNemar-ready pairs; do not pass this as judgment beats stump; new_build pending.",
+      "goal": "Task 18 \u2014 cap.stump_parity_guard: compute path_a_fact_count stump and emit McNemar-ready pairs; do not pass this as judgment beats stump; new_build pending.",
       "scope": "Stump helper plus this capability pin only. Do not claim a quality win. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/stump.py",
@@ -775,7 +775,7 @@
       "acceptance_criteria": [
         "path_a_fact_count_stump and stump_pair exist and are McNemar-ready.",
         "new_build is pending, not pass; no quality-win assertion.",
-        "old_build is recorded honestly (new≈stump or pending new).",
+        "old_build is recorded honestly (new\u2248stump or pending new).",
         "The verifier checks only Task 18 acceptance, not Sprint 1 gate completion."
       ],
       "verification": {
@@ -805,7 +805,7 @@
       "depends_on": [
         "eval-kernel-18-cap-stump"
       ],
-      "goal": "Task 19 — cap.no_label_leak_ids: ground-truth labels, seed EventRecordIDs, and expected_class do not appear in provider-visible excerpts or alert_identity; both arms pass.",
+      "goal": "Task 19 \u2014 cap.no_label_leak_ids: ground-truth labels, seed EventRecordIDs, and expected_class do not appear in provider-visible excerpts or alert_identity; both arms pass.",
       "scope": "This theater pin only. Do not mark it pending. Do not run Sprint 1 gate.",
       "files_allowed": [
         "evals/e2e_kernel.py",
@@ -850,7 +850,7 @@
       "depends_on": [
         "eval-kernel-19-cap-label-leak"
       ],
-      "goal": "Task 20 — GitHub Actions workflow: install .[dev], pytest, and python -m evals.harness --all on FakeProvider; fail on fail/error/missing row; not notebook-only; no Vertex required.",
+      "goal": "Task 20 \u2014 GitHub Actions workflow: install .[dev], pytest, and python -m evals.harness --all on FakeProvider; fail on fail/error/missing row; not notebook-only; no Vertex required.",
       "scope": "Workflow plus --all CLI verification only. Do not require live Vertex. Do not run Sprint 1 gate.",
       "files_allowed": [
         ".github/workflows/eval-kernel.yml",
@@ -895,7 +895,7 @@
       "depends_on": [
         "eval-kernel-20-github-workflow"
       ],
-      "goal": "Task 21 — Docs pointer: eval_gates and memory-bank point at the Sprint 1 plan; CBC queue-item retire stays deferred to Sprint 3.",
+      "goal": "Task 21 \u2014 Docs pointer: eval_gates and memory-bank point at the Sprint 1 plan; CBC queue-item retire stays deferred to Sprint 3.",
       "scope": "Pointer docs only. Do not retire CBC items. Do not run Sprint 1 gate.",
       "files_allowed": [
         "docs/eval_gates.md",
@@ -932,7 +932,7 @@
     },
     {
       "id": "eval-kernel-sprint1-gate",
-      "status": "pending",
+      "status": "done",
       "tier": "T3",
       "depends_on": [
         "eval-kernel-01-scorecard",
@@ -995,9 +995,11 @@
       "gate_model": "cursor-grok-4.6-high-fast",
       "run_mode": "in_session_grok",
       "run_dir": ".workflow/eval-kernel-sprint1-gate",
-      "attempts": 0,
+      "attempts": 2,
       "max_retries": 1,
-      "evidence": [],
+      "evidence": [
+        ".workflow/eval-kernel-sprint1-gate/results/verifier-result.md"
+      ],
       "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
       "researcher_decision": "skipped: gate is verify-only"
     }

@@ -1,11 +1,19 @@
 # Progress Log
 
+## 2026-09-19 — Eval-kernel Sprint 1 COMPLETE
+
+- Merged [PR 1](https://github.com/OmarAK-Git/praetor/pull/1) (design spec) and [PR 2](https://github.com/OmarAK-Git/praetor/pull/2) (Sprint 1 TDD plan).
+- Drained GSD sprint `eval-kernel-sprint1` (21 tasks + phase-exit gate).
+- Gate: pytest 1220 passed, ruff/mypy clean, OM 34/34, `--all` 30 kernel rows (2 capability `new_build` PENDING).
+- Evidence: `.workflow/eval-kernel-sprint1-gate/results/verifier-result.md`.
+- CBC adapter remains rejected; cite-to-subject McNemar was not implemented; Sprint 2 not started.
+
 ## 2026-09-18 — Eval-kernel program SoT accepted; Sprint 1 drain in progress
 
 - Merged [PR 1](https://github.com/OmarAK-Git/praetor/pull/1) (design spec) and [PR 2](https://github.com/OmarAK-Git/praetor/pull/2) (Sprint 1 TDD plan).
 - Loaded GSD sprint `eval-kernel-sprint1` (21 tasks + phase-exit gate).
-- Drained tasks 1–21 (scorecard through docs pointer). Next: `eval-kernel-sprint1-gate`.
-- CBC adapter remains rejected; full queue-item retire waits for Task 21 / Sprint 3.
+- Drain later completed 2026-09-19 (see entry above).
+- CBC adapter remains rejected; full queue-item retire waits for Sprint 3.
 
 ## 2026-09-02 — PROD-CAP-001 landed; PROD-CAP-002 closed on Path A
 

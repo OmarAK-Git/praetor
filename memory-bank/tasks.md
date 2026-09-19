@@ -47,11 +47,11 @@ Index of `docs/proposals/v2_implementation_plan.md` (**36** tasks, **6** sprints
 | V2-035 | Statute Curation Workflow | V2-5 | **complete** | V2-027, V2-032 | L |
 | V2-036 | Eval Regression Locking Discipline | V2-5 | **complete** | V2-034, V2-035 | M |
 
-**Next up:** Drain GSD sprint `eval-kernel-sprint1` (loaded 2026-09-18 from
-accepted PRs #1/#2). Tasks 1–21 done. Next runnable: `eval-kernel-sprint1-gate`.
-CBC AlertEnvelope adapter remains **rejected** (design spec §2); do not expand
-normalizers or promote Path B (DEC-067). Full CBC queue-item retire waits
-for Task 21 / Sprint 3.
+**Next up:** Eval-kernel Sprint 1 is **done** (gate pass). Next authorized
+work is a separate Sprint 2 judgment plan (cite-to-subject primary) — do not
+start it from this queue. CBC AlertEnvelope adapter remains **rejected**
+(design spec §2); do not expand normalizers or promote Path B (DEC-067).
+Full CBC queue-item retire waits for Sprint 3.
 
 **Also queued:** Eval kernel Sprint 1 plan
 `docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md`. Sprint 3 (only if
