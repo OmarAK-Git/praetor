@@ -72,7 +72,7 @@ _REALM_BY_PREFIX: dict[str, Realm] = {
 
 
 def _quality_pass_forbidden(scenario_id: str, status: str) -> bool:
-    if scenario_id == "cap.baseline_bag_path_a":
+    if scenario_id in {"cap.baseline_bag_path_a", "cap.stump_parity_guard"}:
         return False
     return scenario_id in CAPABILITY_QUALITY_IDS and status == "pass"
 
@@ -118,6 +118,8 @@ def run_e2e_scenario(
             observed = _run_use_demo_honesty(scenario)
         elif scenario.scenario_id == "cap.baseline_bag_path_a":
             observed = _run_cap_baseline(scenario, db_path=db_path)
+        elif scenario.scenario_id == "cap.stump_parity_guard":
+            observed = _run_cap_stump_parity_guard(scenario, db_path=db_path)
         else:
             raise LookupError(f"no executor for {scenario.scenario_id}")
         status = "pass"
@@ -415,6 +417,56 @@ def _run_cap_baseline(
             "frozen_label": setup["frozen_label"],
             "alert_identity": setup["alert_identity"],
         }
+    finally:
+        store.close()
+
+
+def _run_cap_stump_parity_guard(
+    scenario: E2EScenarioDocument, *, db_path: Path
+) -> dict[str, object]:
+    from datetime import datetime
+
+    from evals.stump import DispositionBucket, stump_pair
+    from praetor.correlation import correlate_telemetry
+
+    setup = scenario.setup
+    anchor = datetime.fromisoformat(str(setup["anchor_time"]).replace("Z", "+00:00"))
+    sysmon = _load_fixture_events(str(setup["sysmon_fixture"]))
+    security = _load_fixture_events(str(setup["security_fixture"]))
+    correlated = correlate_telemetry(
+        sysmon_events=sysmon,
+        security_events=security,
+        anchor_time=anchor,
+    )
+    path_a_fact_count = len(correlated.bundle.facts)
+    verifier = _default_verifier()
+    store = _open_activated_store(db_path, verifier)
+    try:
+        result = process_alert_intake(
+            store,
+            judgment_provider=_CountingJudgmentProvider(
+                judgment=_judgment_for_bundle(
+                    correlated.bundle,
+                    proposed=Disposition(str(setup["proposed_disposition"])),
+                )
+            ),
+            stamp_backend=_stamp_backend(setup),
+            alert_identity=str(setup["alert_identity"]),
+            sysmon_events=sysmon,
+            security_events=security,
+            anchor_time=anchor,
+        )
+        proposed = (
+            result.edict.model_judgment.proposed_disposition.value
+            if result.edict is not None
+            else None
+        )
+        return stump_pair(
+            bag_id=str(setup["alert_identity"]),
+            frozen_label=cast(DispositionBucket, setup["frozen_label"]),
+            path_a_fact_count=path_a_fact_count,
+            model_proposed=proposed,
+        )
     finally:
         store.close()
 

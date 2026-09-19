@@ -1,0 +1,24 @@
+schema_version: "1"
+scenario_id: cap.stump_parity_guard
+realm: capability
+description: Emit McNemar-ready path_a_fact_count stump pairs; do not claim judgment beats stump.
+runner: e2e_kernel
+setup:
+  alert_identity: cap.stump_parity_guard
+  sysmon_fixture: tests/fixtures/sysmon/process_chain.json
+  security_fixture: tests/fixtures/security/successful_logon_4624.json
+  anchor_time: "2026-06-08T12:00:00.000000Z"
+  frozen_label: malicious
+  proposed_disposition: standard_review
+arms:
+  old_build:
+    expected:
+      quality_win_claimed: false
+    provider: fake
+  new_build:
+    expected:
+      quality_win_claimed: false
+    provider: fake
+scorecard_pins:
+  - quality_win_claimed
+theater_detector: stipulated_capability
