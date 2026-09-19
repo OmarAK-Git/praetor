@@ -96,6 +96,8 @@ def run_e2e_scenario(
             observed = _run_gov_recovery(scenario, db_path=db_path)
         elif scenario.scenario_id == "des.envelope_rejects_extra_fields":
             observed = _run_des_envelope(scenario)
+        elif scenario.scenario_id == "des.path_b_stays_out_of_src":
+            observed = _run_des_path_b(scenario)
         else:
             raise LookupError(f"no executor for {scenario.scenario_id}")
         status = "pass"
@@ -305,6 +307,31 @@ def _run_gov_recovery(
         }
     finally:
         store.close()
+
+
+def _run_des_path_b(scenario: E2EScenarioDocument) -> dict[str, object]:
+    from evals.theater import TheaterContext, run_theater_detector
+
+    src_root = Path(str(scenario.setup["src_root"]))
+    finding = run_theater_detector(
+        "path_b_in_src",
+        TheaterContext(
+            scenario_id=scenario.scenario_id,
+            realm=scenario.realm,
+            arm="old_build",
+            alert_identity=scenario.scenario_id,
+            excerpt_blob="",
+            scorecard_status=None,
+            scorecard_is_quality_pass=False,
+            src_root=src_root,
+            copy_roots=(),
+            cite_to_subject_primary_earned=False,
+        ),
+    )
+    return {
+        "path_b_import_found": finding.tripped,
+        "theater_message": finding.message,
+    }
 
 
 def _run_des_envelope(scenario: E2EScenarioDocument) -> dict[str, object]:

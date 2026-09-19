@@ -1,0 +1,19 @@
+schema_version: "1"
+scenario_id: des.path_b_stays_out_of_src
+realm: design
+description: AST/import guard — src/praetor does not import evals.capability.flatten or a Path B flattener.
+runner: e2e_kernel
+setup:
+  src_root: src/praetor
+arms:
+  old_build:
+    expected:
+      path_b_import_found: false
+    provider: fake
+  new_build:
+    expected:
+      path_b_import_found: false
+    provider: fake
+scorecard_pins:
+  - path_b_import_found
+theater_detector: path_b_in_src
