@@ -1315,13 +1315,34 @@ def format_results(results: Sequence[ScenarioRunResult]) -> str:
 
 
 def main(argv: Sequence[str] | None = None) -> int:
-    _ = argv
+    args = list(sys.argv[1:] if argv is None else argv)
+    run_matrix = "--e2e" not in args
+    run_kernel = "--e2e" in args or "--all" in args
+    if "--all" in args:
+        run_matrix = True
+        run_kernel = True
+
     import tempfile
 
-    with tempfile.TemporaryDirectory(prefix="praetor-eval-") as tmp:
-        results = run_all_scenarios(tmp_root=Path(tmp))
-    print(format_results(results))
-    return 0 if all(result.passed for result in results) else 1
+    matrix_code = 0
+    if run_matrix:
+        with tempfile.TemporaryDirectory(prefix="praetor-eval-") as tmp:
+            results = run_all_scenarios(tmp_root=Path(tmp))
+        print(format_results(results))
+        matrix_code = 0 if all(result.passed for result in results) else 1
+
+    kernel_code = 0
+    if run_kernel:
+        from evals.e2e_kernel import format_scorecards, kernel_exit_code, run_e2e_kernel
+
+        with tempfile.TemporaryDirectory(prefix="praetor-e2e-") as tmp:
+            rows = run_e2e_kernel(tmp_root=Path(tmp))
+        print(format_scorecards(rows))
+        kernel_code = kernel_exit_code(rows)
+
+    if matrix_code or kernel_code:
+        return 1
+    return 0
 
 
 if __name__ == "__main__":
