@@ -1,0 +1,28 @@
+schema_version: "1"
+scenario_id: use.reconstruct_from_ledger
+realm: usability
+description: After intake, ledger rows reconstruct the edict fields the scorecard asserted.
+runner: e2e_kernel
+setup:
+  alert_identity: use.reconstruct_from_ledger
+  bundle: host
+  host_id: ws-01
+  proposed_disposition: standard_review
+arms:
+  old_build:
+    expected:
+      ledger_decision_id_matches: true
+      ledger_evidence_bundle_hash_matches: true
+      ledger_final_disposition_matches: true
+    provider: fake
+  new_build:
+    expected:
+      ledger_decision_id_matches: true
+      ledger_evidence_bundle_hash_matches: true
+      ledger_final_disposition_matches: true
+    provider: fake
+scorecard_pins:
+  - ledger_decision_id_matches
+  - ledger_evidence_bundle_hash_matches
+  - ledger_final_disposition_matches
+theater_detector: stipulated_capability

@@ -108,6 +108,8 @@ def run_e2e_scenario(
             observed = _run_thr_wrong_process(scenario)
         elif scenario.scenario_id == "thr.ambiguous_multi_host_target":
             observed = _run_thr_multi_host(scenario, db_path=db_path)
+        elif scenario.scenario_id == "use.reconstruct_from_ledger":
+            observed = _run_use_reconstruct(scenario, db_path=db_path)
         else:
             raise LookupError(f"no executor for {scenario.scenario_id}")
         status = "pass"
@@ -348,6 +350,50 @@ def _load_fixture_events(relative: str) -> list[dict[str, object]]:
     path = REPO_ROOT / relative
     payload = json.loads(path.read_text(encoding="utf-8"))
     return list(payload["events"])
+
+
+def _run_use_reconstruct(
+    scenario: E2EScenarioDocument, *, db_path: Path
+) -> dict[str, object]:
+    from praetor.contracts.edict import DecisionEdict
+    from praetor.ledger.store import fetch_ledger_rows
+
+    setup = scenario.setup
+    verifier = _default_verifier()
+    store = _open_activated_store(db_path, verifier)
+    try:
+        bundle = _resolve_policy_bundle(setup)
+        proposed = Disposition(str(setup["proposed_disposition"]))
+        result = process_alert_intake(
+            store,
+            judgment_provider=_CountingJudgmentProvider(
+                judgment=_judgment_for_bundle(bundle, proposed=proposed)
+            ),
+            stamp_backend=_stamp_backend(setup),
+            alert_identity=str(setup["alert_identity"]),
+            evidence_bundle=bundle,
+        )
+        assert result.edict is not None
+        ledger_edicts = [
+            DecisionEdict.model_validate(json.loads(row.record_json))
+            for row in fetch_ledger_rows(store.conn)
+            if row.record_type == "decision_edict"
+        ]
+        if not ledger_edicts:
+            raise RuntimeError("no decision_edict in ledger")
+        reconstructed = ledger_edicts[-1]
+        return {
+            "ledger_decision_id_matches": reconstructed.decision_id
+            == result.edict.decision_id,
+            "ledger_evidence_bundle_hash_matches": (
+                reconstructed.evidence_bundle_hash == result.edict.evidence_bundle_hash
+            ),
+            "ledger_final_disposition_matches": (
+                reconstructed.final_disposition == result.edict.final_disposition
+            ),
+        }
+    finally:
+        store.close()
 
 
 def _run_thr_multi_host(
