@@ -53,6 +53,10 @@ CBC AlertEnvelope adapter remains **rejected** (design spec §2); do not expand
 normalizers or promote Path B (DEC-067). Full CBC queue-item retire waits
 for Task 21 / Sprint 3.
 
+**Also queued:** Eval kernel Sprint 1 plan
+`docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md`. Sprint 3 (only if
+cite-to-subject is earned) retires the CBC AlertEnvelope-spike queue items above.
+
 | ID | Goal | Status | Depends |
 |---|---|---|---|
 | capability-spike-01-corpus | Anchor manifest schema/loader | **done** | — |

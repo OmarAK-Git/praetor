@@ -2,6 +2,8 @@
 
 ## Current focus
 
+**2026-09-07 — Eval kernel Sprint 1 plan written.** Implement `docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md` (scorecard + 15 FakeProvider scenarios + `.github/workflows/eval-kernel.yml`). Cite-to-subject remains Sprint 2 primary. Full CBC AlertEnvelope-spike queue retire waits for Sprint 3.
+
 **2026-09-19 — Eval-kernel Sprint 1 draining.** Tasks 1–20 done (`.github/workflows/eval-kernel.yml` — pytest + `python -m evals.harness --all`, FakeProvider only). Next runnable: `eval-kernel-21-docs-pointer`.
 
 **2026-09-02 — PROD-CAP-001 landed.** Truncation vs parse-error. Next: CBC AlertEnvelope spike spec (no live run until spec approved).

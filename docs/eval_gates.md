@@ -206,3 +206,28 @@ runs are excluded from the score. On A≈B ties, Path B citation mix vs EventID
 pre-registered in `evals/capability/score.py`.
 
 Design: `docs/superpowers/specs/2026-08-01-capability-spike-design.md`
+
+## Sprint 1 eval kernel (gating, FakeProvider)
+
+Plan: [`docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md`](superpowers/plans/2026-09-07-eval-kernel-sprint1.md)
+Design: [`docs/superpowers/specs/2026-09-06-eval-kernel-judgment-readiness-design.md`](superpowers/specs/2026-09-06-eval-kernel-judgment-readiness-design.md)
+
+**What it gates**
+
+- 15 E2E scenario IDs under `evals/e2e_scenarios/` via `evals/e2e_kernel.py`
+- Scorecard rows for `old_build` / `new_build`; capability quality `new_build` is `pending`
+- GitHub workflow `.github/workflows/eval-kernel.yml` runs `pytest tests/evals/` and `python -m evals.harness --all` on FakeProvider
+
+**What it does not prove**
+
+- Judgment quality. Cite-to-subject is the Sprint 2 **primary** (spec §6). Disposition-vs-stump is secondary.
+- Production readiness. Sprint 3 starts only if Sprint 2 earns cite-to-subject.
+
+**CI**
+
+```powershell
+python -m pytest tests/evals/ -q
+python -m evals.harness --all
+```
+
+Notebook / demo workflows are not a substitute. Live Vertex remains opt-in (`PRAETOR_REAL_PROVIDER_PROBE` / `PRAETOR_CAPABILITY_SPIKE`) and is not a merge gate.
