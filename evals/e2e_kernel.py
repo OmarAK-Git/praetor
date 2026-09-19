@@ -72,6 +72,8 @@ _REALM_BY_PREFIX: dict[str, Realm] = {
 
 
 def _quality_pass_forbidden(scenario_id: str, status: str) -> bool:
+    if scenario_id == "cap.baseline_bag_path_a":
+        return False
     return scenario_id in CAPABILITY_QUALITY_IDS and status == "pass"
 
 
@@ -114,6 +116,8 @@ def run_e2e_scenario(
             observed = _run_use_progressive(scenario, db_path=db_path)
         elif scenario.scenario_id == "use.demo_honesty_gate":
             observed = _run_use_demo_honesty(scenario)
+        elif scenario.scenario_id == "cap.baseline_bag_path_a":
+            observed = _run_cap_baseline(scenario, db_path=db_path)
         else:
             raise LookupError(f"no executor for {scenario.scenario_id}")
         status = "pass"
@@ -354,6 +358,65 @@ def _load_fixture_events(relative: str) -> list[dict[str, object]]:
     path = REPO_ROOT / relative
     payload = json.loads(path.read_text(encoding="utf-8"))
     return list(payload["events"])
+
+
+def _run_cap_baseline(
+    scenario: E2EScenarioDocument, *, db_path: Path
+) -> dict[str, object]:
+    from datetime import datetime
+
+    from praetor.correlation import correlate_telemetry
+    from praetor.correlation._event_fields import event_field
+
+    setup = scenario.setup
+    anchor = datetime.fromisoformat(str(setup["anchor_time"]).replace("Z", "+00:00"))
+    sysmon = _load_fixture_events(str(setup["sysmon_fixture"]))
+    security = _load_fixture_events(str(setup["security_fixture"]))
+    correlated = correlate_telemetry(
+        sysmon_events=sysmon,
+        security_events=security,
+        anchor_time=anchor,
+    )
+    event_ids = sorted(
+        {
+            int(event_field(event, "EventID") or 0)
+            for event in (*sysmon, *security)
+        }
+    )
+    verifier = _default_verifier()
+    store = _open_activated_store(db_path, verifier)
+    try:
+        bundle = correlated.bundle
+        result = process_alert_intake(
+            store,
+            judgment_provider=_CountingJudgmentProvider(
+                judgment=_judgment_for_bundle(
+                    bundle,
+                    proposed=Disposition(str(setup["proposed_disposition"])),
+                )
+            ),
+            stamp_backend=_stamp_backend(setup),
+            alert_identity=str(setup["alert_identity"]),
+            sysmon_events=sysmon,
+            security_events=security,
+            anchor_time=anchor,
+        )
+        proposed = (
+            result.edict.model_judgment.proposed_disposition.value
+            if result.edict is not None
+            else None
+        )
+        return {
+            "used_correlate_telemetry": len(bundle.facts) > 0,
+            "used_process_alert_intake": result.edict is not None,
+            "used_path_b": False,
+            "path_a_event_ids": event_ids,
+            "proposed_disposition": proposed,
+            "frozen_label": setup["frozen_label"],
+            "alert_identity": setup["alert_identity"],
+        }
+    finally:
+        store.close()
 
 
 def _run_use_reconstruct(
