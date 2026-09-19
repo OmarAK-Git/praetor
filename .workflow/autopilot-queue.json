@@ -3375,7 +3375,7 @@
     },
     {
       "id": "eval-kernel-03-scenario-loader",
-      "status": "pending",
+      "status": "done",
       "tier": "T2",
       "depends_on": [
         "eval-kernel-01-scorecard"
@@ -3413,15 +3413,17 @@
       "implementation_agent": "implementer",
       "verification_agent": "skeptic-verifier",
       "run_dir": ".workflow/eval-kernel-03-scenario-loader",
-      "attempts": 0,
+      "attempts": 1,
       "max_retries": 1,
-      "evidence": [],
+      "evidence": [
+        ".workflow/eval-kernel-03-scenario-loader/results/verifier-result.md"
+      ],
       "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
       "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
     },
     {
       "id": "eval-kernel-04-theater",
-      "status": "pending",
+      "status": "in_progress",
       "tier": "T2",
       "depends_on": [
         "eval-kernel-03-scenario-loader"
@@ -3456,7 +3458,7 @@
       "implementation_agent": "implementer",
       "verification_agent": "skeptic-verifier",
       "run_dir": ".workflow/eval-kernel-04-theater",
-      "attempts": 0,
+      "attempts": 1,
       "max_retries": 1,
       "evidence": [],
       "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
