@@ -94,6 +94,8 @@ def run_e2e_scenario(
             observed = _run_gov_feed_unhealthy(scenario, db_path=db_path)
         elif scenario.scenario_id == "gov.recovery_never_contains":
             observed = _run_gov_recovery(scenario, db_path=db_path)
+        elif scenario.scenario_id == "des.envelope_rejects_extra_fields":
+            observed = _run_des_envelope(scenario)
         else:
             raise LookupError(f"no executor for {scenario.scenario_id}")
         status = "pass"
@@ -303,6 +305,37 @@ def _run_gov_recovery(
         }
     finally:
         store.close()
+
+
+def _run_des_envelope(scenario: E2EScenarioDocument) -> dict[str, object]:
+    from pydantic import ValidationError
+
+    from praetor.contracts.alert import AlertEnvelope
+
+    legal = AlertEnvelope.model_validate(
+        {
+            "schema_version": "1",
+            "alert_identity": str(scenario.setup["alert_identity"]),
+        }
+    )
+    extra_field = str(scenario.setup["extra_field"])
+    raised = False
+    try:
+        AlertEnvelope.model_validate(
+            {
+                "schema_version": "1",
+                "alert_identity": str(scenario.setup["alert_identity"]),
+                extra_field: scenario.setup["extra_value"],
+            }
+        )
+    except ValidationError:
+        raised = True
+    return {
+        "raises_validation_error": raised,
+        "accepted_legal_envelope": legal.alert_identity
+        == str(scenario.setup["alert_identity"]),
+        "rejected_cbc_field": extra_field,
+    }
 
 
 def missing_required_scenario_ids(present: set[str]) -> frozenset[str]:

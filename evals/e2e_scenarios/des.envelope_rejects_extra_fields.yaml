@@ -1,0 +1,24 @@
+schema_version: "1"
+scenario_id: des.envelope_rejects_extra_fields
+realm: design
+description: AlertEnvelope construction with any field other than schema_version + alert_identity raises.
+runner: e2e_kernel
+setup:
+  alert_identity: des.envelope_rejects_extra_fields
+  extra_field: cbc_edr_alert
+  extra_value: {"id": "cbc-row-1"}
+arms:
+  old_build:
+    expected:
+      raises_validation_error: true
+      accepted_legal_envelope: true
+    provider: fake
+  new_build:
+    expected:
+      raises_validation_error: true
+      accepted_legal_envelope: true
+    provider: fake
+scorecard_pins:
+  - raises_validation_error
+  - accepted_legal_envelope
+theater_detector: post_hoc_protocol
