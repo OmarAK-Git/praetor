@@ -3468,7 +3468,7 @@
     },
     {
       "id": "eval-kernel-05-gov-never-contain",
-      "status": "pending",
+      "status": "done",
       "tier": "T2",
       "depends_on": [
         "eval-kernel-02-runner-cli",
@@ -3507,15 +3507,17 @@
       "implementation_agent": "implementer",
       "verification_agent": "skeptic-verifier",
       "run_dir": ".workflow/eval-kernel-05-gov-never-contain",
-      "attempts": 0,
+      "attempts": 1,
       "max_retries": 1,
-      "evidence": [],
+      "evidence": [
+        ".workflow/eval-kernel-05-gov-never-contain/results/verifier-result.md"
+      ],
       "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
       "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
     },
     {
       "id": "eval-kernel-06-gov-feed-unhealthy",
-      "status": "pending",
+      "status": "in_progress",
       "tier": "T2",
       "depends_on": [
         "eval-kernel-05-gov-never-contain"
@@ -3549,7 +3551,7 @@
       "implementation_agent": "implementer",
       "verification_agent": "skeptic-verifier",
       "run_dir": ".workflow/eval-kernel-06-gov-feed-unhealthy",
-      "attempts": 0,
+      "attempts": 1,
       "max_retries": 1,
       "evidence": [],
       "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
