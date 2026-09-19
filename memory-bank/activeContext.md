@@ -2,7 +2,7 @@
 
 ## Current focus
 
-**2026-09-18 — Eval-kernel Sprint 1 draining.** Tasks 1–7 done (scorecard through all three governance pins). Next runnable: `eval-kernel-08-des-envelope`.
+**2026-09-18 — Eval-kernel Sprint 1 draining.** Tasks 1–8 done. Next runnable: `eval-kernel-09-des-path-b`.
 
 **2026-09-02 — PROD-CAP-001 landed.** Truncation vs parse-error. Next: CBC AlertEnvelope spike spec (no live run until spec approved).
 
