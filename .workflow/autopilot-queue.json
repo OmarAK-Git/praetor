@@ -3561,7 +3561,7 @@
     },
     {
       "id": "eval-kernel-07-gov-recovery",
-      "status": "pending",
+      "status": "done",
       "tier": "T2",
       "depends_on": [
         "eval-kernel-06-gov-feed-unhealthy"
@@ -3595,9 +3595,11 @@
       "implementation_agent": "implementer",
       "verification_agent": "skeptic-verifier",
       "run_dir": ".workflow/eval-kernel-07-gov-recovery",
-      "attempts": 0,
+      "attempts": 1,
       "max_retries": 1,
-      "evidence": [],
+      "evidence": [
+        ".workflow/eval-kernel-07-gov-recovery/results/verifier-result.md"
+      ],
       "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
       "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
     },

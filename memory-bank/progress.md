@@ -1,10 +1,11 @@
 # Progress Log
 
-## 2026-09-18 — Eval-kernel program SoT accepted
+## 2026-09-18 — Eval-kernel program SoT accepted; Sprint 1 drain in progress
 
 - Merged [PR 1](https://github.com/OmarAK-Git/praetor/pull/1) (design spec) and [PR 2](https://github.com/OmarAK-Git/praetor/pull/2) (Sprint 1 TDD plan).
-- Loaded GSD sprint `eval-kernel-sprint1` (21 tasks + phase-exit gate) into `.workflow/autopilot-queue.json`.
-- Next runnable: `eval-kernel-01-scorecard`. CBC adapter remains rejected; full queue-item retire waits for Task 21 / Sprint 3.
+- Loaded GSD sprint `eval-kernel-sprint1` (21 tasks + phase-exit gate).
+- Drained tasks 1–7 (scorecard, CLI, loader, theater, three governance pins). Next: `eval-kernel-08-des-envelope`.
+- CBC adapter remains rejected; full queue-item retire waits for Task 21 / Sprint 3.
 
 ## 2026-09-02 — PROD-CAP-001 landed; PROD-CAP-002 closed on Path A
 
