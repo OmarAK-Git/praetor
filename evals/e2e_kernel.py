@@ -8,12 +8,16 @@ from typing import TYPE_CHECKING
 
 from evals.harness import (
     _apply_emergency_never_contain_setup,
+    _apply_policy_setup,
+    _containment_allow_from_setup,
     _default_verifier,
     _fetch_directive_for_decision_id,
     _judgment_for_bundle,
     _open_activated_store,
+    _persist_snapshot_with_overrides,
     _resolve_policy_bundle,
     _stamp_backend,
+    allowlist_containment_policy,
 )
 from evals.scorecard import (
     CAPABILITY_QUALITY_IDS,
@@ -22,8 +26,10 @@ from evals.scorecard import (
     ScorecardRow,
     validate_scorecard_row,
 )
+from praetor.config.state import fetch_active_snapshot
 from praetor.contracts.disposition import Disposition
 from praetor.engine.orchestrator import (
+    IntakeResult,
     _CountingJudgmentProvider,
     process_alert_intake,
 )
@@ -84,6 +90,8 @@ def run_e2e_scenario(
             "gov.never_contain_live_shape"
         ):
             observed = _run_gov_never_contain(scenario, db_path=db_path)
+        elif scenario.scenario_id == "gov.feed_unhealthy_blocks_contain":
+            observed = _run_gov_feed_unhealthy(scenario, db_path=db_path)
         else:
             raise LookupError(f"no executor for {scenario.scenario_id}")
         status = "pass"
@@ -182,6 +190,53 @@ def _run_gov_never_contain(
             "final_disposition": result.edict.final_disposition.value,
             "fault_flags": list(result.edict.fault_flags),
             "directive_emitted": directive is not None,
+            "used_process_alert_intake": True,
+        }
+    finally:
+        store.close()
+
+
+def _run_gov_feed_unhealthy(
+    scenario: E2EScenarioDocument, *, db_path: Path
+) -> dict[str, object]:
+    setup = scenario.setup
+    verifier = _default_verifier()
+    store = _open_activated_store(db_path, verifier)
+    try:
+        _apply_policy_setup(store, setup, verifier)
+        base = fetch_active_snapshot(store.conn)
+        if base is not None:
+            host_ids, asset_ids = _containment_allow_from_setup(setup)
+            if host_ids or asset_ids:
+                _persist_snapshot_with_overrides(
+                    store,
+                    base,
+                    containment_policy=allowlist_containment_policy(
+                        host_ids=host_ids,
+                        asset_ids=asset_ids,
+                    ),
+                )
+        bundle = _resolve_policy_bundle(setup)
+
+        def _intake(proposed: Disposition, alert_suffix: str) -> IntakeResult:
+            provider = _CountingJudgmentProvider(
+                judgment=_judgment_for_bundle(bundle, proposed=proposed)
+            )
+            return process_alert_intake(
+                store,
+                judgment_provider=provider,
+                stamp_backend=_stamp_backend(setup),
+                alert_identity=f"{setup['alert_identity']}-{alert_suffix}",
+                evidence_bundle=bundle,
+            )
+
+        blocked = _intake(Disposition.AUTO_CONTAIN, "ac")
+        review = _intake(Disposition.STANDARD_REVIEW, "sr")
+        assert blocked.edict is not None and review.edict is not None
+        return {
+            "auto_contain.final_disposition": blocked.edict.final_disposition.value,
+            "auto_contain.fault_flags": list(blocked.edict.fault_flags),
+            "standard_review.final_disposition": review.edict.final_disposition.value,
             "used_process_alert_intake": True,
         }
     finally:

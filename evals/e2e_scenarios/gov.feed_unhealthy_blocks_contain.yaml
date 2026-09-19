@@ -1,0 +1,33 @@
+schema_version: "1"
+scenario_id: gov.feed_unhealthy_blocks_contain
+realm: governance
+description: Unhealthy revocation feed blocks auto_contain and still allows standard_review via process_alert_intake.
+runner: e2e_kernel
+setup:
+  alert_identity: gov.feed_unhealthy_blocks_contain
+  bundle: host
+  host_id: ws-01
+  feed_unhealthy: true
+  containment_allow:
+    hosts:
+      - ws-01
+arms:
+  old_build:
+    expected:
+      auto_contain.final_disposition: escalate
+      auto_contain.fault_flags:
+        - revocation_feed_unhealthy
+      standard_review.final_disposition: standard_review
+    provider: fake
+  new_build:
+    expected:
+      auto_contain.final_disposition: escalate
+      auto_contain.fault_flags:
+        - revocation_feed_unhealthy
+      standard_review.final_disposition: standard_review
+    provider: fake
+scorecard_pins:
+  - auto_contain.final_disposition
+  - auto_contain.fault_flags
+  - standard_review.final_disposition
+theater_detector: stipulated_capability
