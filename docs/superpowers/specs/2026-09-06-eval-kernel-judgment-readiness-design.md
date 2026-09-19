@@ -19,7 +19,7 @@ Headline that still stands:
 
 | Finding | Evidence | Consequence |
 |---|---|---|
-| Path A judgment is not distinguishable from a `path_a_fact_count` stump | McNemar b=3 c=1, exact two-sided **p=0.625**, n=26 majority | Capability above a trivial heuristic is **unmeasured**. Do not claim judgment readiness. |
+| Path A judgment is not distinguishable from a `path_a_fact_count` stump | McNemar b=3 c=1, exact two-sided **p=0.625**, n=26 majority | Capability above a trivial heuristic is **unmeasured**. Do not claim trustworthy judgment. |
 | Coverage is not the bottleneck | Path A > Path B on paired anchors, McNemar b=7 c=0, **p=0.015625**; benign specificity collapsed under richer Path B evidence | Do **not** expand correlation normalizers (DEC-067). |
 | Absolute rates do not transfer | Corpus was raw windows at a synthetic 50/50 base rate, not detector-fired AlertEnvelope traffic | Do not quote spike FP/separation as production quality. |
 
@@ -50,7 +50,7 @@ Run **Approach A** as three sequential sprints:
 | CBC JSON adapter | Rejected. Envelope is identity-only; CBC rows are window-pickers. |
 | `AlertEnvelope` field expansion | Contract is `schema_version` + `alert_identity`. Extra fields already fail (`extra="forbid"`). |
 | Correlator EventID expansion | DEC-067: coverage is not the bottleneck; denser Path B *hurt* benign specificity. |
-| Claiming judgment readiness before capability gates pass | Path A ≈ stump. Sprint 1 must not launder that into a pass. |
+| Claiming trustworthy judgment before capability gates pass | Path A ≈ stump. Sprint 1 must not launder that into a pass. |
 | Starting Sprint 3 before Sprint 2 earns it | Production readiness is conditional. Honest stop if `new≈old` on **cite-to-subject**. |
 | Promoting the Path B flattener into `src/` | Spike-local prototype. DEC-067 does not authorize promotion. |
 | Prompt retuning from scored dispositions | DEC-067 does not authorize it. |
@@ -202,7 +202,7 @@ Fifteen IDs, three per realm. Short descriptions are the pin. Do not add a sixte
 |---|---|
 | `use.reconstruct_from_ledger` | After a completed intake, ledger rows + `decision_id` / `evidence_bundle_hash` reconstruct the edict fields the scorecard asserted. If the kernel cannot rebuild the story from the ledger, `failure_class=harness`. |
 | `use.progressive_auth_report` | `build_progressive_authorization_report` reads evaluation rows written by the same intake (override rate per `target_type` / `asset_class`). The report is read-only. A missing evaluation row is a harness fail. |
-| `use.demo_honesty_gate` | Demo / walkthrough copy and this kernel’s capability rows do not claim unearned judgment capability while Sprint 2 cite-to-subject primary is unearned. A stump-only win is not a claim. If demo text asserts capability Sprint 2 has not granted, `failure_class=theater_detector`. |
+| `use.demo_honesty_gate` | Demo / walkthrough copy and this kernel’s capability rows do not claim “judgment works” while Sprint 2 cite-to-subject primary is unearned. A stump-only win is not a claim. If demo text asserts capability Sprint 2 has not granted, `failure_class=theater_detector`. |
 
 ### Sprint 1 exit criteria for the set
 
@@ -329,7 +329,7 @@ Named `theater_detector` checks (scenario field must pick one):
 |---|---|
 | `label_leak` | GT labels, seed EventRecordIDs, or `expected_class` appear in excerpts / `alert_identity` |
 | `stipulated_capability` | FakeProvider `proposed_disposition` is scored as a capability quality `pass` |
-| `unearned_demo_claim` | Demo / walkthrough / kernel copy claims unearned judgment capability while cite-to-subject primary is unearned (stump-only win does not count) |
+| `unearned_demo_claim` | Demo / walkthrough / kernel copy claims judgment works while cite-to-subject primary is unearned (stump-only win does not count) |
 | `path_b_in_src` | `src/praetor/` imports a Path B flattener |
 | `post_hoc_protocol` | Labels or prompt changed after seeing dispositions |
 | `gate_scored_as_judgment` | PolicyGate outcome is used as the capability number |

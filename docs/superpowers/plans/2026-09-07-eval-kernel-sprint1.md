@@ -13,7 +13,7 @@
 - No CBC JSON adapter. Envelope is identity-only; CBC ATLASv2 rows are window-pickers, not a Praetor type.
 - No `AlertEnvelope` field expansion. Contract is `schema_version` + `alert_identity`. Extra fields already fail (`extra="forbid"`).
 - No correlator EventID expansion. DEC-067: coverage is not the bottleneck; denser Path B hurt benign specificity.
-- Do not claim judgment readiness before capability gates pass. Path A ≈ stump. Sprint 1 must not launder that into a pass.
+- Do not claim trustworthy judgment before capability gates pass. Path A ≈ stump. Sprint 1 must not launder that into a pass.
 - Do not start Sprint 3 before Sprint 2 earns the cite-to-subject primary. Production readiness is conditional. Honest stop if `new≈old` on cite-to-subject.
 - Do not promote the Path B flattener into `src/`. Spike-local prototype. DEC-067 does not authorize promotion. The kernel must not import `evals.capability.flatten` or any Path B builder on the default CI path.
 - Do not retune the prompt from scored dispositions. DEC-067 does not authorize it.
@@ -1024,7 +1024,7 @@ def test_stipulated_capability_trips_on_quality_pass() -> None:
 
 def test_unearned_demo_claim_trips_when_primary_unearned(tmp_path: Path) -> None:
     copy = tmp_path / "README.md"
-    copy.write_text("Praetor is production-ready for decisions.\n", encoding="utf-8")
+    copy.write_text("Praetor judgment works and is production-ready.\n", encoding="utf-8")
     finding = run_theater_detector(
         "unearned_demo_claim",
         _ctx(copy_roots=(tmp_path,), cite_to_subject_primary_earned=False),
@@ -1077,7 +1077,7 @@ from evals.e2e_scenario import THEATER_DETECTOR_NAMES
 
 _LEAK_NEEDLES = ("expected_class", "EventRecordID", "ground-truth", "ground_truth")
 _UNEARNED_CLAIM = re.compile(
-    r"judgment" + r" works|trustworthy " + r"judgment|production-ready " + r"judgment",
+    r"judgment works|trustworthy judgment|production-ready judgment",
     re.IGNORECASE,
 )
 _PATH_B_MODULES = frozenset({"evals.capability.flatten", "evals.capability.bundle"})
@@ -2831,7 +2831,7 @@ Expected: FAIL — missing YAML / no executor.
 schema_version: "1"
 scenario_id: use.demo_honesty_gate
 realm: usability
-description: Demo/walkthrough/kernel copy must not claim unearned judgment capability while cite-to-subject is unearned.
+description: Demo/walkthrough/kernel copy must not claim judgment works while cite-to-subject is unearned.
 runner: e2e_kernel
 setup:
   copy_roots:

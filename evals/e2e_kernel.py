@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
 from evals.harness import (
     REPO_ROOT,
@@ -453,6 +453,20 @@ def _run_use_progressive(
         store.close()
 
 
+def _demo_honesty_copy_roots(copy_roots: object) -> tuple[Path, ...]:
+    roots: list[Path] = []
+    for root in cast(Sequence[str], copy_roots):
+        path = Path(str(root))
+        if path == Path("docs") and path.is_dir():
+            for child in sorted(path.iterdir()):
+                if child.name == "superpowers":
+                    continue
+                roots.append(child)
+        else:
+            roots.append(path)
+    return tuple(roots)
+
+
 def _run_use_demo_honesty(scenario: E2EScenarioDocument) -> dict[str, object]:
     from evals.theater import TheaterContext, run_theater_detector
 
@@ -468,7 +482,7 @@ def _run_use_demo_honesty(scenario: E2EScenarioDocument) -> dict[str, object]:
             scorecard_status=None,
             scorecard_is_quality_pass=False,
             src_root=Path("src/praetor"),
-            copy_roots=tuple(Path(str(root)) for root in scenario.setup["copy_roots"]),
+            copy_roots=_demo_honesty_copy_roots(scenario.setup["copy_roots"]),
             cite_to_subject_primary_earned=earned,
         ),
     )
