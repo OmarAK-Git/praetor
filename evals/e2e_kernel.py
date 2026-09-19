@@ -110,6 +110,8 @@ def run_e2e_scenario(
             observed = _run_thr_multi_host(scenario, db_path=db_path)
         elif scenario.scenario_id == "use.reconstruct_from_ledger":
             observed = _run_use_reconstruct(scenario, db_path=db_path)
+        elif scenario.scenario_id == "use.progressive_auth_report":
+            observed = _run_use_progressive(scenario, db_path=db_path)
         else:
             raise LookupError(f"no executor for {scenario.scenario_id}")
         status = "pass"
@@ -391,6 +393,59 @@ def _run_use_reconstruct(
             "ledger_final_disposition_matches": (
                 reconstructed.final_disposition == result.edict.final_disposition
             ),
+        }
+    finally:
+        store.close()
+
+
+def _run_use_progressive(
+    scenario: E2EScenarioDocument, *, db_path: Path
+) -> dict[str, object]:
+    from datetime import datetime
+
+    from praetor.reporting.progressive_authorization import (
+        PROGRESSIVE_AUTHORIZATION_REPORT_READ_ONLY,
+        build_progressive_authorization_report,
+    )
+
+    setup = scenario.setup
+    verifier = _default_verifier()
+    store = _open_activated_store(db_path, verifier)
+    try:
+        bundle = _resolve_policy_bundle(setup)
+        result = process_alert_intake(
+            store,
+            judgment_provider=_CountingJudgmentProvider(
+                judgment=_judgment_for_bundle(
+                    bundle,
+                    proposed=Disposition(str(setup["proposed_disposition"])),
+                )
+            ),
+            stamp_backend=_stamp_backend(setup),
+            alert_identity=str(setup["alert_identity"]),
+            evidence_bundle=bundle,
+        )
+        assert result.edict is not None
+        report = build_progressive_authorization_report(
+            store.conn,
+            window_start=datetime.fromisoformat(str(setup["window_start"])),
+            window_end=datetime.fromisoformat(str(setup["window_end"])),
+        )
+        present = any(
+            dim.policy_gate_evaluations_total > 0
+            for dim in report.policy_gate_by_dimension
+        )
+        rate_defined = any(
+            dim.policy_gate_override_rate is not None
+            for dim in report.policy_gate_by_dimension
+        )
+        return {
+            "evaluation_row_present": present,
+            "report_read_only": (
+                report.read_only is True
+                and PROGRESSIVE_AUTHORIZATION_REPORT_READ_ONLY is True
+            ),
+            "override_rate_defined": rate_defined,
         }
     finally:
         store.close()

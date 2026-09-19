@@ -1,0 +1,30 @@
+schema_version: "1"
+scenario_id: use.progressive_auth_report
+realm: usability
+description: Progressive authorization report reads evaluation rows written by the same intake.
+runner: e2e_kernel
+setup:
+  alert_identity: use.progressive_auth_report
+  bundle: host
+  host_id: ws-01
+  proposed_disposition: standard_review
+  window_start: "2026-06-01T00:00:00+00:00"
+  window_end: "2026-12-31T00:00:00+00:00"
+arms:
+  old_build:
+    expected:
+      evaluation_row_present: true
+      report_read_only: true
+      override_rate_defined: true
+    provider: fake
+  new_build:
+    expected:
+      evaluation_row_present: true
+      report_read_only: true
+      override_rate_defined: true
+    provider: fake
+scorecard_pins:
+  - evaluation_row_present
+  - report_read_only
+  - override_rate_defined
+theater_detector: stipulated_capability
