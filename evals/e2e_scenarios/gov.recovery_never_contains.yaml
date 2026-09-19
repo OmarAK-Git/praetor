@@ -1,0 +1,26 @@
+schema_version: "1"
+scenario_id: gov.recovery_never_contains
+realm: governance
+description: Startup recovery of a non-terminal auto_contain candidate never emits auto_contain.
+runner: e2e_kernel
+setup:
+  alert_identity: gov.recovery_never_contains
+  seed: stamp_resolved_autocontain_candidate
+arms:
+  old_build:
+    expected:
+      recovered_final_disposition: escalate
+      recovered_proposed_disposition: auto_contain
+      containment_directive_emitted: false
+    provider: fake
+  new_build:
+    expected:
+      recovered_final_disposition: escalate
+      recovered_proposed_disposition: auto_contain
+      containment_directive_emitted: false
+    provider: fake
+scorecard_pins:
+  - recovered_final_disposition
+  - recovered_proposed_disposition
+  - containment_directive_emitted
+theater_detector: stipulated_capability

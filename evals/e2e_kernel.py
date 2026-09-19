@@ -92,6 +92,8 @@ def run_e2e_scenario(
             observed = _run_gov_never_contain(scenario, db_path=db_path)
         elif scenario.scenario_id == "gov.feed_unhealthy_blocks_contain":
             observed = _run_gov_feed_unhealthy(scenario, db_path=db_path)
+        elif scenario.scenario_id == "gov.recovery_never_contains":
+            observed = _run_gov_recovery(scenario, db_path=db_path)
         else:
             raise LookupError(f"no executor for {scenario.scenario_id}")
         status = "pass"
@@ -238,6 +240,66 @@ def _run_gov_feed_unhealthy(
             "auto_contain.fault_flags": list(blocked.edict.fault_flags),
             "standard_review.final_disposition": review.edict.final_disposition.value,
             "used_process_alert_intake": True,
+        }
+    finally:
+        store.close()
+
+
+def _run_gov_recovery(
+    scenario: E2EScenarioDocument, *, db_path: Path
+) -> dict[str, object]:
+    import json
+
+    from praetor.contracts.edict import DecisionEdict
+    from praetor.engine.orchestrator import SucceedingStampBackend
+    from praetor.engine.recovery import run_engine_startup_recovery
+    from praetor.engine.skeleton import SKELETON_BUNDLE_HASH, skeleton_model_judgment
+    from praetor.ledger.store import fetch_ledger_rows
+    from praetor.state.attempts import AttemptState, transition_attempt
+    from praetor.tickets.stamp import StampContext, execute_stamp
+
+    verifier = _default_verifier()
+    store = _open_activated_store(db_path, verifier)
+    try:
+        snapshot = fetch_active_snapshot(store.conn)
+        assert snapshot is not None
+        alloc = store.allocate_attempt(
+            alert_identity=str(scenario.setup["alert_identity"]),
+            evidence_bundle_hash=SKELETON_BUNDLE_HASH,
+            org_config_snapshot_hash=snapshot.snapshot_hash,
+        )
+        assert alloc.attempt is not None
+        aid = alloc.attempt.processing_attempt_identity
+        transition_attempt(store.conn, aid, AttemptState.ACTIVE)
+        transition_attempt(store.conn, aid, AttemptState.PENDING_STAMP)
+        judgment = skeleton_model_judgment(proposed=Disposition.AUTO_CONTAIN)
+        backend = SucceedingStampBackend()
+        execute_stamp(
+            store.conn,
+            backend,
+            StampContext(
+                alert_identity=alloc.attempt.alert_identity,
+                evidence_bundle_hash=alloc.attempt.evidence_bundle_hash,
+                org_config_snapshot_hash=alloc.attempt.org_config_snapshot_hash,
+                processing_attempt_identity=aid,
+                ticket_payload={"candidate_judgment": judgment.model_dump(mode="json")},
+            ),
+        )
+        transition_attempt(store.conn, aid, AttemptState.STAMP_RESOLVED)
+        run_engine_startup_recovery(store, stamp_backend=backend)
+        edicts = [
+            DecisionEdict.model_validate(json.loads(row.record_json))
+            for row in fetch_ledger_rows(store.conn)
+            if row.record_type == "decision_edict"
+        ]
+        assert len(edicts) == 1
+        return {
+            "recovered_final_disposition": edicts[0].final_disposition.value,
+            "recovered_proposed_disposition": (
+                edicts[0].model_judgment.proposed_disposition.value
+            ),
+            "containment_directive_emitted": edicts[0].containment_directive is not None,
+            "used_run_engine_startup_recovery": True,
         }
     finally:
         store.close()
