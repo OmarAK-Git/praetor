@@ -94,7 +94,14 @@ class SpikeVertexProvider:
 
     def generate_judgment(self, request: JudgmentRequest) -> ModelJudgment:
         result = self.generate_judgment_detailed(request)
-        return result["judgment"]
+        judgment = result["judgment"]
+        if not isinstance(judgment, ModelJudgment):
+            msg = (
+                "spike vertex detailed result missing ModelJudgment: "
+                f"{type(judgment).__name__}"
+            )
+            raise ProviderMalformedResponseError(msg)
+        return judgment
 
     def generate_judgment_detailed(
         self, request: JudgmentRequest

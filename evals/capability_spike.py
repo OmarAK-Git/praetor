@@ -164,7 +164,7 @@ def _load_observations_jsonl(path: Path) -> list[Observation]:
             if isinstance(data.get("cited_event_ids"), list):
                 data["cited_event_ids"] = tuple(int(x) for x in data["cited_event_ids"])
             try:
-                rows.append(Observation(**data))  # type: ignore[arg-type]
+                rows.append(Observation(**data))
             except TypeError:
                 continue
     return rows
