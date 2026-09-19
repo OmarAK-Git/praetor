@@ -88,3 +88,16 @@ def test_harness_default_still_runs_outcome_matrix_only() -> None:
         check=False,
     )
     assert completed.returncode == 0, completed.stdout + completed.stderr
+
+
+def test_harness_all_exits_zero_after_full_suite() -> None:
+    completed = subprocess.run(
+        [sys.executable, "-m", "evals.harness", "--all"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert "gov.never_contain_live_shape" in completed.stdout
+    assert "cap.baseline_bag_path_a" in completed.stdout
