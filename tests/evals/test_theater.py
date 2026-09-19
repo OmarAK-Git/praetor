@@ -80,3 +80,36 @@ def test_gate_scored_as_judgment_trips_on_quality_from_policy_gate() -> None:
         ),
     )
     assert finding.tripped is True
+
+
+def test_post_hoc_protocol_trips_on_relabel_marker() -> None:
+    finding = run_theater_detector(
+        "post_hoc_protocol",
+        _ctx(excerpt_blob="post_hoc_relabel after dispositions"),
+    )
+    assert finding.tripped is True
+    assert finding.detector == "post_hoc_protocol"
+
+
+@pytest.mark.parametrize(
+    "name",
+    [
+        "label_leak",
+        "stipulated_capability",
+        "unearned_demo_claim",
+        "path_b_in_src",
+        "post_hoc_protocol",
+        "gate_scored_as_judgment",
+    ],
+)
+def test_named_detector_stays_clean_on_default_ctx(name: str) -> None:
+    finding = run_theater_detector(name, _ctx())
+    assert finding.tripped is False
+    assert finding.detector == name
+
+
+def test_detectors_match_theater_names() -> None:
+    from evals.e2e_scenario import THEATER_DETECTOR_NAMES
+    from evals.theater import DETECTORS
+
+    assert set(DETECTORS) == set(THEATER_DETECTOR_NAMES)
