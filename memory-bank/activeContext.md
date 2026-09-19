@@ -2,7 +2,7 @@
 
 ## Current focus
 
-**2026-09-19 — Eval-kernel Sprint 1 draining.** Tasks 1–15 done. Next: `eval-kernel-16-use-demo-honesty`.
+**2026-09-19 — Eval-kernel Sprint 1 draining.** Tasks 1–16 done (through demo honesty). Next runnable: `eval-kernel-17-cap-baseline`.
 
 **2026-09-02 — PROD-CAP-001 landed.** Truncation vs parse-error. Next: CBC AlertEnvelope spike spec (no live run until spec approved).
 
