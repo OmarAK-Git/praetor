@@ -2,7 +2,7 @@
 
 ## Current focus
 
-**2026-09-18 — Eval-kernel Sprint 1 draining.** Tasks 1–3 done. Next: `eval-kernel-04-theater`.
+**2026-09-18 — Eval-kernel Sprint 1 draining.** Tasks 1–4 done (scorecard, kernel CLI, scenario loader, theater registry). Next: `eval-kernel-05-gov-never-contain`.
 
 **2026-09-02 — PROD-CAP-001 landed.** Truncation vs parse-error. Next: CBC AlertEnvelope spike spec (no live run until spec approved).
 
