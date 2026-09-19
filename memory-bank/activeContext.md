@@ -2,7 +2,7 @@
 
 ## Current focus
 
-**2026-09-18 — Eval-kernel Sprint 1 draining.** Task 1 (`eval-kernel-01-scorecard`) done. Next runnable: `eval-kernel-02-runner-cli` (Task 3 also unblocked). Evidence: `.workflow/eval-kernel-01-scorecard/results/verifier-result.md`. CBC adapter remains rejected.
+**2026-09-18 — Eval-kernel Sprint 1 draining.** Tasks 1–2 done. Next runnable: `eval-kernel-03-scenario-loader`. Evidence: `.workflow/eval-kernel-01-scorecard/results/verifier-result.md`, `.workflow/eval-kernel-02-runner-cli/results/verifier-result.md`.
 
 **2026-09-02 — PROD-CAP-001 landed.** Truncation vs parse-error. Next: CBC AlertEnvelope spike spec (no live run until spec approved).
 
