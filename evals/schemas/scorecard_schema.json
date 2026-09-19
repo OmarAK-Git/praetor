@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://praetor.local/evals/schemas/scorecard_schema.json",
+  "title": "PraetorE2EScorecardRow",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "scenario_id",
+    "realm",
+    "arm",
+    "status",
+    "failure_class",
+    "expected",
+    "observed",
+    "provider"
+  ],
+  "properties": {
+    "schema_version": { "type": "string", "const": "1" },
+    "scenario_id": { "type": "string", "minLength": 1 },
+    "realm": {
+      "type": "string",
+      "enum": ["capability", "governance", "design", "threat", "usability"]
+    },
+    "arm": { "type": "string", "enum": ["old_build", "new_build"] },
+    "status": { "type": "string", "enum": ["pass", "fail", "pending", "error"] },
+    "failure_class": {
+      "type": "string",
+      "enum": ["none", "harness", "model", "theater_detector"]
+    },
+    "expected": { "type": "object" },
+    "observed": { "type": "object" },
+    "provider": { "type": "string", "enum": ["fake", "vertex"] },
+    "notes": { "type": "string" }
+  }
+}
