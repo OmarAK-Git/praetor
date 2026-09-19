@@ -4199,7 +4199,7 @@
     },
     {
       "id": "eval-kernel-21-docs-pointer",
-      "status": "in_progress",
+      "status": "done",
       "tier": "T2",
       "depends_on": [
         "eval-kernel-20-github-workflow"
@@ -4235,13 +4235,15 @@
       "run_dir": ".workflow/eval-kernel-21-docs-pointer",
       "attempts": 1,
       "max_retries": 1,
-      "evidence": [],
+      "evidence": [
+        ".workflow/eval-kernel-21-docs-pointer/results/verifier-result.md"
+      ],
       "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
       "researcher_decision": "skipped: one prescribed TDD path in the ratified Sprint 1 plan"
     },
     {
       "id": "eval-kernel-sprint1-gate",
-      "status": "pending",
+      "status": "in_progress",
       "tier": "T3",
       "depends_on": [
         "eval-kernel-01-scorecard",
@@ -4304,7 +4306,7 @@
       "gate_model": "cursor-grok-4.6-high-fast",
       "run_mode": "in_session_grok",
       "run_dir": ".workflow/eval-kernel-sprint1-gate",
-      "attempts": 0,
+      "attempts": 1,
       "max_retries": 1,
       "evidence": [],
       "source_plan": "docs/superpowers/plans/2026-09-07-eval-kernel-sprint1.md",
